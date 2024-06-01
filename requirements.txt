@@ -1,3 +1,4 @@
 jupyterlab
 scikit-learn
 ingredient-parser-nlp
+pre-commit
