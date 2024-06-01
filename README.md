@@ -10,7 +10,7 @@ The model implementation is in [averaged_perceptron.py](ap/averaged_perceptron.p
 
 The jupyter notebook [here](notebooks/averaged_perceptron.ipynb) goes through the training and evaluation of the model.
 
->  ![NOTE]
+>  ![NOTE]  
 >  Note that to train the model you will need the database of training data from the `ingredient-parser` library, found [here](https://github.com/strangetom/ingredient-parser/blob/master/train/data/training.sqlite3).
 
 ## Performance
