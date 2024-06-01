@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import pickle
 from collections import defaultdict
 
 
@@ -129,3 +130,28 @@ class AveragedPerceptron:
             self.weights[feat] = new_feat_weights
 
         return None
+
+    def save(self, path: str) -> None:
+        """Save trained model to given path.
+
+        The weights and labels are saved as a tuple.
+
+        Parameters
+        ----------
+        path : str
+            Path to save model weights to.
+        """
+        with open(path, "wb") as f:
+            pickle.dump((self.weights, self.labels), f)
+
+    def load(self, path: str) -> None:
+        """Load saved model at given path.
+
+        Parameters
+        ----------
+        path : str
+            Path to model to load.
+        """
+        with open(path, "rb") as f:
+            data = pickle.load(f)
+            self.weights, self.labels = data
