@@ -51,6 +51,38 @@ class IngredientTagger:
 
         return labels
 
+    def tag_from_features(
+        self, sentence_features: list[dict[str, str | bool]]
+    ) -> list[str]:
+        """Tag a sentence with labels using Averaged Perceptron model.
+
+        This function accepts a list of tokens and a list of features for each token,
+        rather than calculate the features in the function.
+
+        Parameters
+        ----------
+        sentence_features : list[dict[str, str | bool]]
+            List of feature dicts for each token.
+
+        Returns
+        -------
+        list[str]
+            List of labels.
+        """
+        labels = []
+        prev_label, prev_label2 = "-START-", "-START2-"
+        for features in sentence_features:
+            converted_features = self._convert_features(
+                features, prev_label, prev_label2
+            )
+            label = self.model.predict(converted_features)
+            labels.append(label)
+
+            prev_label2 = prev_label
+            prev_label = label
+
+        return labels
+
     def _convert_features(
         self, features: dict[str, str | bool], prev_label: str, prev_label2: str
     ) -> set[str]:
