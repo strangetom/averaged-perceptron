@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import pickle
 from collections import defaultdict
 
 
@@ -24,13 +23,13 @@ class AveragedPerceptron:
 
         self._iteration: int = 0
 
-    def predict(self, features: dict[str, str | bool]) -> str:
-        """Predict the label for a token descibred by features dict.
+    def predict(self, features: set[str]) -> str:
+        """Predict the label for a token described by features set.
 
         Parameters
         ----------
-        features : dict[str, str | bool]
-            Dictionary of features for token
+        features : set[str]
+            Set of features for token
 
         Returns
         -------
@@ -49,7 +48,7 @@ class AveragedPerceptron:
         # Sort by score, then alphabetically sort for stability
         return max(self.labels, key=lambda label: (scores[label], label))
 
-    def update(self, truth: str, guess: str, features: dict[str, str | bool]) -> None:
+    def update(self, truth: str, guess: str, features: set[str]) -> None:
         """Update weights for given features.
 
         This only makes changes if the true and predicted labels are different.
@@ -60,7 +59,7 @@ class AveragedPerceptron:
             True label for given features.
         guess : str
             Predicted label for given features.
-        features : dict[str, str | bool]
+        features : set[str]
             Features.
 
         Returns
@@ -130,28 +129,3 @@ class AveragedPerceptron:
             self.weights[feat] = new_feat_weights
 
         return None
-
-    def save(self, path: str) -> None:
-        """Save trained model to given path.
-
-        The weights and labels are saved as a tuple.
-
-        Parameters
-        ----------
-        path : str
-            Path to save model weights to.
-        """
-        with open(path, "wb") as f:
-            pickle.dump((self.weights, self.labels), f)
-
-    def load(self, path: str) -> None:
-        """Load saved model at given path.
-
-        Parameters
-        ----------
-        path : str
-            Path to model to load.
-        """
-        with open(path, "rb") as f:
-            data = pickle.load(f)
-            self.weights, self.labels = data
