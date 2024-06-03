@@ -119,7 +119,7 @@ class IngredientTagger:
         # Add extra features based on labels of previous tokens.
         converted.add("prev_label=" + prev_label)
         converted.add("prev_label2=" + prev_label2)
-        converted.add("prev_label+prev_label2=" + prev_label + "+" + prev_label2)
+        converted.add("prev_label2+prev_label=" + prev_label2 + "+" + prev_label)
         converted.add("prev_label+pos=" + prev_label + "+" + features["pos"])  # type: ignore
 
         return converted
@@ -155,6 +155,7 @@ class IngredientTagger:
         training_features: list[list[dict]],
         truth: list[list[str]],
         n_iter: int = 10,
+        min_abs_weight: float = 0.1,
     ) -> None:
         """Train model using example sentences and their true labels.
 
@@ -167,6 +168,8 @@ class IngredientTagger:
         n_iter : int, optional
             Number of training iterations.
             Default is 10.
+        min_abs_weight : float, optional
+            Weights below this value will be pruned after training.
         """
         if len(self.model.labels) == 0:
             raise ValueError("Set the model labels before training.")
@@ -198,3 +201,4 @@ class IngredientTagger:
             print(f"Iter {iter_}: {100*c/n:.1f}%")
             random.shuffle(training_data)
         self.model.average_weights()
+        self.model.prune_weights(min_abs_weight)

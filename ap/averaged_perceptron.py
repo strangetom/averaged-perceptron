@@ -6,8 +6,8 @@ from collections import defaultdict
 class AveragedPerceptron:
     def __init__(self) -> None:
         # Dict of weights for each feature.
-        # Keys are features, the values is a dict with keys of labels where the weight
-        # is non-zero.
+        # Keys are features, the value for each key is a dict with where the keys are
+        # labels where the weight is non-zero and the value is the weight.
         self.weights = {}
 
         # Set of possible token labels.
@@ -74,11 +74,11 @@ class AveragedPerceptron:
             ----------
             label : str
                 Label to update weight for.
-            feature : dict[str, str | bool]
+            feature : str
                 Feature to update
-            weight : int
+            weight : float
                 Weight of label at time of last update.
-            change : int
+            change : float
                 Change to label weight.
             """
             key = (feature, label)
@@ -128,4 +128,26 @@ class AveragedPerceptron:
 
             self.weights[feat] = new_feat_weights
 
+        return None
+
+    def prune_weights(self, min_abs_weight: float) -> None:
+        """Prune weights by removing weights smaller than min_abs_weight.
+
+        Parameters
+        ----------
+        min_abs_weight : float
+            Minimum absolute value of weight to keep.
+        """
+        new_weights = {}
+        for feature, weights in self.weights.items():
+            new_feature_weights = {}
+
+            for label, weight in weights.items():
+                if abs(weight) >= min_abs_weight:
+                    new_feature_weights[label] = weight
+
+            if new_feature_weights != {}:
+                new_weights[feature] = new_feature_weights
+
+        self.weights = new_weights
         return None
