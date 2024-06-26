@@ -23,7 +23,7 @@ class IngredientTagger:
         self.model = AveragedPerceptron()
         self.labels: set[str] = set()
 
-    def tag(self, sentence: str) -> list[tuple[str]]:
+    def tag(self, sentence: str) -> list[tuple[str, str, float]]:
         """Tag a sentence with labels using Averaged Perceptron model.
 
         Parameters
@@ -33,8 +33,8 @@ class IngredientTagger:
 
         Returns
         -------
-        list[tuple[str]]
-            List of (token, label) tuples.
+        list[tuple[str, str, float]]
+            List of (token, label, confidence) tuples.
         """
         labels = []
         p = PreProcessor(sentence)
@@ -43,8 +43,8 @@ class IngredientTagger:
             converted_features = self._convert_features(
                 features, prev_label, prev_label2
             )
-            label = self.model.predict(converted_features)
-            labels.append((token, label))
+            label, confidence = self.model.predict(converted_features)
+            labels.append((token, label, confidence))
 
             prev_label2 = prev_label
             prev_label = label
@@ -53,7 +53,7 @@ class IngredientTagger:
 
     def tag_from_features(
         self, sentence_features: list[dict[str, str | bool]]
-    ) -> list[str]:
+    ) -> list[tuple[str, float]]:
         """Tag a sentence with labels using Averaged Perceptron model.
 
         This function accepts a list of tokens and a list of features for each token,
@@ -66,8 +66,8 @@ class IngredientTagger:
 
         Returns
         -------
-        list[str]
-            List of labels.
+        list[tuple[str, float]]
+            List of (label, confidence) tuples.
         """
         labels = []
         prev_label, prev_label2 = "-START-", "-START2-"
@@ -75,8 +75,8 @@ class IngredientTagger:
             converted_features = self._convert_features(
                 features, prev_label, prev_label2
             )
-            label = self.model.predict(converted_features)
-            labels.append(label)
+            label, confidence = self.model.predict(converted_features)
+            labels.append((label, confidence))
 
             prev_label2 = prev_label
             prev_label = label
@@ -187,7 +187,7 @@ class IngredientTagger:
                     converted_features = self._convert_features(
                         features, prev_label, prev_label2
                     )
-                    guess = self.model.predict(converted_features)
+                    guess, _ = self.model.predict(converted_features)
                     self.model.update(true_label, guess, converted_features)
 
                     prev_label2 = prev_label

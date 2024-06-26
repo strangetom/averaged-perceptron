@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from collections import defaultdict
+from math import exp
 
 
 class AveragedPerceptron:
@@ -23,7 +24,24 @@ class AveragedPerceptron:
 
         self._iteration: int = 0
 
-    def predict(self, features: set[str]) -> str:
+    def _confidence(self, scores: dict[str, float]) -> list[float]:
+        """Calculate confidence for each labels.
+
+        Parameters
+        ----------
+        scores : dict[str, float]
+            Dict of non-zero scores for labels
+
+        Returns
+        -------
+        list[float]
+            List of confidences for labels
+        """
+        exps = [exp(s) for s in scores.values()]
+        exp_sum = sum(exps)
+        return [round(ex / exp_sum, 3) for ex in exps]
+
+    def predict(self, features: set[str]) -> tuple[str, float]:
         """Predict the label for a token described by features set.
 
         Parameters
@@ -33,8 +51,8 @@ class AveragedPerceptron:
 
         Returns
         -------
-        str
-            Class label for token
+        tuple[str, float]
+            Class label for token and confidence value
         """
         scores = defaultdict(float)
         for feat in features:
@@ -46,7 +64,10 @@ class AveragedPerceptron:
                 scores[label] += weight
 
         # Sort by score, then alphabetically sort for stability
-        return max(self.labels, key=lambda label: (scores[label], label))
+        best_label = max(self.labels, key=lambda label: (scores[label], label))
+        best_confidence = max(self._confidence(scores))
+
+        return best_label, best_confidence
 
     def update(self, truth: str, guess: str, features: set[str]) -> None:
         """Update weights for given features.
