@@ -156,6 +156,7 @@ class IngredientTagger:
         truth: list[list[str]],
         n_iter: int = 10,
         min_abs_weight: float = 0.1,
+        verbose: bool = True,
     ) -> None:
         """Train model using example sentences and their true labels.
 
@@ -170,6 +171,9 @@ class IngredientTagger:
             Default is 10.
         min_abs_weight : float, optional
             Weights below this value will be pruned after training.
+        verbose : bool, optional
+            If True, print performance at each iteration.
+            Default is is True.
         """
         if len(self.model.labels) == 0:
             raise ValueError("Set the model labels before training.")
@@ -198,7 +202,10 @@ class IngredientTagger:
                     n += 1
                     c += guess == true_label
 
-            print(f"Iter {iter_}: {100*c/n:.1f}%")
+            if verbose:
+                print(f"Iter {iter_}: {100*c/n:.1f}%")
+
             random.shuffle(training_data)
+
         self.model.average_weights()
         self.model.prune_weights(min_abs_weight)
