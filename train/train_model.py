@@ -234,7 +234,6 @@ def train_multiple(args: argparse.Namespace) -> None:
     worst_word = 100 * word_accuracies[index_worst]
     worst_seed = seeds[index_worst]
     print()
-
     print(
         f"Best:  Sentence {best_sentence:.2f}% / Word {best_word:.2f}% (Seed: {best_seed})"
     )
