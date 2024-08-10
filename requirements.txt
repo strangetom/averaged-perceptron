@@ -1,4 +1,6 @@
 jupyterlab
 scikit-learn
-ingredient-parser-nlp
+tqdm
 pre-commit
+matplotlib
+-e ../ingredient-parser
