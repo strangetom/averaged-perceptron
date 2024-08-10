@@ -7,8 +7,8 @@ from math import exp
 class AveragedPerceptron:
     def __init__(self) -> None:
         # Dict of weights for each feature.
-        # Keys are features, the value for each key is a dict with where the keys are
-        # labels where the weight is non-zero and the value is the weight.
+        # Keys are features, the value for each key is another dict where the keys are
+        # the labels where the weight is non-zero and the value is the weight.
         self.weights = {}
 
         # Set of possible token labels.
@@ -69,6 +69,28 @@ class AveragedPerceptron:
 
         return best_label, best_confidence
 
+    def _update_feature(self, label: str, feature: str, weight: float, change: float):
+        """Update weights for feature by given change
+
+        Parameters
+        ----------
+        label : str
+            Label to update weight for.
+        feature : str
+            Feature to update weights of.
+        weight : float
+            Weight of label for feature at time of last update.
+        change : float
+            Change to be applied to label weight for feature.
+        """
+        key = (feature, label)
+        # Update total for feature/label combo to account for number of iterations
+        # since last update
+        self._totals[key] += (self._iteration - self._tstamps[key]) * weight
+        self._tstamps[key] = self._iteration
+
+        self.weights[feature][label] = weight + change
+
     def update(self, truth: str, guess: str, features: set[str]) -> None:
         """Update weights for given features.
 
@@ -88,28 +110,6 @@ class AveragedPerceptron:
         None
         """
 
-        def upd_feat(label: str, feature: str, weight: float, change: float):
-            """Update weight for feature by change
-
-            Parameters
-            ----------
-            label : str
-                Label to update weight for.
-            feature : str
-                Feature to update
-            weight : float
-                Weight of label at time of last update.
-            change : float
-                Change to label weight.
-            """
-            key = (feature, label)
-            # Update total for feature/label combo to account for number of iterations
-            # since last update
-            self._totals[key] += (self._iteration - self._tstamps[key]) * weight
-            self._tstamps[key] = self._iteration
-
-            self.weights[feature][label] = weight + change
-
         self._iteration += 1
 
         if truth == guess:
@@ -121,8 +121,8 @@ class AveragedPerceptron:
             # Update weights for feature:
             # Increment weight for correct label by +1, decrement weights for
             # incorrect labels by -1.
-            upd_feat(truth, feat, weights.get(truth, 0.0), 1.0)
-            upd_feat(guess, feat, weights.get(guess, 0.0), -1.0)
+            self._update_feature(truth, feat, weights.get(truth, 0.0), 1.0)
+            self._update_feature(guess, feat, weights.get(guess, 0.0), -1.0)
 
         return None
 

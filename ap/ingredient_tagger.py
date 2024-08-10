@@ -56,8 +56,8 @@ class IngredientTagger:
     ) -> list[tuple[str, float]]:
         """Tag a sentence with labels using Averaged Perceptron model.
 
-        This function accepts a list of tokens and a list of features for each token,
-        rather than calculate the features in the function.
+        This function accepts a list of features for each token,
+        rather than calculating the features from the tokens.
 
         Parameters
         ----------
