@@ -3,7 +3,7 @@
 import argparse
 import concurrent.futures as cf
 import contextlib
-from random import randint
+import random
 from statistics import mean, stdev
 
 from sklearn.model_selection import train_test_split
@@ -61,9 +61,10 @@ def train_model(
     """
     # Generate random seed for the train/test split if none provided.
     if seed is None:
-        seed = randint(0, 1_000_000_000)
+        seed = random.randint(0, 1_000_000_000)
 
     print(f"[INFO] {seed} is the random seed used for the train/test split.")
+    random.seed(seed)
 
     # Split data into train and test sets
     # The stratify argument means that each dataset is represented proprtionally
@@ -102,7 +103,9 @@ def train_model(
         "PUNC",
         "SIZE",
     }
-    tagger.train(features_train, truth_train, n_iter=15, min_abs_weight=0.25)
+    tagger.train(
+        features_train, truth_train, n_iter=15, min_abs_weight=0.25, verbose=False
+    )
     tagger.save("ap.pickle")
 
     print("[INFO] Evaluating model with test data.")
@@ -134,7 +137,7 @@ def train_model(
     if plot_confusion_matrix:
         confusion_matrix(labels_pred, truth_test)
 
-    stats = evaluate(labels_pred, truth_test)
+    stats = evaluate(labels_pred, truth_test, seed)
     return stats
 
 
@@ -200,10 +203,11 @@ def train_multiple(args: argparse.Namespace) -> None:
             for future in tqdm(cf.as_completed(futures), total=len(futures)):
                 eval_results.append(future.result())
 
-    word_accuracies, sentence_accuracies = [], []
+    word_accuracies, sentence_accuracies, seeds = [], [], []
     for result in eval_results:
         sentence_accuracies.append(result.sentence.accuracy)
         word_accuracies.append(result.token.accuracy)
+        seeds.append(result.seed)
 
     sentence_mean = 100 * mean(sentence_accuracies)
     sentence_uncertainty = 3 * 100 * stdev(sentence_accuracies)
@@ -216,3 +220,24 @@ def train_multiple(args: argparse.Namespace) -> None:
     print()
     print("Average word-level accuracy:")
     print(f"\t-> {word_mean:.2f}% ± {word_uncertainty:.2f}%")
+
+    index_best = max(
+        range(len(sentence_accuracies)), key=sentence_accuracies.__getitem__
+    )
+    best_sentence = 100 * sentence_accuracies[index_best]
+    best_word = 100 * word_accuracies[index_best]
+    best_seed = seeds[index_best]
+    index_worst = min(
+        range(len(sentence_accuracies)), key=sentence_accuracies.__getitem__
+    )
+    worst_sentence = 100 * sentence_accuracies[index_worst]
+    worst_word = 100 * word_accuracies[index_worst]
+    worst_seed = seeds[index_worst]
+    print()
+
+    print(
+        f"Best:  Sentence {best_sentence:.2f}% / Word {best_word:.2f}% (Seed: {best_seed})"
+    )
+    print(
+        f"Worst: Sentence {worst_sentence:.2f}% / Word {worst_word:.2f}% (Seed: {worst_seed})"
+    )
