@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import time
 
 from ingredient_parser.en import PreProcessor, PostProcessor
 from ingredient_parser.en._utils import pluralise_units
@@ -6,7 +7,9 @@ from ingredient_parser.en._utils import pluralise_units
 from ap.ingredient_tagger import IngredientTagger
 
 TAGGER = IngredientTagger()
-TAGGER.load("notebooks/ap.pickle")
+TAGGER.load("ap.pickle")
+
+ITERATIONS = 500
 
 
 def parse_ingredient(sentence):
@@ -74,6 +77,14 @@ if __name__ == "__main__":
         ),
     ]
 
-    for i in range(100):
+    start = time.time()
+    for i in range(ITERATIONS):
         for sent, _ in sentences:
             parse_ingredient(sent)
+
+    total_sentences = ITERATIONS * len(sentences)
+    duration = time.time() - start
+    print(f"Elapsed time: {duration:.2f} s")
+    print(
+        f"{1e6*duration/total_sentences:.2f} us/sentence | {int(total_sentences/duration)} sentences/second"
+    )
