@@ -106,7 +106,7 @@ def train_model(
     tagger.train(
         features_train, truth_train, n_iter=15, min_abs_weight=0.25, verbose=False
     )
-    tagger.save("ap.pickle")
+    tagger.save("ap.json")
 
     print("[INFO] Evaluating model with test data.")
     labels_pred = []

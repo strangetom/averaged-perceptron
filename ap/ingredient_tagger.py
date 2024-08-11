@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import pickle
+import json
 import random
 
 from ingredient_parser.en import PreProcessor
@@ -134,8 +134,12 @@ class IngredientTagger:
         path : str
             Path to save model weights to.
         """
-        with open(path, "wb") as f:
-            pickle.dump((self.model.weights, self.model.labels), f)
+        with open(path, "w") as f:
+            dump = {
+                "labels": list(self.model.labels),
+                "weights": self.model.weights,
+            }
+            json.dump(dump, f)
 
     def load(self, path: str) -> None:
         """Load saved model at given path.
@@ -145,9 +149,10 @@ class IngredientTagger:
         path : str
             Path to model to load.
         """
-        with open(path, "rb") as f:
-            data = pickle.load(f)
-            self.model.weights, self.labels = data
+        with open(path, "r") as f:
+            data = json.load(f)
+            self.model.weights = data["weights"]
+            self.labels = set(data["labels"])
             self.model.labels = self.labels
 
     def train(

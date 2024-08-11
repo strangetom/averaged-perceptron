@@ -7,7 +7,7 @@ from ingredient_parser.en._utils import pluralise_units
 from ap.ingredient_tagger import IngredientTagger
 
 TAGGER = IngredientTagger()
-TAGGER.load("ap.pickle")
+TAGGER.load("ap.json")
 
 ITERATIONS = 500
 
