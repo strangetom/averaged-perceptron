@@ -2,6 +2,7 @@
 
 import json
 import random
+from collections import defaultdict
 
 from ingredient_parser.en import PreProcessor
 
@@ -21,6 +22,7 @@ class IngredientTagger:
 
     def __init__(self):
         self.model = AveragedPerceptron()
+        self.labeldict = {}
         self.labels: set[str] = set()
 
     def tag(self, sentence: str) -> list[tuple[str, str, float]]:
@@ -40,10 +42,13 @@ class IngredientTagger:
         p = PreProcessor(sentence)
         prev_label, prev_label2 = "-START-", "-START2-"
         for token, features in zip(p.tokenized_sentence, p.sentence_features()):
-            converted_features = self._convert_features(
-                features, prev_label, prev_label2
-            )
-            label, confidence = self.model.predict(converted_features)
+            label, confidence = (self.labeldict.get(features["stem"]), 1.0)
+            if not label:
+                converted_features = self._convert_features(
+                    features, prev_label, prev_label2
+                )
+                label, confidence = self.model.predict(converted_features)
+
             labels.append((token, label, confidence))
 
             prev_label2 = prev_label
@@ -72,10 +77,13 @@ class IngredientTagger:
         labels = []
         prev_label, prev_label2 = "-START-", "-START2-"
         for features in sentence_features:
-            converted_features = self._convert_features(
-                features, prev_label, prev_label2
-            )
-            label, confidence = self.model.predict(converted_features)
+            label, confidence = (self.labeldict.get(features["stem"]), 1.0)
+            if not label:
+                converted_features = self._convert_features(
+                    features, prev_label, prev_label2
+                )
+                label, confidence = self.model.predict(converted_features)
+
             labels.append((label, confidence))
 
             prev_label2 = prev_label
@@ -138,8 +146,9 @@ class IngredientTagger:
             dump = {
                 "labels": list(self.model.labels),
                 "weights": self.model.weights,
+                "labeldict": self.labeldict,
             }
-            json.dump(dump, f)
+            json.dump(dump, f, indent=2)
 
     def load(self, path: str) -> None:
         """Load saved model at given path.
@@ -153,6 +162,7 @@ class IngredientTagger:
             data = json.load(f)
             self.model.weights = data["weights"]
             self.labels = set(data["labels"])
+            self.labeldict = data["labeldict"]
             self.model.labels = self.labels
 
     def train(
@@ -161,6 +171,7 @@ class IngredientTagger:
         truth: list[list[str]],
         n_iter: int = 10,
         min_abs_weight: float = 0.1,
+        quantize: bool = False,
         verbose: bool = True,
     ) -> None:
         """Train model using example sentences and their true labels.
@@ -183,6 +194,8 @@ class IngredientTagger:
         if len(self.model.labels) == 0:
             raise ValueError("Set the model labels before training.")
 
+        self._make_labeldict(training_features, truth)
+
         # We need to convert to list before we start training so that we can shuffle the list
         # after each training epoch.
         training_data = list(zip(training_features, truth))
@@ -193,11 +206,13 @@ class IngredientTagger:
             for sentence_features, truth_labels in training_data:
                 prev_label, prev_label2 = "-START-", "-START2-"
                 for features, true_label in zip(sentence_features, truth_labels):
-                    converted_features = self._convert_features(
-                        features, prev_label, prev_label2
-                    )
-                    guess, _ = self.model.predict(converted_features)
-                    self.model.update(true_label, guess, converted_features)
+                    guess = self.labeldict.get(features["stem"])
+                    if not guess:
+                        converted_features = self._convert_features(
+                            features, prev_label, prev_label2
+                        )
+                        guess, _ = self.model.predict(converted_features)
+                        self.model.update(true_label, guess, converted_features)
 
                     prev_label2 = prev_label
                     # Use the guess here to avoid to model becoming over-reliant on the historical labels
@@ -214,3 +229,40 @@ class IngredientTagger:
 
         self.model.average_weights()
         self.model.prune_weights(min_abs_weight)
+        if quantize:
+            self.model.quantize()
+
+    def _make_labeldict(
+        self, sentence_features: list[list[dict]], sentence_labels: list[list[str]]
+    ) -> None:
+        """Generate dict of unambiguous token stems and their labels.
+
+        This dict only includes token stems that occur more than FREQ_THRESHOLD times
+        in the training data, and have the given label at least AMBIGUITY_THRESHOLD of
+        the time.
+
+        Token stems are used instead of tokens themselves because the stem feature is always
+        present. The token feature is only present if it differs from the stem.
+
+        Parameters
+        ----------
+        sentence_token_stems : list[list[str]]
+            Stems for each token in each sentence
+        sentence_labels : list[list[str]]
+            Label for each token in each sentence
+        """
+        counts = defaultdict(lambda: defaultdict(int))
+        for features, labels in zip(sentence_features, sentence_labels):
+            for feats, label in zip(features, labels):
+                stem = feats["stem"]
+                counts[stem][label] += 1
+
+        FREQ_THRESHOLD = 10
+        AMBIGUITY_THRESHOLD = 1
+
+        self.labeldict = {}
+        for stem, tag_freqs in counts.items():
+            label, mode = max(tag_freqs.items(), key=lambda item: item[1])
+            n = sum(tag_freqs.values())
+            if n >= FREQ_THRESHOLD and (float(mode) / n) >= AMBIGUITY_THRESHOLD:
+                self.labeldict[stem] = label

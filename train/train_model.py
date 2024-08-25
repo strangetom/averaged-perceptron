@@ -104,7 +104,12 @@ def train_model(
         "SIZE",
     }
     tagger.train(
-        features_train, truth_train, n_iter=15, min_abs_weight=0.25, verbose=False
+        features_train,
+        truth_train,
+        n_iter=15,
+        min_abs_weight=0.25,
+        quantize=True,
+        verbose=False,
     )
     tagger.save("ap.json")
 

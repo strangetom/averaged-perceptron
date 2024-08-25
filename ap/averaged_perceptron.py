@@ -171,4 +171,22 @@ class AveragedPerceptron:
                 new_weights[feature] = new_feature_weights
 
         self.weights = new_weights
-        return None
+
+    def quantize(self) -> None:
+        """Quantize weights to int8."""
+        max_weight = 0
+        for _, scores in self.weights.items():
+            max_weight = max(max_weight, max(abs(w) for w in scores.values()))
+
+        scale = 127 / max_weight
+
+        new_weights = {}
+        for feature, weights in self.weights.items():
+            new_feature_weights = {}
+
+            for label, weight in weights.items():
+                new_feature_weights[label] = round(weight * scale)
+
+            new_weights[feature] = new_feature_weights
+
+        self.weights = new_weights
