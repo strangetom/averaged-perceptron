@@ -94,14 +94,8 @@ def train_model(
     print("[INFO] Training model with training data.")
     tagger = IngredientTagger()
     tagger.model.labels = {
-        "QTY",
-        "UNIT",
-        "NAME",
-        "PREP",
-        "COMMENT",
-        "PURPOSE",
-        "PUNC",
-        "SIZE",
+        "FF",
+        "NF",
     }
     tagger.train(
         features_train,
@@ -117,7 +111,10 @@ def train_model(
     labels_pred = []
     scores_pred = []
     for feats in features_test:
-        labels, scores = zip(*tagger.tag_from_features(feats))
+        tags = tagger.tag_from_features(feats)
+        if not tags:
+            continue
+        labels, scores = zip(*tags)
         labels_pred.append(list(labels))
         scores_pred.append(list(scores))
 
