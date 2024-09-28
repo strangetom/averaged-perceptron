@@ -25,11 +25,11 @@ from .training_utils import (
 def train_model(
     vectors: DataVectors,
     split: float,
-    save_model: str,
     seed: int | None,
     html: bool,
     detailed_results: bool,
     plot_confusion_matrix: bool,
+    model: str,
 ) -> Stats:
     """Train model using vectors, splitting the vectors into a train and evaluation
     set based on <split>. The trained model is saved to <save_model>.
@@ -53,6 +53,9 @@ def train_model(
         the test set.
     plot_confusion_matrix : bool
         If True, plot a confusion matrix of the token labels.
+    model : str
+        Type of model being trained, used to set the tagger labels.
+        'parser' or 'foundationfoods'.
 
     Returns
     -------
@@ -79,11 +82,14 @@ def train_model(
         truth_test,
         _,
         source_test,
+        _,
+        tokens_test,
     ) = train_test_split(
         vectors.sentences,
         vectors.features,
         vectors.labels,
         vectors.source,
+        vectors.tokens,
         test_size=split,
         stratify=vectors.source,
         random_state=seed,
@@ -93,19 +99,32 @@ def train_model(
 
     print("[INFO] Training model with training data.")
     tagger = IngredientTagger()
-    tagger.model.labels = {
-        "FF",
-        "NF",
-    }
+
+    if model == "parser":
+        tagger.model.labels = {
+            "QTY",
+            "UNIT",
+            "NAME",
+            "PREP",
+            "COMMENT",
+            "PURPOSE",
+            "PUNC",
+            "SIZE",
+        }
+    elif model == "foundationfoods":
+        tagger.model.labels = {
+            "FF",
+            "NF",
+        }
     tagger.train(
         features_train,
         truth_train,
         n_iter=15,
         min_abs_weight=0.25,
-        quantize=True,
+        quantize=False,
         verbose=False,
     )
-    tagger.save("ap.json")
+    tagger.save(f"{model}.json")
 
     print("[INFO] Evaluating model with test data.")
     labels_pred = []
@@ -121,6 +140,7 @@ def train_model(
     if html:
         test_results_to_html(
             sentences_test,
+            tokens_test,
             truth_test,
             labels_pred,
             scores_pred,
@@ -130,16 +150,16 @@ def train_model(
     if detailed_results:
         test_results_to_detailed_results(
             sentences_test,
+            tokens_test,
             truth_test,
             labels_pred,
             scores_pred,
-            source_test,
         )
 
     if plot_confusion_matrix:
         confusion_matrix(labels_pred, truth_test)
 
-    stats = evaluate(labels_pred, truth_test, seed)
+    stats = evaluate(labels_pred, truth_test, seed, model == "foundationfoods")
     return stats
 
 
@@ -151,15 +171,17 @@ def train_single(args: argparse.Namespace) -> None:
     args : argparse.Namespace
         Model training configuration
     """
-    vectors = load_datasets(args.database, args.table, args.datasets)
+    vectors = load_datasets(
+        args.database, args.table, args.datasets, args.model == "foundationfoods"
+    )
     stats = train_model(
         vectors,
         args.split,
-        args.save_model,
         args.seed,
         args.html,
         args.detailed,
         args.confusion,
+        args.model,
     )
 
     print("Sentence-level results:")
@@ -182,7 +204,9 @@ def train_multiple(args: argparse.Namespace) -> None:
     args : argparse.Namespace
         Model training configuration
     """
-    vectors = load_datasets(args.database, args.table, args.datasets)
+    vectors = load_datasets(
+        args.database, args.table, args.datasets, args.model == "foundationfoods"
+    )
 
     # The first None argument is for the seed. This is set to None so each
     # iteration of the training function uses a different random seed.
@@ -190,11 +214,11 @@ def train_multiple(args: argparse.Namespace) -> None:
         (
             vectors,
             args.split,
-            args.save_model,
             None,
             args.html,
             args.detailed,
             args.confusion,
+            args.model,
         )
     ] * args.runs
 

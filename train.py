@@ -45,11 +45,6 @@ if __name__ == "__main__":
         help="Fraction of data to be used for testing",
     )
     train_parser.add_argument(
-        "--save-model",
-        default="ingredient_parser/en/model.en.crfsuite",
-        help="Path to save model to",
-    )
-    train_parser.add_argument(
         "--seed",
         default=None,
         type=int,
@@ -69,6 +64,12 @@ if __name__ == "__main__":
         "--confusion",
         action="store_true",
         help="Plot confusion matrix of token labels.",
+    )
+    train_parser.add_argument(
+        "--model",
+        choices=["parser", "foundationfoods"],
+        required=True,
+        help="Specify which model to train.",
     )
 
     multiple_parser_help = "Average AP performance across multiple training cycles."
@@ -101,11 +102,6 @@ if __name__ == "__main__":
         help="Fraction of data to be used for testing",
     )
     multiple_parser.add_argument(
-        "--save-model",
-        default="ingredient_parser/en/model.en.crfsuite",
-        help="Path to save model to",
-    )
-    multiple_parser.add_argument(
         "--html",
         action="store_true",
         help="Output a markdown file containing detailed results.",
@@ -133,6 +129,12 @@ if __name__ == "__main__":
         default=os.cpu_count() - 1,
         type=int,
         help="Number of processes to spawn. Default to number of cpu cores.",
+    )
+    multiple_parser.add_argument(
+        "--model",
+        choices=["parser", "foundationfoods"],
+        required=True,
+        help="Specify which model to train.",
     )
 
     args = parser.parse_args()
