@@ -25,6 +25,9 @@ class IngredientTagger:
         self.labeldict = {}
         self.labels: set[str] = set()
 
+    def __repr__(self):
+        return f"IngredientTagger(labels={self.labels})"
+
     def tag(self, sentence: str) -> list[tuple[str, str, float]]:
         """Tag a sentence with labels using Averaged Perceptron model.
 

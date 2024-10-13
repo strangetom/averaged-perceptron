@@ -24,6 +24,9 @@ class AveragedPerceptron:
 
         self._iteration: int = 0
 
+    def __repr__(self):
+        return f"AveragedPerceptron(labels={self.labels})"
+
     def _confidence(self, scores: dict[str, float]) -> list[float]:
         """Calculate confidence for each labels.
 
