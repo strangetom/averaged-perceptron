@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from collections import defaultdict
-from math import exp, log
+from math import exp
 
 
 class AveragedPerceptron:
@@ -28,9 +28,25 @@ class AveragedPerceptron:
         return f"AveragedPerceptron(labels={self.labels})"
 
     def _confidence(self, scores: dict[str, float]) -> list[float]:
-        """Calculate (log) confidence for each labels.
+        """Calculate softmax confidence for each labels.
 
-        Can be converted to the 0-1 range by exp() each element
+        To avoid OverflowError exceptions, this is implemented as log softmax.
+        The non-log form of softmax, for the ith element is:
+            exp(s_i) / sum_i[exp(s_i)]
+
+        Taking logs
+            log( exp(s_i) / sum_i[exp(s_i)] )
+            log(exp(s_i)) - log(sum_i[exp(s_i)])
+            s_i - log(sum_i[exp(s_i)])
+
+        The second term is dominated by the largest value, so can be approximated as
+        max(s), giving
+
+            s_i - max(s)
+
+        Then we can take the exp to get back the probability.
+
+        See also https://gregorygundersen.com/blog/2020/02/09/log-sum-exp/
 
         Parameters
         ----------
@@ -40,24 +56,28 @@ class AveragedPerceptron:
         Returns
         -------
         list[float]
-            List of (log) confidences for labels
+            List of confidences for labels
         """
-        exps = [exp(s) for s in scores.values()]
-        exp_sum = sum(exps)
-        return [round(log(ex) - log(exp_sum), 3) for ex in exps]
+        max_score = max(scores.values())
+        return [round(exp(s - max_score), 3) for s in scores.values()]
 
-    def predict(self, features: set[str]) -> tuple[str, float]:
+    def predict(
+        self, features: set[str], return_score: bool = False
+    ) -> tuple[str, float]:
         """Predict the label for a token described by features set.
 
         Parameters
         ----------
         features : set[str]
             Set of features for token
+        return_score : bool, optional
+            If True, return score for predicted label.
+            If False, return scores is always 1.
 
         Returns
         -------
         tuple[str, float]
-            Class label for token and confidence value
+            Class label given features and confidence value.
         """
         scores = defaultdict(float)
         for feat in features:
@@ -70,7 +90,11 @@ class AveragedPerceptron:
 
         # Sort by score, then alphabetically sort for stability
         best_label = max(self.labels, key=lambda label: (scores[label], label))
-        best_confidence = max(self._confidence(scores))
+
+        if return_score:
+            best_confidence = max(self._confidence(scores))
+        else:
+            best_confidence = 1.0
 
         return best_label, best_confidence
 

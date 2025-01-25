@@ -3,7 +3,6 @@
 import json
 import random
 from collections import defaultdict
-from math import exp
 
 from ingredient_parser.en import PreProcessor
 
@@ -51,9 +50,11 @@ class IngredientTagger:
                 converted_features = self._convert_features(
                     features, prev_label, prev_label2, prev_label3
                 )
-                label, confidence = self.model.predict(converted_features)
+                label, confidence = self.model.predict(
+                    converted_features, return_score=True
+                )
 
-            labels.append((token.text, label, exp(confidence)))
+            labels.append((token.text, label, confidence))
 
             prev_label3 = prev_label2
             prev_label2 = prev_label
@@ -87,9 +88,11 @@ class IngredientTagger:
                 converted_features = self._convert_features(
                     features, prev_label, prev_label2, prev_label3
                 )
-                label, confidence = self.model.predict(converted_features)
+                label, confidence = self.model.predict(
+                    converted_features, return_score=True
+                )
 
-            labels.append((label, exp(confidence)))
+            labels.append((label, confidence))
 
             prev_label3 = prev_label2
             prev_label2 = prev_label
@@ -229,7 +232,12 @@ class IngredientTagger:
                         converted_features = self._convert_features(
                             features, prev_label, prev_label2, prev_label3
                         )
-                        guess, _ = self.model.predict(converted_features)
+                        # Do not calculate score for prediction during training because
+                        # the weights have not been averaged, so the values could be
+                        # massive and cause OverflowErrors.
+                        guess, _ = self.model.predict(
+                            converted_features, return_score=False
+                        )
                         self.model.update(true_label, guess, converted_features)
 
                     prev_label3 = prev_label2
