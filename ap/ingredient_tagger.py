@@ -43,17 +43,18 @@ class IngredientTagger:
         """
         labels = []
         p = PreProcessor(sentence)
-        prev_label, prev_label2 = "-START-", "-START2-"
+        prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
         for token, features in zip(p.tokenized_sentence, p.sentence_features()):
             label, confidence = (self.labeldict.get(features["stem"]), 1.0)
             if not label:
                 converted_features = self._convert_features(
-                    features, prev_label, prev_label2
+                    features, prev_label, prev_label2, prev_label3
                 )
                 label, confidence = self.model.predict(converted_features)
 
             labels.append((token, label, confidence))
 
+            prev_label3 = prev_label2
             prev_label2 = prev_label
             prev_label = label
 
@@ -78,24 +79,29 @@ class IngredientTagger:
             List of (label, confidence) tuples.
         """
         labels = []
-        prev_label, prev_label2 = "-START-", "-START2-"
+        prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
         for features in sentence_features:
             label, confidence = (self.labeldict.get(features["stem"]), 1.0)
             if not label:
                 converted_features = self._convert_features(
-                    features, prev_label, prev_label2
+                    features, prev_label, prev_label2, prev_label3
                 )
                 label, confidence = self.model.predict(converted_features)
 
             labels.append((label, confidence))
 
+            prev_label3 = prev_label2
             prev_label2 = prev_label
             prev_label = label
 
         return labels
 
     def _convert_features(
-        self, features: dict[str, str | bool], prev_label: str, prev_label2: str
+        self,
+        features: dict[str, str | bool],
+        prev_label: str,
+        prev_label2: str,
+        prev_label3: str,
     ) -> set[str]:
         """Convert features dict to set of strings.
 
@@ -114,6 +120,8 @@ class IngredientTagger:
             Label of previous token.
         prev_label2 : str
             Label of token before previous token.
+        prev_label2 : str
+            Label of token before token before previous token.
 
         Returns
         -------
@@ -130,7 +138,13 @@ class IngredientTagger:
         # Add extra features based on labels of previous tokens.
         converted.add("prev_label=" + prev_label)
         converted.add("prev_label2=" + prev_label2)
-        converted.add("prev_label2+prev_label=" + prev_label2 + "+" + prev_label)
+        converted.add("prev_label3=" + prev_label2)
+        converted.add("prev_label2+prev_label=" + "+".join((prev_label2, prev_label)))
+        converted.add("prev_label3+prev_label2=" + "+".join((prev_label3, prev_label2)))
+        converted.add(
+            "prev_label3+prev_label2+prev_label="
+            + "+".join((prev_label3, prev_label2, prev_label))
+        )
         converted.add("prev_label+pos=" + prev_label + "+" + features["pos"])  # type: ignore
 
         return converted
@@ -207,16 +221,17 @@ class IngredientTagger:
             n = 0  # numer of total tokens this iteration
             c = 0  # number of correctly labelled tokens this iteration
             for sentence_features, truth_labels in training_data:
-                prev_label, prev_label2 = "-START-", "-START2-"
+                prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
                 for features, true_label in zip(sentence_features, truth_labels):
                     guess = self.labeldict.get(features["stem"])
                     if not guess:
                         converted_features = self._convert_features(
-                            features, prev_label, prev_label2
+                            features, prev_label, prev_label2, prev_label3
                         )
                         guess, _ = self.model.predict(converted_features)
                         self.model.update(true_label, guess, converted_features)
 
+                    prev_label3 = prev_label2
                     prev_label2 = prev_label
                     # Use the guess here to avoid to model becoming over-reliant on the historical labels
                     # being correct
