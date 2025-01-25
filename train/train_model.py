@@ -15,11 +15,31 @@ from .test_results_to_detailed_results import test_results_to_detailed_results
 from .test_results_to_html import test_results_to_html
 from .training_utils import (
     DataVectors,
+    ModelType,
     Stats,
     confusion_matrix,
     evaluate,
     load_datasets,
 )
+
+
+def get_model_type(cmd_arg: str) -> ModelType:
+    """Convert command line argument for model type into enum
+
+    Parameters
+    ----------
+    cmd_arg : str
+        Command line argument for model
+
+    Returns
+    -------
+    ModelType
+    """
+    types = {
+        "parser": ModelType.PARSER,
+        "foundationfoods": ModelType.FOUNDATION_FOODS,
+    }
+    return types[cmd_arg]
 
 
 def train_model(
@@ -62,6 +82,8 @@ def train_model(
     Stats
         Statistics evaluating the model
     """
+    model = get_model_type(model)
+
     # Generate random seed for the train/test split if none provided.
     if seed is None:
         seed = random.randint(0, 1_000_000_000)
@@ -100,18 +122,23 @@ def train_model(
     print("[INFO] Training model with training data.")
     tagger = IngredientTagger()
 
-    if model == "parser":
+    if model == ModelType.PARSER:
         tagger.model.labels = {
+            "B_NAME_TOK",
+            "I_NAME_TOK",
+            "B_NAME_VAR",
+            "I_NAME_VAR",
+            "NAME_MOD",
+            "NAME_SEP",
             "QTY",
             "UNIT",
-            "NAME",
-            "PREP",
+            "SIZE",
             "COMMENT",
             "PURPOSE",
+            "PREP",
             "PUNC",
-            "SIZE",
         }
-    elif model == "foundationfoods":
+    elif model == ModelType.FOUNDATION_FOODS:
         tagger.model.labels = {
             "FF",
             "NF",
@@ -124,7 +151,7 @@ def train_model(
         quantize=False,
         verbose=False,
     )
-    tagger.save(f"{model}.json")
+    tagger.save(f"{model.name}.json")
 
     print("[INFO] Evaluating model with test data.")
     labels_pred = []
@@ -159,7 +186,7 @@ def train_model(
     if plot_confusion_matrix:
         confusion_matrix(labels_pred, truth_test)
 
-    stats = evaluate(labels_pred, truth_test, seed, model == "foundationfoods")
+    stats = evaluate(labels_pred, truth_test, seed, model)
     return stats
 
 
@@ -172,7 +199,7 @@ def train_single(args: argparse.Namespace) -> None:
         Model training configuration
     """
     vectors = load_datasets(
-        args.database, args.table, args.datasets, args.model == "foundationfoods"
+        args.database, args.table, args.datasets, get_model_type(args.model)
     )
     stats = train_model(
         vectors,
