@@ -3,6 +3,7 @@
 import json
 import random
 from collections import defaultdict
+from math import exp
 
 from ingredient_parser.en import PreProcessor
 
@@ -52,7 +53,7 @@ class IngredientTagger:
                 )
                 label, confidence = self.model.predict(converted_features)
 
-            labels.append((token, label, confidence))
+            labels.append((token.text, label, exp(confidence)))
 
             prev_label3 = prev_label2
             prev_label2 = prev_label
@@ -88,7 +89,7 @@ class IngredientTagger:
                 )
                 label, confidence = self.model.predict(converted_features)
 
-            labels.append((label, confidence))
+            labels.append((label, exp(confidence)))
 
             prev_label3 = prev_label2
             prev_label2 = prev_label
