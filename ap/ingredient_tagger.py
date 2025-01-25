@@ -20,10 +20,13 @@ class IngredientTagger:
         Averaged Perceptron model used for tagging.
     """
 
-    def __init__(self):
+    def __init__(self, weights_file: str | None = None):
         self.model = AveragedPerceptron()
         self.labeldict = {}
         self.labels: set[str] = set()
+
+        if weights_file is not None:
+            self.load(weights_file)
 
     def __repr__(self):
         return f"IngredientTagger(labels={self.labels})"
