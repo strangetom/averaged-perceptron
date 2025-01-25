@@ -166,7 +166,7 @@ class IngredientTagger:
                 "weights": self.model.weights,
                 "labeldict": self.labeldict,
             }
-            json.dump(dump, f, indent=2)
+            json.dump(dump, f, separators=(",", ":"))
 
     def load(self, path: str) -> None:
         """Load saved model at given path.
