@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from collections import defaultdict
-from math import exp
+from math import exp, log
 
 
 class AveragedPerceptron:
@@ -28,7 +28,9 @@ class AveragedPerceptron:
         return f"AveragedPerceptron(labels={self.labels})"
 
     def _confidence(self, scores: dict[str, float]) -> list[float]:
-        """Calculate confidence for each labels.
+        """Calculate (log) confidence for each labels.
+
+        Can be converted to the 0-1 range by exp() each element
 
         Parameters
         ----------
@@ -38,11 +40,11 @@ class AveragedPerceptron:
         Returns
         -------
         list[float]
-            List of confidences for labels
+            List of (log) confidences for labels
         """
         exps = [exp(s) for s in scores.values()]
         exp_sum = sum(exps)
-        return [round(ex / exp_sum, 3) for ex in exps]
+        return [round(log(ex) - log(exp_sum), 3) for ex in exps]
 
     def predict(self, features: set[str]) -> tuple[str, float]:
         """Predict the label for a token described by features set.
