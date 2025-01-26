@@ -6,17 +6,19 @@ from ingredient_parser.en._utils import pluralise_units
 
 from ap.ingredient_tagger import IngredientTagger
 
-TAGGER = IngredientTagger()
-TAGGER.load("ap.json")
+TAGGER = IngredientTagger("PARSER.json")
 
 ITERATIONS = 500
 
 
 def parse_ingredient(sentence):
     processed_sentence = PreProcessor(sentence)
-    tokens = processed_sentence.tokenized_sentence
-    labels = TAGGER.tag_from_features(processed_sentence.sentence_features())
-    scores = [0.0] * len(tokens)  # AP models doesn't output scores
+    labels, scores = zip(
+        *TAGGER.tag_from_features(processed_sentence.sentence_features())
+    )
+    tokens = [t.text for t in processed_sentence.tokenized_sentence]
+    labels = list(labels)
+    scores = list(scores)
 
     # Re-pluralise tokens that were singularised if the label isn't UNIT
     # For tokens with UNIT label, we'll deal with them below
