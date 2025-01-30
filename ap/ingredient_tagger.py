@@ -115,6 +115,8 @@ class IngredientTagger:
         The model weights use the features as keys, so they need to be a string rather
         than a key: value pair.
         For string features, the string is prepared by joining the key and value by "=".
+        For int and float features, the string is prepared by joining the key and value
+        by "=".
         For boolean features, the string is prepared just using the key.
 
         Additional features are added based on the labels of the previous two tokens.
@@ -141,6 +143,8 @@ class IngredientTagger:
                 converted.add(key)
             elif isinstance(value, str):
                 converted.add(key + "=" + value)
+            elif isinstance(value, (int, float)):
+                converted.add(key + "=" + str(value))
 
         # Add extra features based on labels of previous tokens.
         converted.add("prev_label=" + prev_label)
