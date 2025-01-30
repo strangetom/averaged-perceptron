@@ -3,6 +3,7 @@
 import argparse
 import concurrent.futures as cf
 import contextlib
+from itertools import chain
 import random
 from statistics import mean, stdev
 
@@ -122,7 +123,7 @@ def train_model(
     print("[INFO] Training model with training data.")
     tagger = IngredientTagger()
 
-    tagger.model.labels = set(truth_train)
+    tagger.model.labels = set(chain.from_iterable(truth_train))
     tagger.train(
         features_train,
         truth_train,
