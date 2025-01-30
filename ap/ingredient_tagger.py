@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
+import gzip
 import json
 import random
+import mimetypes
 from collections import defaultdict
 
 from ingredient_parser.en import PreProcessor
@@ -160,7 +162,7 @@ class IngredientTagger:
 
         return converted
 
-    def save(self, path: str) -> None:
+    def save(self, path: str, compress: bool = True) -> None:
         """Save trained model to given path.
 
         The weights and labels are saved as a tuple.
@@ -169,14 +171,24 @@ class IngredientTagger:
         ----------
         path : str
             Path to save model weights to.
+        compress : bool, optional
+            If True, compress .json file using gzip.
+            Default is True.
         """
-        with open(path, "w") as f:
-            dump = {
-                "labels": list(self.model.labels),
-                "weights": self.model.weights,
-                "labeldict": self.labeldict,
-            }
-            json.dump(dump, f, separators=(",", ":"))
+        data = {
+            "labels": list(self.model.labels),
+            "weights": self.model.weights,
+            "labeldict": self.labeldict,
+        }
+        if compress:
+            if not path.endswith(".gz"):
+                path = path + ".gz"
+
+            with gzip.open(path, "wt", encoding="utf-8") as f:
+                json.dump(data, f)
+        else:
+            with open(path, "w") as f:
+                json.dump(data, f, separators=(",", ":"))
 
     def load(self, path: str) -> None:
         """Load saved model at given path.
@@ -185,13 +197,23 @@ class IngredientTagger:
         ----------
         path : str
             Path to model to load.
+            .json and .json.gz are accepted formats.
         """
-        with open(path, "r") as f:
-            data = json.load(f)
-            self.model.weights = data["weights"]
-            self.labels = set(data["labels"])
-            self.labeldict = data["labeldict"]
-            self.model.labels = self.labels
+        mimetype, encoding = mimetypes.guess_type(path)
+        if mimetype != "application/json":
+            raise ValueError("Model must be a .json or .json.gz file.")
+
+        if encoding == "gzip":
+            with open(path, "rb") as f:
+                data = json.loads(gzip.decompress(f.read()))
+        else:
+            with open(path, "r") as f:
+                data = json.load(f)
+
+        self.model.weights = data["weights"]
+        self.labels = set(data["labels"])
+        self.labeldict = data["labeldict"]
+        self.model.labels = self.labels
 
     def train(
         self,
