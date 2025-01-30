@@ -122,32 +122,12 @@ def train_model(
     print("[INFO] Training model with training data.")
     tagger = IngredientTagger()
 
-    if model == ModelType.PARSER:
-        tagger.model.labels = {
-            "B_NAME_TOK",
-            "I_NAME_TOK",
-            "B_NAME_VAR",
-            "I_NAME_VAR",
-            "NAME_MOD",
-            "NAME_SEP",
-            "QTY",
-            "UNIT",
-            "SIZE",
-            "COMMENT",
-            "PURPOSE",
-            "PREP",
-            "PUNC",
-        }
-    elif model == ModelType.FOUNDATION_FOODS:
-        tagger.model.labels = {
-            "FF",
-            "NF",
-        }
+    tagger.model.labels = set(truth_train)
     tagger.train(
         features_train,
         truth_train,
         n_iter=15,
-        min_abs_weight=0.25,
+        min_abs_weight=0.15,
         quantize=False,
         verbose=False,
     )
