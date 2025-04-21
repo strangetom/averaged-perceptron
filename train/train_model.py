@@ -16,31 +16,11 @@ from .test_results_to_detailed_results import test_results_to_detailed_results
 from .test_results_to_html import test_results_to_html
 from .training_utils import (
     DataVectors,
-    ModelType,
     Stats,
     confusion_matrix,
     evaluate,
     load_datasets,
 )
-
-
-def get_model_type(cmd_arg: str) -> ModelType:
-    """Convert command line argument for model type into enum
-
-    Parameters
-    ----------
-    cmd_arg : str
-        Command line argument for model
-
-    Returns
-    -------
-    ModelType
-    """
-    types = {
-        "parser": ModelType.PARSER,
-        "foundationfoods": ModelType.FOUNDATION_FOODS,
-    }
-    return types[cmd_arg]
 
 
 def train_model(
@@ -50,7 +30,6 @@ def train_model(
     html: bool,
     detailed_results: bool,
     plot_confusion_matrix: bool,
-    model: str,
 ) -> Stats:
     """Train model using vectors, splitting the vectors into a train and evaluation
     set based on <split>. The trained model is saved to <save_model>.
@@ -74,17 +53,12 @@ def train_model(
         the test set.
     plot_confusion_matrix : bool
         If True, plot a confusion matrix of the token labels.
-    model : str
-        Type of model being trained, used to set the tagger labels.
-        'parser' or 'foundationfoods'.
 
     Returns
     -------
     Stats
         Statistics evaluating the model
     """
-    model = get_model_type(model)
-
     # Generate random seed for the train/test split if none provided.
     if seed is None:
         seed = random.randint(0, 1_000_000_000)
@@ -132,7 +106,7 @@ def train_model(
         quantize=False,
         verbose=False,
     )
-    tagger.save(f"{model.name}.json")
+    tagger.save("PARSER.json.gz")
 
     print("[INFO] Evaluating model with test data.")
     labels_pred = []
@@ -167,7 +141,7 @@ def train_model(
     if plot_confusion_matrix:
         confusion_matrix(labels_pred, truth_test)
 
-    stats = evaluate(labels_pred, truth_test, seed, model)
+    stats = evaluate(labels_pred, truth_test, seed)
     return stats
 
 
@@ -179,9 +153,7 @@ def train_single(args: argparse.Namespace) -> None:
     args : argparse.Namespace
         Model training configuration
     """
-    vectors = load_datasets(
-        args.database, args.table, args.datasets, get_model_type(args.model)
-    )
+    vectors = load_datasets(args.database, args.table, args.datasets)
     stats = train_model(
         vectors,
         args.split,
@@ -189,7 +161,6 @@ def train_single(args: argparse.Namespace) -> None:
         args.html,
         args.detailed,
         args.confusion,
-        args.model,
     )
 
     print("Sentence-level results:")

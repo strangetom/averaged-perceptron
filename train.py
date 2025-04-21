@@ -65,12 +65,6 @@ if __name__ == "__main__":
         action="store_true",
         help="Plot confusion matrix of token labels.",
     )
-    train_parser.add_argument(
-        "--model",
-        choices=["parser", "foundationfoods"],
-        required=True,
-        help="Specify which model to train.",
-    )
 
     multiple_parser_help = "Average AP performance across multiple training cycles."
     multiple_parser = subparsers.add_parser("multiple", help=multiple_parser_help)
@@ -129,12 +123,6 @@ if __name__ == "__main__":
         default=os.cpu_count() - 1,
         type=int,
         help="Number of processes to spawn. Default to number of cpu cores.",
-    )
-    multiple_parser.add_argument(
-        "--model",
-        choices=["parser", "foundationfoods"],
-        required=True,
-        help="Specify which model to train.",
     )
 
     args = parser.parse_args()
