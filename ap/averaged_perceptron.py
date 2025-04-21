@@ -32,17 +32,17 @@ class AveragedPerceptron:
 
         To avoid OverflowError exceptions, this is implemented as log softmax.
         The non-log form of softmax, for the ith element is:
-            exp(s_i) / sum_i[exp(s_i)]
+            p_i = exp(s_i) / sum_i[exp(s_i)]
 
         Taking logs
-            log( exp(s_i) / sum_i[exp(s_i)] )
-            log(exp(s_i)) - log(sum_i[exp(s_i)])
-            s_i - log(sum_i[exp(s_i)])
+            log(p_i) = log( exp(s_i) / sum_i[exp(s_i)] )
+            log(p_i) = log(exp(s_i)) - log(sum_i[exp(s_i)])
+            log(p_i) = s_i - log(sum_i[exp(s_i)])
 
         The second term is dominated by the largest value, so can be approximated as
         max(s), giving
 
-            s_i - max(s)
+            log(p_i) = s_i - max(s)
 
         Then we can take the exp to get back the probability.
 
