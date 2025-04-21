@@ -6,7 +6,7 @@ from ingredient_parser.en._utils import pluralise_units
 
 from ap.ingredient_tagger import IngredientTagger
 
-TAGGER = IngredientTagger("PARSER.json")
+TAGGER = IngredientTagger("PARSER.json.gz")
 
 ITERATIONS = 500
 
@@ -17,6 +17,7 @@ def parse_ingredient(sentence):
         *TAGGER.tag_from_features(processed_sentence.sentence_features())
     )
     tokens = [t.text for t in processed_sentence.tokenized_sentence]
+    pos_tags = [t.pos_tag for t in processed_sentence.tokenized_sentence]
     labels = list(labels)
     scores = list(scores)
 
@@ -31,6 +32,7 @@ def parse_ingredient(sentence):
     postprocessed_sentence = PostProcessor(
         sentence,
         tokens,
+        pos_tags,
         labels,
         scores,
         discard_isolated_stop_words=True,
@@ -87,6 +89,5 @@ if __name__ == "__main__":
     total_sentences = ITERATIONS * len(sentences)
     duration = time.time() - start
     print(f"Elapsed time: {duration:.2f} s")
-    print(
-        f"{1e6*duration/total_sentences:.2f} us/sentence | {int(total_sentences/duration)} sentences/second"
-    )
+    print(f"{1e6*duration/total_sentences:.2f} us/sentence")
+    print(f"{int(total_sentences/duration)} sentences/second")
