@@ -3,8 +3,9 @@
 import argparse
 import concurrent.futures as cf
 import contextlib
-from itertools import chain
+import logging
 import random
+from itertools import chain
 from statistics import mean, stdev
 
 from sklearn.model_selection import train_test_split
@@ -21,6 +22,8 @@ from .training_utils import (
     evaluate,
     load_datasets,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def train_model(
@@ -63,7 +66,7 @@ def train_model(
     if seed is None:
         seed = random.randint(0, 1_000_000_000)
 
-    print(f"[INFO] {seed} is the random seed used for the train/test split.")
+    logger.info(f"{seed} is the random seed used for the train/test split.")
     random.seed(seed)
 
     # Split data into train and test sets
@@ -91,10 +94,10 @@ def train_model(
         stratify=vectors.source,
         random_state=seed,
     )
-    print(f"[INFO] {len(features_train):,} training vectors.")
-    print(f"[INFO] {len(features_test):,} testing vectors.")
+    logger.info(f"{len(features_train):,} training vectors.")
+    logger.info(f"{len(features_test):,} testing vectors.")
 
-    print("[INFO] Training model with training data.")
+    logger.info("Training model with training data.")
     tagger = IngredientTagger()
 
     tagger.model.labels = set(chain.from_iterable(truth_train))
@@ -108,7 +111,7 @@ def train_model(
     )
     tagger.save("PARSER.json.gz")
 
-    print("[INFO] Evaluating model with test data.")
+    logger.info("Evaluating model with test data.")
     labels_pred = []
     scores_pred = []
     for feats in features_test:
