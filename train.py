@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
 
 import argparse
+import logging
 import os
+import sys
 
 from train import (
     train_multiple,
     train_single,
 )
+
+LOGGING_LEVEL = {
+    0: logging.INFO,
+    1: logging.DEBUG,
+}
 
 
 if __name__ == "__main__":
@@ -64,6 +71,13 @@ if __name__ == "__main__":
         "--confusion",
         action="store_true",
         help="Plot confusion matrix of token labels.",
+    )
+    train_parser.add_argument(
+        "-v",
+        help="Enable verbose output.",
+        action="count",
+        default=0,
+        dest="verbose",
     )
 
     multiple_parser_help = "Average AP performance across multiple training cycles."
@@ -124,8 +138,21 @@ if __name__ == "__main__":
         type=int,
         help="Number of processes to spawn. Default to number of cpu cores.",
     )
+    multiple_parser.add_argument(
+        "-v",
+        help="Enable verbose output.",
+        action="count",
+        default=0,
+        dest="verbose",
+    )
 
     args = parser.parse_args()
+
+    logging.basicConfig(
+        stream=sys.stdout,
+        level=LOGGING_LEVEL[args.verbose],
+        format="[%(levelname)s] (%(module)s) %(message)s",
+    )
 
     if args.command == "train":
         train_single(args)
