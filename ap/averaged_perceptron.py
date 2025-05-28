@@ -62,17 +62,23 @@ class AveragedPerceptron:
         return [round(exp(s - max_score), 3) for s in scores.values()]
 
     def predict(
-        self, features: set[str], return_score: bool = False
+        self,
+        features: set[str],
+        constrained_labels: set[str],
+        return_score: bool = False,
     ) -> tuple[str, float]:
         """Predict the label for a token described by features set.
 
         Parameters
         ----------
         features : set[str]
-            Set of features for token
+            Set of features for token,
+        constrained_labels : set[str]
+            Set of labels that may not be predicted for current feature set due to
+            constraints from prior predictions.
         return_score : bool, optional
             If True, return score for predicted label.
-            If False, return scores is always 1.
+            If False, return scores is always 1.0.
 
         Returns
         -------
@@ -89,7 +95,9 @@ class AveragedPerceptron:
                 scores[label] += weight
 
         # Sort by score, then alphabetically sort for stability
-        best_label = max(self.labels, key=lambda label: (scores[label], label))
+        best_label = max(
+            self.labels - constrained_labels, key=lambda label: (scores[label], label)
+        )
 
         if return_score:
             best_confidence = max(self._confidence(scores))

@@ -47,20 +47,23 @@ class IngredientTagger:
         list[tuple[str, str, float]]
             List of (token, label, confidence) tuples.
         """
-        labels = []
+        labels, labels_only = [], []
         p = PreProcessor(sentence)
         prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
         for token, features in zip(p.tokenized_sentence, p.sentence_features()):
             label, confidence = (self.labeldict.get(features["stem"]), 1.0)
             if not label:
+                constrained_labels = self._apply_constraints(labels_only)
+
                 converted_features = self._convert_features(
                     features, prev_label, prev_label2, prev_label3
                 )
                 label, confidence = self.model.predict(
-                    converted_features, return_score=True
+                    converted_features, constrained_labels, return_score=True
                 )
 
             labels.append((token.text, label, confidence))
+            labels_only.append(label)
 
             prev_label3 = prev_label2
             prev_label2 = prev_label
@@ -86,19 +89,22 @@ class IngredientTagger:
         list[tuple[str, float]]
             List of (label, confidence) tuples.
         """
-        labels = []
+        labels, labels_only = [], []
         prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
         for features in sentence_features:
-            label, confidence = (self.labeldict.get(features["stem"]), 1.0)
+            label, confidence = (self.labeldict.get(features["stem"]), 1.0)  # type:ignore
             if not label:
+                constrained_labels = self._apply_constraints(labels_only)
+
                 converted_features = self._convert_features(
                     features, prev_label, prev_label2, prev_label3
                 )
                 label, confidence = self.model.predict(
-                    converted_features, return_score=True
+                    converted_features, constrained_labels, return_score=True
                 )
 
             labels.append((label, confidence))
+            labels_only.append(label)
 
             prev_label3 = prev_label2
             prev_label2 = prev_label
@@ -162,6 +168,39 @@ class IngredientTagger:
         converted.add("prev_label+pos=" + prev_label + "+" + features["pos"])  # type: ignore
 
         return converted
+
+    def _apply_constraints(self, sequence: list[str]) -> set[str]:
+        """Apply constraints on labels by removing options from the set of possible
+        labels for the next token in the sequence.
+
+        Parameters
+        ----------
+        sequence : list[str]
+            Sequence of labels.
+
+        Returns
+        -------
+        set[str]
+            Set of invalid labels for next item in sequence.
+        """
+        constrained_labels = set()
+        if not sequence:
+            return constrained_labels
+
+        # B_NAME_TOK must occur before I_NAME_TOK.
+        # If the sequence contains NAME_SEP, only check labels after NAME_SEP.
+        # If the sequence does not contain NAME_SEP, check all labels.
+        # If B_NAME_TOK not found, remove I_NAME_TOK from set.
+        if "NAME_SEP" in sequence:
+            # Find index of last occurance of NAME_SEP in sequence
+            name_sep_idx = max(i for i, v in enumerate(sequence) if v == "NAME_SEP")
+            if "B_NAME_TOK" not in sequence[name_sep_idx:]:
+                constrained_labels.add("I_NAME_TOK")
+        else:
+            if "B_NAME_TOK" not in sequence:
+                constrained_labels.add("I_NAME_TOK")
+
+        return constrained_labels
 
     def save(self, path: str, compress: bool = True) -> None:
         """Save trained model to given path.
@@ -257,7 +296,7 @@ class IngredientTagger:
             for sentence_features, truth_labels in training_data:
                 prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
                 for features, true_label in zip(sentence_features, truth_labels):
-                    guess = self.labeldict.get(features["stem"])
+                    guess = self.labeldict.get(features["stem"], "")
                     if not guess:
                         converted_features = self._convert_features(
                             features, prev_label, prev_label2, prev_label3
@@ -266,7 +305,7 @@ class IngredientTagger:
                         # the weights have not been averaged, so the values could be
                         # massive and cause OverflowErrors.
                         guess, _ = self.model.predict(
-                            converted_features, return_score=False
+                            converted_features, set(), return_score=False
                         )
                         self.model.update(true_label, guess, converted_features)
 
@@ -317,7 +356,7 @@ class IngredientTagger:
         FREQ_THRESHOLD = 10
         AMBIGUITY_THRESHOLD = 1
 
-        self.labeldict = {}
+        self.labeldict: dict[str, str] = {}
         for stem, tag_freqs in counts.items():
             label, mode = max(tag_freqs.items(), key=lambda item: item[1])
             n = sum(tag_freqs.values())

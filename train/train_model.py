@@ -100,7 +100,8 @@ def train_model(
     logger.info("Training model with training data.")
     tagger = IngredientTagger()
 
-    tagger.model.labels = set(chain.from_iterable(truth_train))
+    tagger.labels = set(chain.from_iterable(truth_train))
+    tagger.model.labels = tagger.labels
     tagger.train(
         features_train,
         truth_train,
