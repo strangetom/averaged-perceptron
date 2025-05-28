@@ -262,6 +262,7 @@ class IngredientTagger:
         n_iter: int = 10,
         min_abs_weight: float = 0.1,
         quantize: bool = False,
+        make_label_dict: bool = False,
         verbose: bool = True,
     ) -> None:
         """Train model using example sentences and their true labels.
@@ -277,6 +278,9 @@ class IngredientTagger:
             Default is 10.
         min_abs_weight : float, optional
             Weights below this value will be pruned after training.
+        make_label_dict : bool, optional
+            If True, create a dict of labels for tokens that are unambiguous in the
+            training data. Default i False.
         verbose : bool, optional
             If True, print performance at each iteration.
             Default is is True.
@@ -284,7 +288,8 @@ class IngredientTagger:
         if len(self.model.labels) == 0:
             raise ValueError("Set the model labels before training.")
 
-        self._make_labeldict(training_features, truth)
+        if make_label_dict:
+            self._make_labeldict(training_features, truth)
 
         # We need to convert to list before we start training so that we can shuffle the list
         # after each training epoch.

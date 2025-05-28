@@ -108,6 +108,7 @@ def train_model(
         n_iter=15,
         min_abs_weight=0.15,
         quantize=False,
+        make_label_dict=False,
         verbose=False,
     )
     tagger.save("PARSER.json.gz")
