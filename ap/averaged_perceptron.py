@@ -198,11 +198,11 @@ class AveragedPerceptron:
         """
         new_weights = {}
         for feature, weights in self.weights.items():
-            new_feature_weights = {}
-
-            for label, weight in weights.items():
-                if abs(weight) >= min_abs_weight:
-                    new_feature_weights[label] = weight
+            new_feature_weights = {
+                label: weight
+                for label, weight in weights.items()
+                if abs(weight) > min_abs_weight
+            }
 
             if new_feature_weights != {}:
                 new_weights[feature] = new_feature_weights
@@ -212,7 +212,7 @@ class AveragedPerceptron:
     def quantize(self) -> None:
         """Quantize weights to int8."""
         max_weight = 0
-        for _, scores in self.weights.items():
+        for scores in self.weights.values():
             max_weight = max(max_weight, max(abs(w) for w in scores.values()))
 
         scale = 127 / max_weight

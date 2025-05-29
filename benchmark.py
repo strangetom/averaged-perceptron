@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import time
 
-from ingredient_parser.en import PreProcessor, PostProcessor
+from ingredient_parser.en import PostProcessor, PreProcessor
 from ingredient_parser.en._utils import pluralise_units
 
 from ap.ingredient_tagger import IngredientTagger
@@ -89,5 +89,5 @@ if __name__ == "__main__":
     total_sentences = ITERATIONS * len(sentences)
     duration = time.time() - start
     print(f"Elapsed time: {duration:.2f} s")
-    print(f"{1e6*duration/total_sentences:.2f} us/sentence")
-    print(f"{int(total_sentences/duration)} sentences/second")
+    print(f"{1e6 * duration / total_sentences:.2f} us/sentence")
+    print(f"{int(total_sentences / duration)} sentences/second")
