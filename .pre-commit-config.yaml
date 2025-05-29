@@ -2,19 +2,19 @@
 # See https://pre-commit.com/hooks.html for info on hooks
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: check-added-large-files
-        stages: [commit]
+        stages: [pre-commit]
       - id: check-ast
-        stages: [commit]
+        stages: [pre-commit]
       - id: debug-statements
-        stages: [commit]
+        stages: [pre-commit]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.5
+    rev: v0.11.11
     hooks:
       - id: ruff
         args: ["--fix"]
-        stages: [commit]
+        stages: [pre-commit]
       - id: ruff-format
-        stages: [commit]
+        stages: [pre-commit]
