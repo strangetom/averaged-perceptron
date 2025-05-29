@@ -48,4 +48,4 @@ When predicting the labels for a sequence of tokens, the labels the model is all
 
 These constraints are defined from the labelling scheme. For example, `I_NAME_TOK` must always follow a `B_NAME_TOK` label (not necessarily consecutively). Therefore if the sequence of labels predicted so far does not include `B_NAME_TOK`, either since the last `NAME_SEP` if there is one or since the beginning of the sequence, `I_NAME_TOK` is forbidden from being predicted.
 
-This improves the model performance by ~0.25%, but only when applied during inference. If applied during training, the model performance worsens.
+This improves the model performance by ~0.25%.
