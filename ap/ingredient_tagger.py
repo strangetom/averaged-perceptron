@@ -299,10 +299,12 @@ class IngredientTagger:
             n = 0  # numer of total tokens this iteration
             c = 0  # number of correctly labelled tokens this iteration
             for sentence_features, truth_labels in training_data:
+                sequence = []
                 prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
                 for features, true_label in zip(sentence_features, truth_labels):
-                    guess = self.labeldict.get(features["stem"], "")
+                    guess = self.labeldict.get(features["stem"])
                     if not guess:
+                        constrained_labels = self._apply_constraints(sequence)
                         converted_features = self._convert_features(
                             features, prev_label, prev_label2, prev_label3
                         )
@@ -310,7 +312,7 @@ class IngredientTagger:
                         # the weights have not been averaged, so the values could be
                         # massive and cause OverflowErrors.
                         guess, _ = self.model.predict(
-                            converted_features, set(), return_score=False
+                            converted_features, constrained_labels, return_score=False
                         )
                         self.model.update(true_label, guess, converted_features)
 
