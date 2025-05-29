@@ -205,6 +205,10 @@ class IngredientTagger:
         if sequence[-1] == "B_NAME_TOK":
             constrained_labels.add("B_NAME_TOK")
 
+        # I_NAME_TOK cannot follow NAME_VAR or NAME_MOD
+        if sequence[-1] in {"NAME_MOD", "NAME_VAR"}:
+            constrained_labels.add("I_NAME_TOK")
+
         return constrained_labels
 
     def save(self, path: str, compress: bool = True) -> None:
