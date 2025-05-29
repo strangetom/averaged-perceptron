@@ -52,6 +52,11 @@ if __name__ == "__main__":
         help="Fraction of data to be used for testing",
     )
     train_parser.add_argument(
+        "--save-model",
+        default=None,
+        help="Path to save model to",
+    )
+    train_parser.add_argument(
         "--seed",
         default=None,
         type=int,
@@ -108,6 +113,11 @@ if __name__ == "__main__":
         default=0.20,
         type=float,
         help="Fraction of data to be used for testing",
+    )
+    multiple_parser.add_argument(
+        "--save-model",
+        default=None,
+        help="Path to save model to",
     )
     multiple_parser.add_argument(
         "--html",

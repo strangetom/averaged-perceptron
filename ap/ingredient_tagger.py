@@ -2,8 +2,8 @@
 
 import gzip
 import json
-import random
 import mimetypes
+import random
 from collections import defaultdict
 
 from ingredient_parser.en import PreProcessor
@@ -133,7 +133,8 @@ class IngredientTagger:
         Parameters
         ----------
         features : dict[str, str | bool]
-            Dictionary of features for token, obtained from PreProcessor.sentence_features().
+            Dictionary of token features token, obtained from
+            PreProcessor.sentence_features().
         prev_label : str
             Label of previous token.
         prev_label2 : str
@@ -264,6 +265,7 @@ class IngredientTagger:
         quantize: bool = False,
         make_label_dict: bool = False,
         verbose: bool = True,
+        show_progress: bool = True,
     ) -> None:
         """Train model using example sentences and their true labels.
 
@@ -284,6 +286,9 @@ class IngredientTagger:
         verbose : bool, optional
             If True, print performance at each iteration.
             Default is is True.
+        show_progress: bool, optional
+            If True, show progress bar for iterations.
+            Default is True.
         """
         if len(self.model.labels) == 0:
             raise ValueError("Set the model labels before training.")
@@ -295,7 +300,7 @@ class IngredientTagger:
         # list after each training epoch.
         training_data = list(zip(training_features, truth))
 
-        for iter_ in tqdm(range(n_iter)):
+        for iter_ in tqdm(range(n_iter), disable=not show_progress):
             n = 0  # numer of total tokens this iteration
             c = 0  # number of correctly labelled tokens this iteration
             for sentence_features, truth_labels in training_data:
@@ -326,7 +331,7 @@ class IngredientTagger:
                     c += guess == true_label
 
             if verbose:
-                print(f"Iter {iter_}: {100*c/n:.1f}%")
+                print(f"Iter {iter_}: {100 * c / n:.1f}%")
 
             random.shuffle(training_data)
 

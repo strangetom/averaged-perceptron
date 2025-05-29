@@ -6,7 +6,9 @@ import contextlib
 import logging
 import random
 from itertools import chain
+from pathlib import Path
 from statistics import mean, stdev
+from uuid import uuid4
 
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
@@ -23,16 +25,21 @@ from .training_utils import (
     load_datasets,
 )
 
+DEFAULT_MODEL_LOCATION = "PARSER.json.gz"
+
 logger = logging.getLogger(__name__)
 
 
 def train_model(
     vectors: DataVectors,
     split: float,
+    save_model: Path,
     seed: int | None,
     html: bool,
     detailed_results: bool,
     plot_confusion_matrix: bool,
+    keep_model: bool = True,
+    show_progress: bool = True,
 ) -> Stats:
     """Train model using vectors, splitting the vectors into a train and evaluation
     set based on <split>. The trained model is saved to <save_model>.
@@ -43,7 +50,7 @@ def train_model(
         Vectors loaded from training csv files
     split : float
         Fraction of vectors to use for evaluation.
-    save_model : str
+    save_model : Path
         Path to save trained model to.
     seed : int | None
         Integer used as seed for splitting the vectors between the training and
@@ -56,6 +63,12 @@ def train_model(
         the test set.
     plot_confusion_matrix : bool
         If True, plot a confusion matrix of the token labels.
+    keep_model : bool, optional
+        If False, delete model from disk after evaluating it's performance.
+        Default is True.
+    show_progress: bool, optional
+        If True, show progress bar for iterations.
+        Default is True.
 
     Returns
     -------
@@ -110,8 +123,10 @@ def train_model(
         quantize=False,
         make_label_dict=False,
         verbose=False,
+        show_progress=show_progress,
     )
-    tagger.save("PARSER.json.gz")
+    if keep_model:
+        tagger.save(str(save_model))
 
     logger.info("Evaluating model with test data.")
     labels_pred = []
@@ -159,24 +174,33 @@ def train_single(args: argparse.Namespace) -> None:
         Model training configuration
     """
     vectors = load_datasets(args.database, args.table, args.datasets)
+
+    if args.save_model is None:
+        save_model = DEFAULT_MODEL_LOCATION
+    else:
+        save_model = args.save_model
+
     stats = train_model(
         vectors,
         args.split,
+        Path(save_model),
         args.seed,
         args.html,
         args.detailed,
         args.confusion,
+        keep_model=True,
+        show_progress=True,
     )
 
     print("Sentence-level results:")
-    print(f"\tAccuracy: {100*stats.sentence.accuracy:.2f}%")
+    print(f"\tAccuracy: {100 * stats.sentence.accuracy:.2f}%")
 
     print()
     print("Word-level results:")
-    print(f"\tAccuracy {100*stats.token.accuracy:.2f}%")
-    print(f"\tPrecision (micro) {100*stats.token.weighted_avg.precision:.2f}%")
-    print(f"\tRecall (micro) {100*stats.token.weighted_avg.recall:.2f}%")
-    print(f"\tF1 score (micro) {100*stats.token.weighted_avg.f1_score:.2f}%")
+    print(f"\tAccuracy {100 * stats.token.accuracy:.2f}%")
+    print(f"\tPrecision (micro) {100 * stats.token.weighted_avg.precision:.2f}%")
+    print(f"\tRecall (micro) {100 * stats.token.weighted_avg.recall:.2f}%")
+    print(f"\tF1 score (micro) {100 * stats.token.weighted_avg.f1_score:.2f}%")
 
 
 def train_multiple(args: argparse.Namespace) -> None:
@@ -188,9 +212,12 @@ def train_multiple(args: argparse.Namespace) -> None:
     args : argparse.Namespace
         Model training configuration
     """
-    vectors = load_datasets(
-        args.database, args.table, args.datasets, args.model == "foundationfoods"
-    )
+    vectors = load_datasets(args.database, args.table, args.datasets)
+
+    if args.save_model is None:
+        save_model = DEFAULT_MODEL_LOCATION
+    else:
+        save_model = args.save_model
 
     # The first None argument is for the seed. This is set to None so each
     # iteration of the training function uses a different random seed.
@@ -198,20 +225,27 @@ def train_multiple(args: argparse.Namespace) -> None:
         (
             vectors,
             args.split,
-            None,
+            Path(save_model).with_stem("model-" + str(uuid4())),
+            None,  # Seed
             args.html,
             args.detailed,
             args.confusion,
-            args.model,
+            False,  # keep_model
+            False,  # show_progess
         )
     ] * args.runs
 
-    eval_results = []
+    # Disable logging below INFO level
+    log_level = logger.manager.disable
+    logging.disable(logging.INFO)
+
     with contextlib.redirect_stdout(None):  # Suppress print output
         with cf.ProcessPoolExecutor(max_workers=args.processes) as executor:
             futures = [executor.submit(train_model, *a) for a in arguments]
-            for future in tqdm(cf.as_completed(futures), total=len(futures)):
-                eval_results.append(future.result())
+            eval_results = [
+                future.result()
+                for future in tqdm(cf.as_completed(futures), total=len(futures))
+            ]
 
     word_accuracies, sentence_accuracies, seeds = [], [], []
     for result in eval_results:
@@ -234,19 +268,18 @@ def train_multiple(args: argparse.Namespace) -> None:
     index_best = max(
         range(len(sentence_accuracies)), key=sentence_accuracies.__getitem__
     )
-    best_sentence = 100 * sentence_accuracies[index_best]
-    best_word = 100 * word_accuracies[index_best]
-    best_seed = seeds[index_best]
+    max_sent = 100 * sentence_accuracies[index_best]
+    max_word = 100 * word_accuracies[index_best]
+    max_seed = seeds[index_best]
     index_worst = min(
         range(len(sentence_accuracies)), key=sentence_accuracies.__getitem__
     )
-    worst_sentence = 100 * sentence_accuracies[index_worst]
-    worst_word = 100 * word_accuracies[index_worst]
-    worst_seed = seeds[index_worst]
+    min_sent = 100 * sentence_accuracies[index_worst]
+    min_word = 100 * word_accuracies[index_worst]
+    min_seed = seeds[index_worst]
     print()
-    print(
-        f"Best:  Sentence {best_sentence:.2f}% / Word {best_word:.2f}% (Seed: {best_seed})"
-    )
-    print(
-        f"Worst: Sentence {worst_sentence:.2f}% / Word {worst_word:.2f}% (Seed: {worst_seed})"
-    )
+    print(f"Best:  Sentence {max_sent:.2f}% / Word {max_word:.2f}% (Seed: {max_seed})")
+    print(f"Worst: Sentence {min_sent:.2f}% / Word {min_word:.2f}% (Seed: {min_seed})")
+
+    # Restore logging to previous setting
+    logging.disable(log_level)
