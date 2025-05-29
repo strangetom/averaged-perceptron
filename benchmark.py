@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import time
 
 from ingredient_parser.en import PostProcessor, PreProcessor
@@ -7,8 +8,6 @@ from ingredient_parser.en._utils import pluralise_units
 from ap.ingredient_tagger import IngredientTagger
 
 TAGGER = IngredientTagger("PARSER.json.gz")
-
-ITERATIONS = 500
 
 
 def parse_ingredient(sentence):
@@ -81,12 +80,18 @@ if __name__ == "__main__":
         ),
     ]
 
+    parser = argparse.ArgumentParser(description="Ingredient Parser benchmark")
+    parser.add_argument(
+        "--iterations", "-i", type=int, help="Number of iterations to run.", default=500
+    )
+    args = parser.parse_args()
+
     start = time.time()
-    for i in range(ITERATIONS):
+    for i in range(args.iterations):
         for sent, _ in sentences:
             parse_ingredient(sent)
 
-    total_sentences = ITERATIONS * len(sentences)
+    total_sentences = args.iterations * len(sentences)
     duration = time.time() - start
     print(f"Elapsed time: {duration:.2f} s")
     print(f"{1e6 * duration / total_sentences:.2f} us/sentence")
