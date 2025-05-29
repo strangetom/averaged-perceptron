@@ -291,8 +291,8 @@ class IngredientTagger:
         if make_label_dict:
             self._make_labeldict(training_features, truth)
 
-        # We need to convert to list before we start training so that we can shuffle the list
-        # after each training epoch.
+        # We need to convert to list before we start training so that we can shuffle the
+        # list after each training epoch.
         training_data = list(zip(training_features, truth))
 
         for iter_ in tqdm(range(n_iter)):
@@ -316,8 +316,8 @@ class IngredientTagger:
 
                     prev_label3 = prev_label2
                     prev_label2 = prev_label
-                    # Use the guess here to avoid to model becoming over-reliant on the historical labels
-                    # being correct
+                    # Use the guess here to avoid to model becoming over-reliant on the
+                    # historical labels being correct
                     prev_label = guess
 
                     n += 1
@@ -342,8 +342,8 @@ class IngredientTagger:
         in the training data, and have the given label at least AMBIGUITY_THRESHOLD of
         the time.
 
-        Token stems are used instead of tokens themselves because the stem feature is always
-        present. The token feature is only present if it differs from the stem.
+        Token stems are used instead of tokens themselves because the stem feature is
+        always present. The token feature is only present if it differs from the stem.
 
         Parameters
         ----------

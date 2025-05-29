@@ -16,6 +16,7 @@ $ git clone https://github.com/strangetom/averaged-perceptron
 $ cd averaged-perceptron
 $ python3 -m venv venv
 $ source venv/bin/activate
+$ python -m pip install -r requirements.txt
 # Train model, outputting html results, detailed results and confusion matrix
 $ python train.py train --database train/data/training.sqlite3 --html --detailed --confusion
 ```
@@ -26,16 +27,25 @@ The performance of this implementation is show below.
 
 ```bash
 Sentence-level results:
-	Accuracy: 94.45%
+	Accuracy: 94.34%
 
 Word-level results:
-	Accuracy 98.06%
-	Precision (micro) 98.04%
-	Recall (micro) 98.06%
-	F1 score (micro) 98.05%
+	Accuracy 97.82%
+	Precision (micro) 97.80%
+	Recall (micro) 97.82%
+	F1 score (micro) 97.80%
 ```
 
 This compares favourably with current state of the art performance for the [ingredient-parser](https://github.com/strangetom/ingredient-parser) library, although the performance is not quite a good.
 
+## Model enhancements
 
+The Averaged Perceptron model is enhanced in the following ways:
 
+### Label constraints
+
+When predicting the labels for a sequence of tokens, the labels the model is allowed to select from are constrained based on the labels already predicted in the sequence.
+
+These constraints are defined from the labelling scheme. For example, `I_NAME_TOK` must always follow a `B_NAME_TOK` label (not necessarily consecutively). Therefore if the sequence of labels predicted so far does not include `B_NAME_TOK`, either since the last `NAME_SEP` if there is one or since the beginning of the sequence, `I_NAME_TOK` is forbidden from being predicted.
+
+This improves the model performance by ~0.25%, but only when applied during inference. If applied during training, the model performance worsens.
