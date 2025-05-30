@@ -227,9 +227,9 @@ def train_multiple(args: argparse.Namespace) -> None:
             args.split,
             Path(save_model).with_stem("model-" + str(uuid4())),
             None,  # Seed
-            args.html,
-            args.detailed,
-            args.confusion,
+            False,  # html
+            False,  # detailed_results
+            False,  # plot_confusion_matrix
             False,  # keep_model
             False,  # show_progess
         )
