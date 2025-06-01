@@ -16,7 +16,7 @@ from .averaged_perceptron import (
     label_features,
 )
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ap")
 
 # Dict of illegal transitions.
 # The key is the previous label, the values are the set of labels that cannot be

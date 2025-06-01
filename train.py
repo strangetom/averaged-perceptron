@@ -174,10 +174,10 @@ if __name__ == "__main__":
 
     logging.basicConfig(
         stream=sys.stdout,
-        level=LOGGING_LEVEL[args.verbose],
+        level=logging.INFO,
         format="[%(levelname)s] (%(module)s) %(message)s",
     )
-    logging.getLogger("ingredient-parser").setLevel(logging.INFO)
+    logging.getLogger("ap").setLevel(LOGGING_LEVEL[args.verbose])
 
     if args.command == "train":
         train_single(args)
