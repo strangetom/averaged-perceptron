@@ -78,6 +78,13 @@ if __name__ == "__main__":
         help="Plot confusion matrix of token labels.",
     )
     train_parser.add_argument(
+        "--model",
+        type=str,
+        default="ap",
+        choices=["ap", "ap_viterbi"],
+        help="Type of model to train..",
+    )
+    train_parser.add_argument(
         "-v",
         help="Enable verbose output.",
         action="count",
@@ -147,6 +154,13 @@ if __name__ == "__main__":
         default=os.cpu_count() - 1,
         type=int,
         help="Number of processes to spawn. Default to number of cpu cores.",
+    )
+    multiple_parser.add_argument(
+        "--model",
+        type=str,
+        default="ap",
+        choices=["ap", "ap_viterbi"],
+        help="Type of model to train..",
     )
     multiple_parser.add_argument(
         "-v",

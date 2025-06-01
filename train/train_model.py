@@ -8,12 +8,13 @@ import random
 from itertools import chain
 from pathlib import Path
 from statistics import mean, stdev
+from typing import Literal
 from uuid import uuid4
 
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
-from ap.ingredient_tagger import IngredientTagger
+from ap.ingredient_tagger import IngredientTagger, IngredientTaggerViterbi
 
 from .test_results_to_detailed_results import test_results_to_detailed_results
 from .test_results_to_html import test_results_to_html
@@ -32,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 def train_model(
     vectors: DataVectors,
+    model_type: Literal["ap", "ap_viterbi"],
     split: float,
     save_model: Path,
     seed: int | None,
@@ -48,6 +50,10 @@ def train_model(
     ----------
     vectors : DataVectors
         Vectors loaded from training csv files
+    model_type : Literal["ap", "ap_viterbi"]
+        Model type to train.
+        ap = AveragedPerceptron.
+        ap_viterbi = AveragedPerceptron using viterbi decoding.
     split : float
         Fraction of vectors to use for evaluation.
     save_model : Path
@@ -110,8 +116,11 @@ def train_model(
     logger.info(f"{len(features_train):,} training vectors.")
     logger.info(f"{len(features_test):,} testing vectors.")
 
-    logger.info("Training model with training data.")
-    tagger = IngredientTagger()
+    logger.info(f'Training "{model_type}" model with training data.')
+    if model_type == "ap":
+        tagger = IngredientTagger()
+    elif model_type == "ap_viterbi":
+        tagger = IngredientTaggerViterbi()
 
     tagger.labels = set(chain.from_iterable(truth_train))
     tagger.model.labels = tagger.labels
@@ -122,7 +131,6 @@ def train_model(
         min_abs_weight=0.15,
         quantize=False,
         make_label_dict=False,
-        verbose=False,
         show_progress=show_progress,
     )
     if keep_model:
@@ -182,6 +190,7 @@ def train_single(args: argparse.Namespace) -> None:
 
     stats = train_model(
         vectors,
+        args.model,
         args.split,
         Path(save_model),
         args.seed,
@@ -224,6 +233,7 @@ def train_multiple(args: argparse.Namespace) -> None:
     arguments = [
         (
             vectors,
+            args.model,
             args.split,
             Path(save_model).with_stem("model-" + str(uuid4())),
             None,  # Seed
