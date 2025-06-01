@@ -18,6 +18,34 @@ from .averaged_perceptron import (
 
 logger = logging.getLogger(__name__)
 
+# Dict of illegal transitions.
+# The key is the previous label, the values are the set of labels that cannot be
+# predicted for the next label.
+ILLEGAL_TRANSITIONS = {
+    "B_NAME_TOK": {"B_NAME_TOK", "NAME_MOD"},
+    "I_NAME_TOK": {"NAME_MOD"},
+    "NAME_MOD": {"COMMENT", "I_NAME_TOK", "PURPOSE", "QTY", "UNIT"},
+    "NAME_SEP": {
+        "I_NAME_TOK",
+        "PURPOSE",
+    },
+    "NAME_VAR": {"COMMENT", "I_NAME_TOK", "NAME_MOD", "PURPOSE", "QTY", "UNIT"},
+    "PREP": {"NAME_SEP"},
+    "PURPOSE": {
+        "B_NAME_TOK",
+        "I_NAME_TOK",
+        "NAME_MOD",
+        "NAME_SEP",
+        "NAME_VAR",
+        "PREP",
+        "QTY",
+        "SIZE",
+        "UNIT",
+    },
+    "QTY": {"NAME_SEP", "PURPOSE"},
+    "SIZE": {"NAME_SEP", "PURPOSE"},
+}
+
 
 class IngredientTagger:
     """Class to tag ingredient sentence tokens.
@@ -196,7 +224,7 @@ class IngredientTagger:
             return constrained_labels
 
         # B_NAME_TOK must occur before I_NAME_TOK.
-        # If the sequence contains NAME_SEP, only check labels after NAME_SEP.
+        # If the sequence contains NAME_SEP, only check labels after last NAME_SEP.
         # If the sequence does not contain NAME_SEP, check all labels.
         # If B_NAME_TOK not found, remove I_NAME_TOK from set.
         if "NAME_SEP" in sequence:
@@ -208,13 +236,9 @@ class IngredientTagger:
             if "B_NAME_TOK" not in sequence:
                 constrained_labels.add("I_NAME_TOK")
 
-        # B_NAME_TOK cannot follow B_NAME_TOK
-        if sequence[-1] == "B_NAME_TOK":
-            constrained_labels.add("B_NAME_TOK")
-
-        # I_NAME_TOK cannot follow NAME_VAR or NAME_MOD
-        if sequence[-1] in {"NAME_MOD", "NAME_VAR"}:
-            constrained_labels.add("I_NAME_TOK")
+        prev_label = sequence[-1]
+        if prev_label in ILLEGAL_TRANSITIONS:
+            constrained_labels |= ILLEGAL_TRANSITIONS[prev_label]
 
         return constrained_labels
 
@@ -317,7 +341,7 @@ class IngredientTagger:
             for sentence_features, truth_labels in training_data:
                 prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
                 for features, true_label in zip(sentence_features, truth_labels):
-                    guess = self.labeldict.get(features["stem"], "")
+                    guess = self.labeldict.get(features["stem"])
                     if not guess:
                         converted_features = self._convert_features(
                             features, prev_label, prev_label2, prev_label3
@@ -325,6 +349,11 @@ class IngredientTagger:
                         # Do not calculate score for prediction during training because
                         # the weights have not been averaged, so the values could be
                         # massive and cause OverflowErrors.
+                        # Do not set constraints during training. Because the feature
+                        # sets include features based on previous labels, applying
+                        # constraints now means the model never learns from errors that
+                        # might occur during inference and therefore never adjusts
+                        # the weights appropriately.
                         guess, _ = self.model.predict(
                             converted_features, set(), return_score=False
                         )
