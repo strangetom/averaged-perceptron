@@ -177,6 +177,7 @@ if __name__ == "__main__":
         level=LOGGING_LEVEL[args.verbose],
         format="[%(levelname)s] (%(module)s) %(message)s",
     )
+    logging.getLogger("ingredient-parser").setLevel(logging.INFO)
 
     if args.command == "train":
         train_single(args)
