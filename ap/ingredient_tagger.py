@@ -58,15 +58,23 @@ class IngredientTagger:
         Labels that each ingredient sentence token can be tagged as.
     model : AveragedPerceptron
         Averaged Perceptron model used for tagging.
+    only_positive_bool_features : bool, optional
+        If True, only use features with boolean values if the value is True.
+        If False, always use features with boolean values.
+        Default is False.
     """
 
-    def __init__(self, weights_file: str | None = None):
+    def __init__(
+        self, weights_file: str | None = None, only_positive_bool_features: bool = False
+    ):
         self.model = AveragedPerceptron()
         self.labeldict = {}
         self.labels: set[str] = set()
 
         if weights_file is not None:
             self.load(weights_file)
+
+        self.only_positive_bool_features = only_positive_bool_features
 
     def __repr__(self):
         return f"IngredientTagger(labels={self.labels})"
@@ -186,11 +194,12 @@ class IngredientTagger:
         """
         converted = set()
         for key, value in features.items():
-            if isinstance(value, bool) and value:
-                converted.add(key)
+            if isinstance(value, bool) and self.only_positive_bool_features:
+                if value:
+                    converted.add(key)
             elif isinstance(value, str):
                 converted.add(key + "=" + value)
-            elif isinstance(value, (int, float)):
+            elif isinstance(value, (int, float, bool)):
                 converted.add(key + "=" + str(value))
 
         # Add extra features based on labels of previous tokens.
@@ -424,15 +433,23 @@ class IngredientTaggerViterbi:
         Labels that each ingredient sentence token can be tagged as.
     model : AveragedPerceptron
         Averaged Perceptron model used for tagging.
+    only_positive_bool_features : bool, optional
+        If True, only use features with boolean values if the value is True.
+        If False, always use features with boolean values.
+        Default is False.
     """
 
-    def __init__(self, weights_file: str | None = None):
+    def __init__(
+        self, weights_file: str | None = None, only_positive_bool_features: bool = False
+    ):
         self.model = AveragedPerceptronViterbi()
         self.labeldict = {}
         self.labels: set[str] = set()
 
         if weights_file is not None:
             self.load(weights_file)
+
+        self.only_positive_bool_features = only_positive_bool_features
 
     def __repr__(self):
         return f"IngredientTaggerViterbi(labels={self.labels})"
@@ -506,11 +523,12 @@ class IngredientTaggerViterbi:
         """
         converted = set()
         for key, value in features.items():
-            if isinstance(value, bool) and value:
-                converted.add(key)
+            if isinstance(value, bool) and self.only_positive_bool_features:
+                if value:
+                    converted.add(key)
             elif isinstance(value, str):
                 converted.add(key + "=" + value)
-            elif isinstance(value, (int, float)):
+            elif isinstance(value, (int, float, bool)):
                 converted.add(key + "=" + str(value))
 
         return converted
