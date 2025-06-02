@@ -62,10 +62,18 @@ class IngredientTagger:
         If True, only use features with boolean values if the value is True.
         If False, always use features with boolean values.
         Default is False.
+    apply_label_constraints : bool, optional
+        If True, constrain the predictions of the current label based on the predicted
+        sequence so far. This only applies during inference and not during training.
+        If False, no constraints are applied.
+        Default is True.
     """
 
     def __init__(
-        self, weights_file: str | None = None, only_positive_bool_features: bool = False
+        self,
+        weights_file: str | None = None,
+        only_positive_bool_features: bool = False,
+        apply_label_constraints: bool = True,
     ):
         self.model = AveragedPerceptron()
         self.labeldict = {}
@@ -75,6 +83,7 @@ class IngredientTagger:
             self.load(weights_file)
 
         self.only_positive_bool_features = only_positive_bool_features
+        self.apply_label_constraints = apply_label_constraints
 
     def __repr__(self):
         return f"IngredientTagger(labels={self.labels})"
@@ -232,6 +241,9 @@ class IngredientTagger:
         """
         constrained_labels = set()
         if not sequence:
+            return constrained_labels
+
+        if not self.apply_label_constraints:
             return constrained_labels
 
         # B_NAME_TOK must occur before I_NAME_TOK.
