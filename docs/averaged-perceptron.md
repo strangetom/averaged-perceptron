@@ -269,7 +269,7 @@ $$
 \log{(p_i)} = s_i - \max{(s)}
 $$
 
-### Pruning
+> In general, we find that the model is very confident in it's prediction, so the probability is usually 1.0.
 
 ## References
 

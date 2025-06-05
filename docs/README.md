@@ -46,3 +46,5 @@ We will then investigate improvements various improvements to this.
   * [Constrained transitions](constrained-transitions.md)
   * [Viterbi decoding](viterbi.md)
   * ...
+
+Where possible, model accuracy results will be provided to show the relative improvement (or not) of each technique discussed. It will not necessarily be valid to compare the performance results across different techniques as there won't be any guarantee that the training conditions were the same when the results were generated. 

@@ -291,6 +291,7 @@ class IngredientTagger:
                 json.dump(data, f)
         else:
             with open(path, "w") as f:
+                # The seperator argument removes spaces from the normal defaults
                 json.dump(data, f, separators=(",", ":"))
 
     def load(self, path: str) -> None:
