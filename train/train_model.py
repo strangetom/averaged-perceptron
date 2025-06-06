@@ -128,7 +128,7 @@ def train_model(
         features_train,
         truth_train,
         n_iter=15,
-        min_abs_weight=0.15,
+        min_abs_weight=1,
         quantize=False,
         make_label_dict=False,
         show_progress=show_progress,

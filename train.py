@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
 import argparse
+import json
 import logging
 import os
 import sys
+from random import randint
 
 from train import (
+    grid_search,
     train_multiple,
     train_single,
 )
@@ -14,6 +17,16 @@ LOGGING_LEVEL = {
     0: logging.INFO,
     1: logging.DEBUG,
 }
+
+
+class ParseJsonArg(argparse.Action):
+    """Custom argparse.Action to parse JSON argument into dict."""
+
+    def __init__(self, option_strings, dest, **kwargs):
+        super().__init__(option_strings, dest, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_strings):
+        setattr(namespace, self.dest, json.loads(values))
 
 
 if __name__ == "__main__":
@@ -170,6 +183,76 @@ if __name__ == "__main__":
         dest="verbose",
     )
 
+    gridsearch_parser_help = (
+        "Grid search over all combinations of model hyperparameters."
+    )
+    gridsearch_parser = subparsers.add_parser("gridsearch", help=multiple_parser_help)
+    gridsearch_parser.add_argument(
+        "--database",
+        help="Path to database of training data",
+        type=str,
+        dest="database",
+        required=True,
+    )
+    gridsearch_parser.add_argument(
+        "--database-table",
+        help="Name of table in database containing training data",
+        type=str,
+        dest="table",
+        default="en",
+    )
+    gridsearch_parser.add_argument(
+        "--datasets",
+        help="Datasets to use in training and evaluating the model",
+        dest="datasets",
+        nargs="*",
+        default=["bbc", "cookstr", "nyt", "allrecipes", "tc"],
+    )
+    gridsearch_parser.add_argument(
+        "--split",
+        default=0.20,
+        type=float,
+        help="Fraction of data to be used for testing",
+    )
+    gridsearch_parser.add_argument(
+        "--save-model",
+        default=None,
+        help="Path to save model to",
+    )
+    gridsearch_parser.add_argument(
+        "--keep-models",
+        action="store_true",
+        default=False,
+        help="Keep models after evaluation instead of deleting.",
+    )
+    gridsearch_parser.add_argument(
+        "-p",
+        "--processes",
+        default=os.cpu_count() - 1,
+        type=int,
+        help="Number of processes to spawn. Default to number of cpu cores.",
+    )
+    gridsearch_parser.add_argument(
+        "--seed",
+        default=randint(0, 1_000_000_000),
+        type=int,
+        help="Seed value used for train/test split.",
+    )
+    gridsearch_parser.add_argument(
+        "--hyperparameters",
+        help="""Hyperparameters as JSON. 
+        The values for each parameter should be a list.
+        Any parameters not given will take their default value.""",
+        action=ParseJsonArg,
+    )
+    gridsearch_parser.add_argument(
+        "-v",
+        help="Enable verbose output.",
+        action="count",
+        default=0,
+        dest="verbose",
+    )
+
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -183,3 +266,5 @@ if __name__ == "__main__":
         train_single(args)
     elif args.command == "multiple":
         train_multiple(args)
+    elif args.command == "gridsearch":
+        grid_search(args)
