@@ -59,7 +59,7 @@ The maximum weight  for the model trained for these examples was 110.43.
 | 5                       | 97.72% (-0.22%) | 93.95% (-0.90%)   | 201,561 bytes (-79.99%) |
 | 10                      | 93.66% (-4.37%) | 83.20% (-12.24%)  | 59,343 bytes (-94.11%)  |
 
-In this example, we can reduce the model size by 32% with a negligible impact on model performance. 
+In this example, we can reduce the model size by 32% with a no impact on model performance. 
 
 If model size was particularly important, we could go even further and reduce the model size by 80% with less than 1% reduction in sentence level accuracy.
 
