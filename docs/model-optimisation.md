@@ -1,8 +1,8 @@
-# Weight size reduction
+# Model optimisation
 
 ## Introduction
 
-Here we discuss different techniques for reducing the size of the model weights.
+Here we discuss different techniques for optimising the model for size or execution performance.
 
 We will assume that the method of storing the weights is to store them in a gzipped JSON file.
 
@@ -59,7 +59,9 @@ The maximum weight  for the model trained for these examples was 110.43.
 | 5                       | 97.72% (-0.22%) | 93.95% (-0.90%)   | 201,561 bytes (-79.99%) |
 | 10                      | 93.66% (-4.37%) | 83.20% (-12.24%)  | 59,343 bytes (-94.11%)  |
 
-In this example, we can reduce the model size by 32% with a negligible impact on model performance. We could go even further, if model size was particularly important, and reduce the size by 80% with less than 1% reduction in sentence level accuracy.
+In this example, we can reduce the model size by 32% with a negligible impact on model performance. 
+
+If model size was particularly important, we could go even further and reduce the model size by 80% with less than 1% reduction in sentence level accuracy.
 
 ## Quantisation
 

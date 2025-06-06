@@ -42,7 +42,7 @@ The basic approach is implement an Averaged Perceptron model, which will be base
 We will then investigate improvements various improvements to this.
 
 * [Averaged Perceptron](averaged-perceptron.md) 
-  * Extending previous label context
+  * [Model optimisation](model-optimisation.md)
   * [Constrained transitions](constrained-transitions.md)
   * [Viterbi decoding](viterbi.md)
   * ...
