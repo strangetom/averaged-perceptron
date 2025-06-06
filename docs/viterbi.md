@@ -30,7 +30,7 @@ The lattice is the data structure we will use to keep track of the scores during
 
 The lattice is populated one column at a time. Each element of a column represents a possible current label for the given token. We want to calculate the score for each transition from the previous label to the current label, where the previous label can be any of the possible labels. The information we store at that element is the best score and the previous label that resulted in that score.
 
-> Insert next diagram of same lattice, showing label transition
+![viterbi-lattice-forward](viterbi-lattice-forward.svg)
 
 > **Why do we only keep the best score?**
 >
@@ -252,3 +252,14 @@ def update(
 `predicted_features` are the features that were used by the Viterbi algorithm and resulted in the incorrect predicted label.
 
 `truth_features` are the features from the true sequence for the token that was incorrectly labelled. Importantly, `truth_features` contains the features based on the *true* previous label.
+
+## Performance comparison
+
+Comparison of the greedy and Viterbi Averaged Perceptron models, using the same hyperparameters.
+
+| Model   | Word accuracy | Sentence accuracy | Model size | Time    |
+| ------- | ------------- | ----------------- | ---------- | ------- |
+| Greedy  | 97.57%        | 93.18%            | 0.96 MB    | 0:08.20 |
+| Viterbi | 97.67%        | 94.08%            | 1.04 MB    | 1:35:57 |
+
+Using the Viterbi algorithm does yield a notable improvement to sentence accuracy, but it comes at a significant increase in training time (12x longer).
