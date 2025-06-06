@@ -4,6 +4,7 @@ import argparse
 import concurrent.futures as cf
 import logging
 import os
+import random
 import time
 from dataclasses import asdict, dataclass
 from datetime import timedelta
@@ -163,6 +164,7 @@ def train_model_grid_search(
     dict
         Statistics from evaluating the model
     """
+    random.seed(seed)
     start_time = time.monotonic()
 
     # Split data into train and test sets
