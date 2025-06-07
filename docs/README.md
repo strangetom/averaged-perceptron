@@ -29,7 +29,7 @@ The possible labels are as follows:
 | NAME_VAR   | A token that creates a variant of the ingredient name.<br />This is used in cases such as **beef or chicken stock**. **beef** and **chicken** are labelled with NAME_VAR as they indicate variations of the ingredient name **stock**. |
 | NAME_MOD   | A token that modifies multiple ingredient names in the sentence.<br />For example in **dried apply and pears**, **dried** is labelled as NAME_MOD because it modified the two ingredient names, **apples** and **pears**. |
 | NAME_SEP   | A token that separates different ingredient names and isn't PUNC, typically **or**. |
-| COMMENT    | Addition information in the sentence that does not fall in one of the labels. |
+| COMMENT    | Additional information in the sentence that does not fall in one of the labels. |
 
 This is the problem that the is the core of [ingredient-parser](https://github.com/strangetom/ingredient-parser) library. 
 
@@ -37,7 +37,7 @@ For the purposes of the implementations here, we will reuse the training data, t
 
 ## Approach
 
-The basic approach is implement an Averaged Perceptron model, which will be based on the the following blog post by Matthew Honnibal: [A Good Part-of-Speech Tagger in about 200 Lines of Python](https://explosion.ai/blog/part-of-speech-pos-tagger-in-python).
+The basic approach is to implement an Averaged Perceptron model, which will be based on the the following blog post by Matthew Honnibal: [A Good Part-of-Speech Tagger in about 200 Lines of Python](https://explosion.ai/blog/part-of-speech-pos-tagger-in-python).
 
 We will then investigate improvements various improvements to this.
 

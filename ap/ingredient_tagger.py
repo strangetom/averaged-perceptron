@@ -27,10 +27,7 @@ ILLEGAL_TRANSITIONS = {
     "B_NAME_TOK": {"B_NAME_TOK", "NAME_MOD"},
     "I_NAME_TOK": {"NAME_MOD"},
     "NAME_MOD": {"COMMENT", "I_NAME_TOK", "PURPOSE", "QTY", "UNIT"},
-    "NAME_SEP": {
-        "I_NAME_TOK",
-        "PURPOSE",
-    },
+    "NAME_SEP": {"I_NAME_TOK", "PURPOSE"},
     "NAME_VAR": {"COMMENT", "I_NAME_TOK", "NAME_MOD", "PURPOSE", "QTY", "UNIT"},
     "PREP": {"NAME_SEP"},
     "PURPOSE": {

@@ -43,9 +43,9 @@ The lattice is populated one column at a time. Each element of a column represen
 
 > **Why do we only keep the best score?**
 >
-> Once we've calculated all these scores and kept the best score of each (previous label, current label), we then back track through the lattice to pick the path with the maximum overall score.
+> Once we've calculated all these scores and kept the best score of each (previous label, current label) pair, we then back track through the lattice to pick the path with the maximum overall score.
 >
-> If a given lattice element is in that path, then the only way to maximise the global score is the use the best score for that element. Using any other score will necessarily result in a lower overall score.
+> If a given lattice element is in that path, then the only way to maximise the global score is the use the best score for that element. Using any other score will necessarily result in a lower overall score. Therefore, we don't need to keep track of the lower scores because they can never result in a higher global score.
 
 Once the lattice has been populated, we can back track through it to find the best label sequence. We start with the label that has the highest score for the last element. We know what the previous label has to be to get that score, so that becomes the label before. We also know that to maximise the score for that label, we have to use the previous label we stored that resulted in that maximum score. And so on, and so on.
 
