@@ -26,7 +26,16 @@ Therefore, the algorithm has three parts:
 
 The lattice is the data structure we will use to keep track of the scores during the forward path. In general terms, the lattice is a $n\times m$ matrix, where $n$ is the number of labels and $m$ is the number of tokens.
 
-> insert diagram
+$$
+\begin{bmatrix}
+ l_{QTY,0} & l_{QTY,1} & l_{QTY,2} & l_{QTY,3} & \cdots\\
+ l_{UNIT,0} & l_{UNIT,1} & l_{UNIT,2} & l_{UNIT,3} & \cdots\\
+ l_{SIZE,0} & l_{SIZE,1} & l_{SIZE,2} & l_{SIZE,3} & \cdots\\
+ l_{PREP,0} & l_{PREP,1} & l_{PREP,2} & l_{PREP,3} & \cdots\\
+ \vdots & \vdots & \vdots & \vdots & \ddots
+\end{bmatrix}
+$$
+
 
 The lattice is populated one column at a time. Each element of a column represents a possible current label for the given token. We want to calculate the score for each transition from the previous label to the current label, where the previous label can be any of the possible labels. The information we store at that element is the best score and the previous label that resulted in that score.
 
@@ -156,6 +165,12 @@ for t, features in enumerate(features_seq[1:], 1):
             lattice[t][current_label].score = score
             lattice[t][current_label].backpointer = prev_label
 ```
+
+> [!NOTE]
+>
+> Many examples and tutorials of the Viterbi algorithms are given in the context of Hidden Markov Models. For these contexts, there are explicit transition probabilities (the probability of transition from one label to another) and emission probabilities (the probability of the label given the properties of the element in the sequence).
+>
+> The same idea still applies here, we just don't separate them out. The feature set we use to calculate the score contains both transition features (based on the previous label) and emission features (based on the properties of the element in the sequence), and the inclusion of the score of the lattice element for the previous means we capture the same probabilities just in a different way.
 
 Note that the score calculation here also include the score of previous label currently being considered. This is because we want to maximise the score for the *transition* from previous label to current label.
 
