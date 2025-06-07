@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
+import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from functools import lru_cache
 from itertools import product
 from math import exp
+
+logger = logging.getLogger("ap")
 
 
 class AveragedPerceptron:
@@ -200,6 +203,7 @@ class AveragedPerceptron:
             Minimum absolute value of weight to keep.
         """
         new_weights = {}
+        pruned_count, initial_weight_count = 0, 0
         for feature, weights in self.weights.items():
             new_feature_weights = {
                 label: weight
@@ -210,6 +214,11 @@ class AveragedPerceptron:
             if new_feature_weights != {}:
                 new_weights[feature] = new_feature_weights
 
+            initial_weight_count += len(weights)
+            pruned_count += len(weights) - len(new_feature_weights)
+
+        pruned_pc = 100 * pruned_count / initial_weight_count
+        logger.debug(f"Pruned {pruned_pc:.2f}% of weights.")
         self.weights = new_weights
 
     def quantize(self) -> None:
