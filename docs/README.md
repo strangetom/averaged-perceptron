@@ -31,7 +31,7 @@ The possible labels are as follows:
 | NAME_SEP   | A token that separates different ingredient names and isn't PUNC, typically **or**. |
 | COMMENT    | Additional information in the sentence that does not fall in one of the labels. |
 
-This is the problem that the is the core of [ingredient-parser](https://github.com/strangetom/ingredient-parser) library. 
+This is the problem that is at the core of [ingredient-parser](https://github.com/strangetom/ingredient-parser) library. 
 
 For the purposes of the implementations here, we will reuse the training data, tokenization and features used by the ingredient-parser library and concern ourselves only with the implementation of models to solve this sequence labelling problem.
 
