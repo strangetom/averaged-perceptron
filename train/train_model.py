@@ -41,6 +41,7 @@ def train_model(
     detailed_results: bool,
     plot_confusion_matrix: bool,
     keep_model: bool = True,
+    combine_name_labels: bool = False,
     show_progress: bool = True,
 ) -> Stats:
     """Train model using vectors, splitting the vectors into a train and evaluation
@@ -72,6 +73,9 @@ def train_model(
     keep_model : bool, optional
         If False, delete model from disk after evaluating it's performance.
         Default is True.
+    combine_name_labels : bool, optional
+        If True, combine all NAME labels into a single NAME label.
+        Default is False
     show_progress: bool, optional
         If True, show progress bar for iterations.
         Default is True.
@@ -169,7 +173,7 @@ def train_model(
     if plot_confusion_matrix:
         confusion_matrix(labels_pred, truth_test)
 
-    stats = evaluate(labels_pred, truth_test, seed)
+    stats = evaluate(labels_pred, truth_test, seed, combine_name_labels)
     return stats
 
 
@@ -181,7 +185,13 @@ def train_single(args: argparse.Namespace) -> None:
     args : argparse.Namespace
         Model training configuration
     """
-    vectors = load_datasets(args.database, args.table, args.datasets)
+    vectors = load_datasets(
+        args.database,
+        args.table,
+        args.datasets,
+        discard_other=True,
+        combine_name_labels=args.combine_name_labels,
+    )
 
     if args.save_model is None:
         save_model = DEFAULT_MODEL_LOCATION
@@ -198,6 +208,7 @@ def train_single(args: argparse.Namespace) -> None:
         args.detailed,
         args.confusion,
         keep_model=True,
+        combine_name_labels=args.combine_name_labels,
         show_progress=True,
     )
 
@@ -221,7 +232,13 @@ def train_multiple(args: argparse.Namespace) -> None:
     args : argparse.Namespace
         Model training configuration
     """
-    vectors = load_datasets(args.database, args.table, args.datasets)
+    vectors = load_datasets(
+        args.database,
+        args.table,
+        args.datasets,
+        discard_other=True,
+        combine_name_labels=args.combine_name_labels,
+    )
 
     if args.save_model is None:
         save_model = DEFAULT_MODEL_LOCATION
@@ -241,6 +258,7 @@ def train_multiple(args: argparse.Namespace) -> None:
             False,  # detailed_results
             False,  # plot_confusion_matrix
             False,  # keep_model
+            args.combine_name_labels,
             False,  # show_progess
         )
     ] * args.runs

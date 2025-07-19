@@ -98,6 +98,11 @@ if __name__ == "__main__":
         help="Type of model to train..",
     )
     train_parser.add_argument(
+        "--combine-name-labels",
+        action="store_true",
+        help="Combine labels containing 'NAME' into a single NAME label.",
+    )
+    train_parser.add_argument(
         "-v",
         help="Enable verbose output.",
         action="count",
@@ -153,6 +158,11 @@ if __name__ == "__main__":
         "--confusion",
         action="store_true",
         help="Plot confusion matrix of token labels.",
+    )
+    multiple_parser.add_argument(
+        "--combine-name-labels",
+        action="store_true",
+        help="Combine labels containing 'NAME' into a single NAME label.",
     )
     multiple_parser.add_argument(
         "-r",
@@ -237,6 +247,11 @@ if __name__ == "__main__":
         default=randint(0, 1_000_000_000),
         type=int,
         help="Seed value used for train/test split.",
+    )
+    gridsearch_parser.add_argument(
+        "--combine-name-labels",
+        action="store_true",
+        help="Combine labels containing 'NAME' into a single NAME label.",
     )
     gridsearch_parser.add_argument(
         "--hyperparameters",
