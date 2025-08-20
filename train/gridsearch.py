@@ -94,7 +94,8 @@ def generate_argument_sets(args: argparse.Namespace) -> list[list]:
         split
         save_model
         seed
-        delete_model
+        keep_model
+        combine_name_labels
 
     Parameters
     ----------
@@ -107,7 +108,9 @@ def generate_argument_sets(args: argparse.Namespace) -> list[list]:
         list of lists, where each sublist is the arguments for training a model with
         one of the combinations of algorithms and parameters
     """
-    vectors = load_datasets(args.database, args.table, args.datasets)
+    vectors = load_datasets(
+        args.database, args.table, args.datasets, args.combine_name_labels
+    )
 
     # Generate list of arguments for all combinations parameters for each algorithm
     argument_sets = []
@@ -126,6 +129,7 @@ def generate_argument_sets(args: argparse.Namespace) -> list[list]:
             save_model,
             args.seed,
             args.keep_models,
+            args.combine_name_labels,
         ]
         argument_sets.append(arguments)
 
@@ -139,6 +143,7 @@ def train_model_grid_search(
     save_model: str,
     seed: int,
     keep_model: bool,
+    combine_name_labels: bool,
 ) -> dict:
     """Train model using given training parameters,
     returning model performance statistics, model parameters and elapsed training time.
@@ -232,7 +237,7 @@ def train_model_grid_search(
         labels, scores = zip(*tags)
         labels_pred.append(list(labels))
         scores_pred.append(list(scores))
-    stats = evaluate(labels_pred, truth_test, seed)
+    stats = evaluate(labels_pred, truth_test, seed, combine_name_labels)
 
     if not keep_model:
         save_model_path.unlink(missing_ok=True)
