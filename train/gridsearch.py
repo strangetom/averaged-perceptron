@@ -109,7 +109,11 @@ def generate_argument_sets(args: argparse.Namespace) -> list[list]:
         one of the combinations of algorithms and parameters
     """
     vectors = load_datasets(
-        args.database, args.table, args.datasets, args.combine_name_labels
+        args.database,
+        args.table,
+        args.datasets,
+        discard_other=True,
+        combine_name_labels=args.combine_name_labels,
     )
 
     # Generate list of arguments for all combinations parameters for each algorithm
