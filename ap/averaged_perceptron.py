@@ -185,7 +185,7 @@ class AveragedPerceptron:
                 total = (
                     self._totals[key] + (self._iteration - self._tstamps[key]) * weight
                 )
-                averaged = round(total / float(self._iteration), 3)
+                averaged = total / float(self._iteration)
 
                 if averaged:
                     new_feat_weights[label] = averaged
@@ -626,7 +626,7 @@ class AveragedPerceptronViterbi:
                 total = (
                     self._totals[key] + (self._iteration - self._tstamps[key]) * weight
                 )
-                averaged = round(total / float(self._iteration), 3)
+                averaged = total / float(self._iteration)
 
                 if averaged:
                     new_feat_weights[label] = averaged
