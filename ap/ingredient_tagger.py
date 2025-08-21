@@ -322,7 +322,7 @@ class IngredientTagger:
         truth: list[list[str]],
         n_iter: int = 10,
         min_abs_weight: float = 0.1,
-        quantize: bool = False,
+        quantize_bits: int | None = None,
         make_label_dict: bool = False,
         show_progress: bool = True,
     ) -> None:
@@ -395,8 +395,8 @@ class IngredientTagger:
 
         self.model.average_weights()
         self.model.prune_weights(min_abs_weight)
-        if quantize:
-            self.model.quantize()
+        if quantize_bits:
+            self.model.quantize(quantize_bits)
 
     def _make_labeldict(
         self, sentence_features: list[list[dict]], sentence_labels: list[list[str]]
@@ -602,7 +602,7 @@ class IngredientTaggerViterbi:
         truth: list[list[str]],
         n_iter: int = 10,
         min_abs_weight: float = 0.1,
-        quantize: bool = False,
+        quantize_bits: int | None = None,
         make_label_dict: bool = False,
         show_progress: bool = True,
     ) -> None:
@@ -709,8 +709,8 @@ class IngredientTaggerViterbi:
 
         self.model.average_weights()
         self.model.prune_weights(min_abs_weight)
-        if quantize:
-            self.model.quantize()
+        if quantize_bits:
+            self.model.quantize(quantize_bits)
 
     def _make_labeldict(
         self, sentence_features: list[list[dict]], sentence_labels: list[list[str]]

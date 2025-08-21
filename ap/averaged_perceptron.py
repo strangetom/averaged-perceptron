@@ -221,20 +221,39 @@ class AveragedPerceptron:
         logger.debug(f"Pruned {pruned_pc:.2f}% of weights.")
         self.weights = new_weights
 
-    def quantize(self) -> None:
-        """Quantize weights to int8."""
+    def quantize(self, nbits: int | None = None) -> None:
+        """Quantize weights to nbit signed integer using linear scaling.
+
+        Because the model weights are only used additively during inference, and we only
+        consider the relative magnitudes of the weights, there is no need for keep the
+        scaling factor because it would just be a multiplier of all of the weights.
+
+        Parameters
+        ----------
+        nbits : int, optional
+            Number of bits for integer scaling.
+            If None, no quantisation is performed.
+            Default is None.
+        """
+        if nbits is None:
+            return
+
         max_weight = 0
         for scores in self.weights.values():
             max_weight = max(max_weight, max(abs(w) for w in scores.values()))
 
-        scale = 127 / max_weight
+        scale = (2 ** (nbits - 1) - 1) / max_weight
 
         new_weights = {}
         for feature, weights in self.weights.items():
             new_feature_weights = {}
 
             for label, weight in weights.items():
-                new_feature_weights[label] = round(weight * scale)
+                quantized_weight = round(weight * scale)
+                # If the weight quanitzes to zero, we can discard it as there is no need
+                # to save features that have weight of 0.
+                if quantized_weight != 0:
+                    new_feature_weights[label] = quantized_weight
 
             new_weights[feature] = new_feature_weights
 
@@ -637,20 +656,37 @@ class AveragedPerceptronViterbi:
 
         self.weights = new_weights
 
-    def quantize(self) -> None:
-        """Quantize weights to int8."""
+    def quantize(self, nbits: int | None = None) -> None:
+        """Quantize weights to nbit signed integer using linear scaling.
+
+        Because the model weights are only used additively during inference, and we only
+        consider the relative magnitudes of the weights, there is no need for keep the
+        scaling factor because it would just be a multiplier of all of the weights.
+
+        Parameters
+        ----------
+        nbits : int, optional
+            Number of bits for integer scaling.
+            If None, no quantisation is performed.
+            Default is None.
+        """
+        if nbits is None:
+            return
+
         max_weight = 0
         for scores in self.weights.values():
             max_weight = max(max_weight, max(abs(w) for w in scores.values()))
 
-        scale = 127 / max_weight
+        scale = (2 ** (nbits - 1) - 1) / max_weight
 
         new_weights = {}
         for feature, weights in self.weights.items():
             new_feature_weights = {}
 
             for label, weight in weights.items():
-                new_feature_weights[label] = round(weight * scale)
+                quantized_weight = round(weight * scale)
+                if quantized_weight != 0:
+                    new_feature_weights[label] = quantized_weight
 
             new_weights[feature] = new_feature_weights
 

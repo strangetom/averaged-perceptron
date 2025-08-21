@@ -35,7 +35,7 @@ class HyperParameters:
     only_positive_bool_features: bool
     apply_label_constraints: bool
     min_abs_weight: float
-    quantize: bool
+    quantize_bits: int | None
     make_label_dict: bool
     model_type: Literal["ap", "ap_viterbi"]
 
@@ -47,7 +47,7 @@ def default_hyperparams() -> HyperParameters:
         only_positive_bool_features=False,
         apply_label_constraints=True,
         min_abs_weight=1,
-        quantize=False,
+        quantize_bits=None,
         make_label_dict=False,
         model_type="ap",
     )
@@ -200,7 +200,8 @@ def train_model_grid_search(
     )
 
     # Make model name unique
-    save_model_path = Path(save_model).with_stem("model-" + str(uuid4()))
+    uuid = str(uuid4())
+    save_model_path = Path(save_model).with_stem("model-" + uuid)
 
     # Train model
     if parameters.model_type == "ap":
@@ -222,7 +223,7 @@ def train_model_grid_search(
         truth_train,
         n_iter=parameters.epochs,
         min_abs_weight=parameters.min_abs_weight,
-        quantize=parameters.quantize,
+        quantize_bits=parameters.quantize_bits,
         make_label_dict=parameters.make_label_dict,
         show_progress=False,
     )
@@ -248,6 +249,7 @@ def train_model_grid_search(
 
     return {
         "model_size": model_size,
+        "uuid": uuid,
         "params": parameters,
         "stats": stats,
         "time": time.monotonic() - start_time,
@@ -287,6 +289,7 @@ def grid_search(args: argparse.Namespace):
         "Sentence accuracy",
         "Time",
         "Size (MB)",
+        "uuid",
     ]
     table = []
     for result in eval_results:
@@ -295,6 +298,7 @@ def grid_search(args: argparse.Namespace):
         stats = result["stats"]
         size = result["model_size"]
         time = timedelta(seconds=int(result["time"]))
+        uuid = result["uuid"]
         table.append(
             [
                 algo,
@@ -303,6 +307,7 @@ def grid_search(args: argparse.Namespace):
                 f"{100 * stats.sentence.accuracy:.2f}%",
                 str(time),
                 f"{size:.2f}",
+                uuid[:6],
             ]
         )
 
@@ -311,6 +316,6 @@ def grid_search(args: argparse.Namespace):
             table,
             headers=headers,
             tablefmt="fancy_grid",
-            maxcolwidths=[None, 130, None, None, None, None],
+            maxcolwidths=[None, 120, None, None, None, None],
         )
     )
