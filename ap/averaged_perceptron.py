@@ -7,6 +7,8 @@ from functools import lru_cache
 from itertools import product
 from math import exp
 
+from ._constants import ILLEGAL_TRANSITIONS
+
 logger = logging.getLogger("ap")
 
 
@@ -360,7 +362,10 @@ class AveragedPerceptronViterbi:
         return [round(exp(s.score - max_score), 3) for s in scores.values()]
 
     def predict_sequence(
-        self, features_seq: list[set[str]], return_score: bool = False
+        self,
+        features_seq: list[set[str]],
+        return_score: bool = False,
+        constrain_transitions: bool = True,
     ) -> list[tuple[str, float]]:
         """Predict the label sequence for a sequence of tokens described by sequence of
         features sets using Viterbi algorithm.
@@ -372,6 +377,9 @@ class AveragedPerceptronViterbi:
         return_score : bool, optional
             If True, return score for each predicted label.
             If False, return score is always 1.
+        constrain_transitions : bool, optional
+            If True, contrain label transitions to only allowed transitions.
+            Default is True
 
         Returns
         -------
@@ -419,6 +427,10 @@ class AveragedPerceptronViterbi:
                 B_NAME_TOK. We could either skip those iterations, or force the score to
                 -inf.
                 """
+                if constrain_transitions and current_label in ILLEGAL_TRANSITIONS.get(
+                    prev_label, set()
+                ):
+                    continue
 
                 score = lattice[t - 1][prev_label].score + self._score(
                     features | label_features(prev_label, pos), current_label
