@@ -133,7 +133,7 @@ def train_model(
         truth_train,
         n_iter=15,
         min_abs_weight=1,
-        quantize_bits=None,
+        quantize_bits=16,
         make_label_dict=False,
         show_progress=show_progress,
     )

@@ -47,7 +47,7 @@ def default_hyperparams() -> HyperParameters:
         only_positive_bool_features=False,
         apply_label_constraints=True,
         min_abs_weight=1,
-        quantize_bits=None,
+        quantize_bits=16,
         make_label_dict=False,
         model_type="ap",
     )
@@ -306,7 +306,7 @@ def grid_search(args: argparse.Namespace):
                 f"{100 * stats.token.accuracy:.2f}%",
                 f"{100 * stats.sentence.accuracy:.2f}%",
                 str(time),
-                f"{size:.2f}",
+                f"{size:.3f}",
                 uuid[:6],
             ]
         )
