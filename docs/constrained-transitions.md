@@ -51,3 +51,77 @@ Comparison of Averaged Perceptron models, trained with and without label constra
 | With               | 97.96%        | 94.80%            |
 | Without            | 97.97%        | 94.54%            |
 
+## Transitions constraints during Viterbi decoding
+
+Applying the transition constraints during Viterbi decoding is a little more complex than applying the constraints to the greedy Averaged Perceptron.
+
+For the constraints that constrain the transition to the adjacent label, we can check during the iteration over each `(current_label, prev_label)` pair:
+
+```python
+for current_label, prev_label in product(labels, labels):
+    if constrain_transitions and current_label in ILLEGAL_TRANSITIONS.get(
+        prev_label, set()
+    ):
+    	# If transition from prev_label to current_label is forbidden, do
+    	# not calculate the score.
+    	continue
+    ...
+```
+
+For the analytical constraint described above, if the `current_label` is I_NAME_TOK then we need to check if B_NAME_TOK occurs in the best path through the Viterbi lattice to the `prev_label`.
+
+```python
+    ...
+    if constrain_transitions and current_label == "I_NAME_TOK":
+        # If current_label is I_NAME_TOK, check if B_NAME_TOK has occurred
+        # in the best path up to prev_label, either since the start
+        # of the sequence or since the last NAME_SEP.
+        if not self._b_name_tok_has_occured(lattice[:t], prev_label):
+            continue
+    ...
+```
+
+The function `_b_name_tok_has_occurred` finds the best path through the Viterbi lattice that ends with `prev_label`
+
+```python
+def _b_name_tok_has_occurred(
+    self, lattice: list[defaultdict[str, LatticeElement]], end_label: str
+) -> bool:
+    """Check if B_NAME_TOK has occured in best sequence ending with prev_label.
+
+    If NAME_SEP occurs in the best sequence, only check if B_NAME_TOK has occurred
+    since the last NAME_SEP.
+
+    Parameters
+    ----------
+    lattice : list[defaultdict[str, LatticeElement]]
+        Viterbi lattice
+    end_label : str
+        Label at end of sequence.
+
+    Returns
+    -------
+    bool
+        True if B_NAME_TOK has occured in sequence since beginning or last NAME_SEP.
+    """
+    label_seq = []
+    backpointer = end_label
+    for score_dict in reversed(lattice):
+        label_seq.append(backpointer)
+        backpointer = score_dict[backpointer].backpointer
+
+    # label_seq is generated from the end, moving towards the start, so reverse.
+    label_seq = list(reversed(label_seq))
+
+    if "NAME_SEP" in label_seq:
+        # Find index of last occurance of NAME_SEP in sequence
+        name_sep_idx = max(i for i, v in enumerate(label_seq) if v == "NAME_SEP")
+        if "B_NAME_TOK" in label_seq[name_sep_idx:]:
+            return True
+    else:
+        if "B_NAME_TOK" in label_seq:
+            return True
+
+    return False
+```
+

@@ -436,7 +436,7 @@ class AveragedPerceptronViterbi:
                     # If current_label is I_NAME_TOK, check if B_NAME_TOK has occurred
                     # in the best path up to prev_label, either since the start
                     # of the sequence or since the last NAME_SEP.
-                    if not self._b_name_tok_has_occured(lattice[:t], prev_label):
+                    if not self._b_name_tok_has_occurred(lattice[:t], prev_label):
                         continue
 
                 score = lattice[t - 1][prev_label].score + self._score(
@@ -475,7 +475,7 @@ class AveragedPerceptronViterbi:
 
         return list(zip(reversed(label_seq), reversed(scores)))
 
-    def _b_name_tok_has_occured(
+    def _b_name_tok_has_occurred(
         self, lattice: list[defaultdict[str, LatticeElement]], end_label: str
     ) -> bool:
         """Check if B_NAME_TOK has occured in best sequence ending with prev_label.
@@ -501,7 +501,7 @@ class AveragedPerceptronViterbi:
             label_seq.append(backpointer)
             backpointer = score_dict[backpointer].backpointer
 
-        # label_seq is generated from the end, moving forwards, so reverse.
+        # label_seq is generated from the end, moving towards the start, so reverse.
         label_seq = list(reversed(label_seq))
 
         if "NAME_SEP" in label_seq:
