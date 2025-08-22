@@ -424,7 +424,10 @@ class IngredientTaggerViterbi:
     """
 
     def __init__(
-        self, weights_file: str | None = None, only_positive_bool_features: bool = False
+        self,
+        weights_file: str | None = None,
+        only_positive_bool_features: bool = False,
+        apply_label_constraints: bool = True,
     ):
         self.model = AveragedPerceptronViterbi()
         self.labeldict = {}
@@ -434,6 +437,7 @@ class IngredientTaggerViterbi:
             self.load(weights_file)
 
         self.only_positive_bool_features = only_positive_bool_features
+        self.apply_label_constraints = apply_label_constraints
 
     def __repr__(self):
         return f"IngredientTaggerViterbi(labels={self.labels})"
@@ -453,7 +457,9 @@ class IngredientTaggerViterbi:
         """
         p = PreProcessor(sentence)
         features = [self._convert_features(f) for f in p.sentence_features()]
-        label_scores = self.model.predict_sequence(features)
+        label_scores = self.model.predict_sequence(
+            features, constrain_transitions=self.apply_label_constraints
+        )
 
         labels = [
             (token.text, label, score)
@@ -480,7 +486,9 @@ class IngredientTaggerViterbi:
             List of (label, confidence) tuples.
         """
         features = [self._convert_features(f) for f in sentence_features]
-        return self.model.predict_sequence(features)
+        return self.model.predict_sequence(
+            features, constrain_transitions=self.apply_label_constraints
+        )
 
     def _convert_features(self, features: dict[str, str | bool]) -> set[str]:
         """Convert features dict to set of strings.
