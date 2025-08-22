@@ -17,7 +17,7 @@ from sklearn.model_selection import train_test_split
 from tabulate import tabulate
 from tqdm import tqdm
 
-from ap.ingredient_tagger import IngredientTagger, IngredientTaggerViterbi
+from ap import IngredientTagger, IngredientTaggerViterbi
 
 from .train_model import DEFAULT_MODEL_LOCATION
 from .training_utils import (

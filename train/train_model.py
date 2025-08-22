@@ -14,7 +14,7 @@ from uuid import uuid4
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
-from ap.ingredient_tagger import IngredientTagger, IngredientTaggerViterbi
+from ap import IngredientTagger, IngredientTaggerViterbi
 
 from .test_results_to_detailed_results import test_results_to_detailed_results
 from .test_results_to_html import test_results_to_html
