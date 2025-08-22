@@ -125,3 +125,9 @@ def _b_name_tok_has_occurred(
     return False
 ```
 
+In the `IngredientTaggerViterbi`, the application of label constraints offers a small improvement.
+
+| Label constraints? | Word accuracy | Sentence accuracy |
+| ------------------ | ------------- | ----------------- |
+| With               | 97.93%        | 94.47%            |
+| Without            | 97.92%        | 94.43%            |
