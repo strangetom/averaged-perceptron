@@ -20,12 +20,12 @@
      borderopacity="1.0"
      inkscape:pageshadow="2"
      inkscape:pageopacity="1"
-     inkscape:pagecheckerboard="0"
+     inkscape:pagecheckerboard="true"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="1.5288585"
-     inkscape:cx="467.34214"
-     inkscape:cy="240.70246"
+     inkscape:zoom="1.2988893"
+     inkscape:cx="345.29501"
+     inkscape:cy="234.816"
      inkscape:window-width="1920"
      inkscape:window-height="1020"
      inkscape:window-x="0"
@@ -78,6 +78,14 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(-3.7303794,-0.7639727)">
+    <rect
+       style="fill:#f9f5d7;fill-opacity:1;stroke-width:1.92229;stroke-linecap:square;stroke-linejoin:bevel;stroke-dasharray:11.5338, 11.5338"
+       id="rect958"
+       width="199.08525"
+       height="110.40337"
+       x="3.7303793"
+       y="0.7639727"
+       ry="0" />
     <rect
        style="fill:#ff8080;fill-opacity:1;stroke:none;stroke-width:0.221322;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="rect30887"
