@@ -247,7 +247,7 @@ class AveragedPerceptron:
 
             for label, weight in weights.items():
                 quantized_weight = round(weight * scale)
-                # If the weight quanitzes to zero, we can discard it as there is no need
+                # If the weight quantizes to zero, we can discard it as there is no need
                 # to save features that have weight of 0.
                 if quantized_weight != 0:
                     new_feature_weights[label] = quantized_weight
@@ -255,3 +255,4 @@ class AveragedPerceptron:
             new_weights[feature] = new_feature_weights
 
         self.weights = new_weights
+        logger.debug(f"Quantized model weights using {nbits} of precision.")

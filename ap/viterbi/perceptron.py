@@ -128,7 +128,7 @@ class AveragedPerceptronViterbi:
             If True, return score for each predicted label.
             If False, return score is always 1.
         constrain_transitions : bool, optional
-            If True, contrain label transitions to only allowed transitions.
+            If True, constrain label transitions to only allowed transitions.
             Default is True
 
         Returns
@@ -228,7 +228,7 @@ class AveragedPerceptronViterbi:
     def _b_name_tok_has_occurred(
         self, lattice: list[defaultdict[str, LatticeElement]], end_label: str
     ) -> bool:
-        """Check if B_NAME_TOK has occured in best sequence ending with prev_label.
+        """Check if B_NAME_TOK has occurred in best sequence ending with prev_label.
 
         If NAME_SEP occurs in the best sequence, only check if B_NAME_TOK has occurred
         since the last NAME_SEP.
@@ -243,7 +243,8 @@ class AveragedPerceptronViterbi:
         Returns
         -------
         bool
-            True if B_NAME_TOK has occured in sequence since beginning or last NAME_SEP.
+            True if B_NAME_TOK has occurred in sequence since beginning or
+            last NAME_SEP.
         """
         label_seq = []
         backpointer = end_label
@@ -255,7 +256,7 @@ class AveragedPerceptronViterbi:
         label_seq = list(reversed(label_seq))
 
         if "NAME_SEP" in label_seq:
-            # Find index of last occurance of NAME_SEP in sequence
+            # Find index of last occurrence of NAME_SEP in sequence
             name_sep_idx = max(i for i, v in enumerate(label_seq) if v == "NAME_SEP")
             if "B_NAME_TOK" in label_seq[name_sep_idx:]:
                 return True
@@ -453,6 +454,7 @@ class AveragedPerceptronViterbi:
             Minimum absolute value of weight to keep.
         """
         new_weights = {}
+        pruned_count, initial_weight_count = 0, 0
         for feature, weights in self.weights.items():
             new_feature_weights = {
                 label: weight
@@ -463,6 +465,11 @@ class AveragedPerceptronViterbi:
             if new_feature_weights != {}:
                 new_weights[feature] = new_feature_weights
 
+            initial_weight_count += len(weights)
+            pruned_count += len(weights) - len(new_feature_weights)
+
+        pruned_pc = 100 * pruned_count / initial_weight_count
+        logger.debug(f"Pruned {pruned_pc:.2f}% of weights.")
         self.weights = new_weights
 
     def quantize(self, nbits: int | None = None) -> None:
@@ -500,3 +507,4 @@ class AveragedPerceptronViterbi:
             new_weights[feature] = new_feature_weights
 
         self.weights = new_weights
+        logger.debug(f"Quantized model weights using {nbits} of precision.")
