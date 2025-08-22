@@ -394,7 +394,7 @@ class AveragedPerceptronViterbi:
         # keys are the possible labels for that item. The values are the LatticeElement
         # dataclass which stores the best score for that label and a backpointer to the
         # previous label that resulted in that score.
-        lattice = [
+        lattice: list[defaultdict[str, LatticeElement]] = [
             defaultdict(lambda: LatticeElement(-float("inf"), ""))
             for _ in range(seq_len)
         ]
@@ -402,6 +402,10 @@ class AveragedPerceptronViterbi:
         # Initialise for first feature set of features_seq
         pos = self._get_pos_from_features(features_seq[0])
         for current_label in labels:
+            if constrain_transitions and current_label == "I_NAME_TOK":
+                # I_NAME_TOK cannot be the first label because it must follow B_NAME_TOK
+                continue
+
             score = self._score(
                 features_seq[0] | label_features("-START-", pos), current_label
             )
@@ -421,16 +425,19 @@ class AveragedPerceptronViterbi:
             # Calculate the score for each label combination and store the best score
             # plus the backpointer to the previous label that yielded that score.
             for current_label, prev_label in product(labels, labels):
-                """
-                Potential optimsiation could be made here by apply constraints on label
-                transitions e.g. from NAME_VAR/NAME_MOD to I_NAME_TOK or B_NAME_TOK to
-                B_NAME_TOK. We could either skip those iterations, or force the score to
-                -inf.
-                """
                 if constrain_transitions and current_label in ILLEGAL_TRANSITIONS.get(
                     prev_label, set()
                 ):
+                    # If transition from prev_label to current_label is forbidden, do
+                    # not calculate the score.
                     continue
+
+                if constrain_transitions and current_label == "I_NAME_TOK":
+                    # If current_label is I_NAME_TOK, check if B_NAME_TOK has occurred
+                    # in the best path up to prev_label, either since the start
+                    # of the sequence or since the last NAME_SEP.
+                    if not self._b_name_tok_has_occured(lattice[:t], prev_label):
+                        continue
 
                 score = lattice[t - 1][prev_label].score + self._score(
                     features | label_features(prev_label, pos), current_label
@@ -467,6 +474,46 @@ class AveragedPerceptronViterbi:
             backpointer = score_dict[backpointer].backpointer
 
         return list(zip(reversed(label_seq), reversed(scores)))
+
+    def _b_name_tok_has_occured(
+        self, lattice: list[defaultdict[str, LatticeElement]], end_label: str
+    ) -> bool:
+        """Check if B_NAME_TOK has occured in best sequence ending with prev_label.
+
+        If NAME_SEP occurs in the best sequence, only check if B_NAME_TOK has occurred
+        since the last NAME_SEP.
+
+        Parameters
+        ----------
+        lattice : list[defaultdict[str, LatticeElement]]
+            Viterbi lattice
+        end_label : str
+            Label at end of sequence.
+
+        Returns
+        -------
+        bool
+            True if B_NAME_TOK has occured in sequence since beginning or last NAME_SEP.
+        """
+        label_seq = []
+        backpointer = end_label
+        for score_dict in reversed(lattice):
+            label_seq.append(backpointer)
+            backpointer = score_dict[backpointer].backpointer
+
+        # label_seq is generated from the end, moving forwards, so reverse.
+        label_seq = list(reversed(label_seq))
+
+        if "NAME_SEP" in label_seq:
+            # Find index of last occurance of NAME_SEP in sequence
+            name_sep_idx = max(i for i, v in enumerate(label_seq) if v == "NAME_SEP")
+            if "B_NAME_TOK" in label_seq[name_sep_idx:]:
+                return True
+        else:
+            if "B_NAME_TOK" in label_seq:
+                return True
+
+        return False
 
     def _score(self, features: set[str], current_label: str) -> int:
         """Calculate score for current label given the features for the token at the
