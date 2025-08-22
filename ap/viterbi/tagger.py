@@ -254,6 +254,8 @@ class IngredientTaggerViterbi:
 
                 if list(predicted_labels) == truth_labels:
                     # All correct, no need to modify weights
+                    n += len(predicted_labels)
+                    c += len(predicted_labels)
                     continue
 
                 # Calculate features based on prev_label for each element in sequence.
