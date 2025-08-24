@@ -459,7 +459,7 @@ class AveragedPerceptronViterbi:
             new_feature_weights = {
                 label: weight
                 for label, weight in weights.items()
-                if abs(weight) >= min_abs_weight or weight != 0
+                if abs(weight) >= min_abs_weight and weight != 0
             }
 
             if new_feature_weights != {}:
