@@ -475,9 +475,10 @@ class AveragedPerceptronViterbi:
                 del self.weights[feature]
                 filtered_count += 1
 
+        filtered_pc = 100 * filtered_count / len(self.weights)
         logger.debug(
             (
-                f"Removed {filtered_count} features for updating "
+                f"Removed {filtered_pc}% of features for updating "
                 f"less than {self.min_feat_updates} times."
             )
         )
@@ -506,7 +507,12 @@ class AveragedPerceptronViterbi:
             pruned_count += len(weights) - len(new_feature_weights)
 
         pruned_pc = 100 * pruned_count / initial_weight_count
-        logger.debug(f"Pruned {pruned_pc:.2f}% of weights.")
+        logger.debug(
+            (
+                f"Pruned {pruned_pc:.2f}% of weights for having absolute "
+                f"values small than {min_abs_weight}."
+            )
+        )
         self.weights = new_weights
 
     def quantize(self, nbits: int | None = None) -> None:
