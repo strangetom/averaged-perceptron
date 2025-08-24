@@ -73,7 +73,7 @@ class AveragedPerceptronViterbi:
         self._tstamps = defaultdict(int)
 
         # Count the number of times each feature has been updated (independent of the
-        # label).
+        # label) during training.
         self._feature_updates = defaultdict(int)
         # The minimum number of feature updates required to consider the feature in
         # the prediction step.
@@ -469,16 +469,16 @@ class AveragedPerceptronViterbi:
             # Nothing to filter
             return None
 
-        filtered_count = 0
+        filtered_count, initial_weight_count = 0, len(self.weights)
         for feature in list(self.weights.keys()):
             if self._feature_updates.get(feature, 0) < self.min_feat_updates:
                 del self.weights[feature]
                 filtered_count += 1
 
-        filtered_pc = 100 * filtered_count / len(self.weights)
+        filtered_pc = 100 * filtered_count / initial_weight_count
         logger.debug(
             (
-                f"Removed {filtered_pc}% of features for updating "
+                f"Removed {filtered_pc:.2f}% of features for updating "
                 f"less than {self.min_feat_updates} times."
             )
         )
