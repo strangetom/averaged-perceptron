@@ -72,6 +72,13 @@ class AveragedPerceptronViterbi:
         # iterations since it last changed.
         self._tstamps = defaultdict(int)
 
+        # Count the number of times each feature has been updated (independent of the
+        # label).
+        self._feature_updates = defaultdict(int)
+        # The minimum number of feature updates required to consider the feature in
+        # the prediction step.
+        self.min_feat_updates = 0
+
         self._iteration: int = 0
 
     def __repr__(self):
@@ -126,7 +133,7 @@ class AveragedPerceptronViterbi:
             List of sets of features for tokens in sequence.
         return_score : bool, optional
             If True, return score for each predicted label.
-            If False, return score is always 1.
+            If False, returned score is always 1.0.
         constrain_transitions : bool, optional
             If True, constrain label transitions to only allowed transitions.
             Default is True
@@ -287,6 +294,9 @@ class AveragedPerceptronViterbi:
             if feat not in self.weights:
                 continue
 
+            if self._feature_updates.get(feat, 0) < self.min_feat_updates:
+                continue
+
             # Increment score by weight for current feature for current label
             score += self.weights[feat].get(current_label, 0)
 
@@ -444,6 +454,33 @@ class AveragedPerceptronViterbi:
             self.weights[feat] = new_feat_weights
 
         return None
+
+    def filter_features(self) -> None:
+        """Filter features from weights dict if they were updated less than than
+        min_feat_updates.
+
+        If min_feat_updates is 0, do nothing.
+
+        Returns
+        -------
+        None
+        """
+        if self.min_feat_updates == 0:
+            # Nothing to filter
+            return None
+
+        filtered_count = 0
+        for feature in list(self.weights.keys()):
+            if self._feature_updates.get(feature, 0) < self.min_feat_updates:
+                del self.weights[feature]
+                filtered_count += 1
+
+        logger.debug(
+            (
+                f"Removed {filtered_count} features for updating "
+                f"less than {self.min_feat_updates} times."
+            )
+        )
 
     def prune_weights(self, min_abs_weight: float) -> None:
         """Prune weights by removing weights smaller than min_abs_weight.

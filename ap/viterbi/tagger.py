@@ -194,6 +194,7 @@ class IngredientTaggerViterbi:
         truth: list[list[str]],
         n_iter: int = 10,
         min_abs_weight: float = 0.1,
+        min_feat_updates: int = 0,
         quantize_bits: int | None = None,
         make_label_dict: bool = False,
         show_progress: bool = True,
@@ -211,6 +212,8 @@ class IngredientTaggerViterbi:
             Default is 10.
         min_abs_weight : float, optional
             Weights below this value will be pruned after training.
+        min_feat_updates : int, optional
+            Minimum number of feature updates required to consider feature.
         make_label_dict : bool, optional
             If True, create a dict of labels for tokens that are unambiguous in the
             training data. Default i False.
@@ -223,6 +226,9 @@ class IngredientTaggerViterbi:
 
         if make_label_dict:
             logger.warning("IngredientTaggerViterbi does not use label_dict.")
+
+        # Set min_feature_updates for model
+        self.model.min_feat_updates = min_feat_updates
 
         # Convert training features to set outside the training loop so we don't do it
         # at every epoch.
@@ -303,6 +309,7 @@ class IngredientTaggerViterbi:
 
             random.shuffle(training_data)
 
+        self.model.filter_features()
         self.model.average_weights()
         self.model.prune_weights(min_abs_weight)
         if quantize_bits:

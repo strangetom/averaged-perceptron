@@ -25,6 +25,13 @@ class AveragedPerceptron:
         # iterations since it last changed.
         self._tstamps = defaultdict(int)
 
+        # Count the number of times each feature has been updated (independent of the
+        # label).
+        self._feature_updates = defaultdict(int)
+        # The minimum number of feature updates required to consider the feature in
+        # the prediction step.
+        self.min_feat_updates = 0
+
         self._iteration: int = 0
 
     def __repr__(self):
@@ -81,7 +88,7 @@ class AveragedPerceptron:
             constraints from prior predictions.
         return_score : bool, optional
             If True, return score for predicted label.
-            If False, return scores is always 1.0.
+            If False, returned score is always 1.0.
 
         Returns
         -------
@@ -91,6 +98,9 @@ class AveragedPerceptron:
         scores = defaultdict(float)
         for feat in features:
             if feat not in self.weights:
+                continue
+
+            if self._feature_updates.get(feat, 0) < self.min_feat_updates:
                 continue
 
             weights = self.weights[feat]
@@ -130,6 +140,9 @@ class AveragedPerceptron:
         self._tstamps[key] = self._iteration
 
         self.weights[feature][label] = weight + change
+
+        # Increment feature update count
+        self._feature_updates[feature] += 1
 
     def update(self, truth: str, guess: str, features: set[str]) -> None:
         """Update weights for given features.
@@ -190,6 +203,33 @@ class AveragedPerceptron:
             self.weights[feat] = new_feat_weights
 
         return None
+
+    def filter_features(self) -> None:
+        """Filter features from weights dict if they were updated less than than
+        min_feat_updates.
+
+        If min_feat_updates is 0, do nothing.
+
+        Returns
+        -------
+        None
+        """
+        if self.min_feat_updates == 0:
+            # Nothing to filter
+            return None
+
+        filtered_count = 0
+        for feature in list(self.weights.keys()):
+            if self._feature_updates.get(feature, 0) < self.min_feat_updates:
+                del self.weights[feature]
+                filtered_count += 1
+
+        logger.debug(
+            (
+                f"Removed {filtered_count} features for updating "
+                f"less than {self.min_feat_updates} times."
+            )
+        )
 
     def prune_weights(self, min_abs_weight: float) -> None:
         """Prune weights by removing weights smaller than min_abs_weight.

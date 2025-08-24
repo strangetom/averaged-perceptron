@@ -295,6 +295,7 @@ class IngredientTagger:
         truth: list[list[str]],
         n_iter: int = 10,
         min_abs_weight: float = 0.1,
+        min_feat_updates: int = 0,
         quantize_bits: int | None = None,
         make_label_dict: bool = False,
         show_progress: bool = True,
@@ -312,10 +313,14 @@ class IngredientTagger:
             Default is 10.
         min_abs_weight : float, optional
             Weights below this value will be pruned after training.
+        min_feat_updates : int, optional
+            Minimum number of feature updates required to consider feature.
+        quantize_bits : int | None, optional
+            Description
         make_label_dict : bool, optional
             If True, create a dict of labels for tokens that are unambiguous in the
             training data. Default i False.
-        show_progress: bool, optional
+        show_progress : bool, optional
             If True, show progress bar for iterations.
             Default is True.
         """
@@ -324,6 +329,9 @@ class IngredientTagger:
 
         if make_label_dict:
             self._make_labeldict(training_features, truth)
+
+        # Set min_feature_updates for model
+        self.model.min_feat_updates = min_feat_updates
 
         # We need to convert to list before we start training so that we can shuffle the
         # list after each training epoch.
@@ -366,6 +374,7 @@ class IngredientTagger:
 
             random.shuffle(training_data)
 
+        self.model.filter_features()
         self.model.average_weights()
         self.model.prune_weights(min_abs_weight)
         if quantize_bits:
