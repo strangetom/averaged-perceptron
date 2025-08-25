@@ -286,20 +286,9 @@ class AveragedPerceptron:
         min_abs_weight : float
             Minimum absolute value of weight to keep.
         """
-        new_weights = {}
-        pruned_count, initial_weight_count = 0, 0
-        for feature, weights in self.weights.items():
-            new_feature_weights = {
-                label: weight
-                for label, weight in weights.items()
-                if abs(weight) >= min_abs_weight and weight != 0
-            }
-
-            if new_feature_weights != {}:
-                new_weights[feature] = new_feature_weights
-
-            initial_weight_count += len(weights)
-            pruned_count += len(weights) - len(new_feature_weights)
+        initial_weight_count = np.count_nonzero(self.weights)
+        self.weights[np.abs(self.weights) < min_abs_weight] = 0
+        pruned_count = np.count_nonzero(self.weights)
 
         pruned_pc = 100 * pruned_count / initial_weight_count
         logger.debug(
@@ -308,7 +297,6 @@ class AveragedPerceptron:
                 f"values small than {min_abs_weight}."
             )
         )
-        self.weights = new_weights
 
     def quantize(self, nbits: int | None = None) -> None:
         """Quantize weights to nbit signed integer using linear scaling.
@@ -327,24 +315,8 @@ class AveragedPerceptron:
         if nbits is None:
             return
 
-        max_weight = 0
-        for scores in self.weights.values():
-            max_weight = max(max_weight, max(abs(w) for w in scores.values()))
-
+        max_weight = np.max(np.abs(self.weights))
         scale = (2 ** (nbits - 1) - 1) / max_weight
+        self.weights = np.round(self.weights * scale)
 
-        new_weights = {}
-        for feature, weights in self.weights.items():
-            new_feature_weights = {}
-
-            for label, weight in weights.items():
-                quantized_weight = round(weight * scale)
-                # If the weight quantizes to zero, we can discard it as there is no need
-                # to save features that have weight of 0.
-                if quantized_weight != 0:
-                    new_feature_weights[label] = quantized_weight
-
-            new_weights[feature] = new_feature_weights
-
-        self.weights = new_weights
         logger.debug(f"Quantized model weights using {nbits} of precision.")
