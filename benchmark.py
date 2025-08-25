@@ -5,7 +5,7 @@ import time
 from ingredient_parser.en import PostProcessor, PreProcessor
 from ingredient_parser.en._utils import pluralise_units
 
-from ap.ingredient_tagger import IngredientTagger
+from ap import IngredientTagger
 
 TAGGER = IngredientTagger("PARSER.json.gz")
 
