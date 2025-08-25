@@ -37,7 +37,7 @@ class AveragedPerceptron:
     def __repr__(self):
         return f"AveragedPerceptron(labels={self.labels})"
 
-    def _confidence(self, scores: dict[str, float]) -> list[float]:
+    def _confidence(self, scores: dict[str, float]) -> dict[str, float]:
         """Calculate softmax confidence for each labels.
 
         To avoid OverflowError exceptions, this is implemented as log softmax.
@@ -65,11 +65,11 @@ class AveragedPerceptron:
 
         Returns
         -------
-        list[float]
-            List of confidences for labels
+        dict[str, float]
+            Dict of confidences for labels
         """
         max_score = max(scores.values())
-        return [round(exp(s - max_score), 3) for s in scores.values()]
+        return {label: round(exp(s - max_score), 3) for label, s in scores.items()}
 
     def predict(
         self,
@@ -113,7 +113,7 @@ class AveragedPerceptron:
         )
 
         if return_score:
-            best_confidence = max(self._confidence(scores))
+            best_confidence = self._confidence(scores)[best_label]
         else:
             best_confidence = 1.0
 
