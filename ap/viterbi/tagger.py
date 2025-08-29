@@ -7,7 +7,7 @@ import mimetypes
 import random
 from collections import defaultdict
 
-from ingredient_parser.en import PreProcessor
+from ingredient_parser.en import FeatureDict, PreProcessor
 from tqdm import tqdm
 
 from .perceptron import (
@@ -78,7 +78,7 @@ class IngredientTaggerViterbi:
         return labels
 
     def tag_from_features(
-        self, sentence_features: list[dict[str, str | bool]]
+        self, sentence_features: list[FeatureDict]
     ) -> list[tuple[str, float]]:
         """Tag a sentence with labels using Averaged Perceptron model.
 
@@ -87,7 +87,7 @@ class IngredientTaggerViterbi:
 
         Parameters
         ----------
-        sentence_features : list[dict[str, str | bool]]
+        sentence_features : list[FeatureDict]
             List of feature dicts for each token.
 
         Returns
@@ -100,7 +100,7 @@ class IngredientTaggerViterbi:
             features, constrain_transitions=self.apply_label_constraints
         )
 
-    def _convert_features(self, features: dict[str, str | bool]) -> set[str]:
+    def _convert_features(self, features: FeatureDict) -> set[str]:
         """Convert features dict to set of strings.
 
         The model weights use the features as keys, so they need to be a string rather
@@ -114,7 +114,7 @@ class IngredientTaggerViterbi:
 
         Parameters
         ----------
-        features : dict[str, str | bool]
+        features : FeatureDict
             Dictionary of features for token, obtained from
             PreProcessor.sentence_features().
 
@@ -190,7 +190,7 @@ class IngredientTaggerViterbi:
 
     def train(
         self,
-        training_features: list[list[dict]],
+        training_features: list[list[FeatureDict]],
         truth: list[list[str]],
         n_iter: int = 10,
         min_abs_weight: float = 0.1,
@@ -203,7 +203,7 @@ class IngredientTaggerViterbi:
 
         Parameters
         ----------
-        training_features : list[list[dict]]
+        training_features : list[list[FeatureDict]]
             List of sentence_features() lists for each sentence.
         truth : list[list[str]]
             List of true label lists for each sentence.
@@ -316,7 +316,9 @@ class IngredientTaggerViterbi:
             self.model.quantize(quantize_bits)
 
     def _make_labeldict(
-        self, sentence_features: list[list[dict]], sentence_labels: list[list[str]]
+        self,
+        sentence_features: list[list[FeatureDict]],
+        sentence_labels: list[list[str]],
     ) -> None:
         """Generate dict of unambiguous token stems and their labels.
 
@@ -329,10 +331,10 @@ class IngredientTaggerViterbi:
 
         Parameters
         ----------
-        sentence_token_stems : list[list[str]]
-            Stems for each token in each sentence
+        sentence_features : list[list[str]]
+            List of FeatureDicts for each sentence.
         sentence_labels : list[list[str]]
-            Label for each token in each sentence
+            Label for each token in each sentence.
         """
         counts = defaultdict(lambda: defaultdict(int))
         for features, labels in zip(sentence_features, sentence_labels):

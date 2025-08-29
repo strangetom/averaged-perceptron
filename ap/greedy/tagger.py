@@ -7,7 +7,7 @@ import mimetypes
 import random
 from collections import defaultdict
 
-from ingredient_parser.en import PreProcessor
+from ingredient_parser.en import FeatureDict, PreProcessor
 from tqdm import tqdm
 
 from ap._constants import ILLEGAL_TRANSITIONS
@@ -96,7 +96,7 @@ class IngredientTagger:
         return labels
 
     def tag_from_features(
-        self, sentence_features: list[dict[str, str | bool]]
+        self, sentence_features: list[FeatureDict]
     ) -> list[tuple[str, float]]:
         """Tag a sentence with labels using Averaged Perceptron model.
 
@@ -105,7 +105,7 @@ class IngredientTagger:
 
         Parameters
         ----------
-        sentence_features : list[dict[str, str | bool]]
+        sentence_features : list[FeatureDict]
             List of feature dicts for each token.
 
         Returns
@@ -138,7 +138,7 @@ class IngredientTagger:
 
     def _convert_features(
         self,
-        features: dict[str, str | bool],
+        features: FeatureDict,
         prev_label: str,
         prev_label2: str,
         prev_label3: str,
@@ -156,7 +156,7 @@ class IngredientTagger:
 
         Parameters
         ----------
-        features : dict[str, str | bool]
+        features : FeatureDict
             Dictionary of token features token, obtained from
             PreProcessor.sentence_features().
         prev_label : str
@@ -291,7 +291,7 @@ class IngredientTagger:
 
     def train(
         self,
-        training_features: list[list[dict]],
+        training_features: list[list[FeatureDict]],
         truth: list[list[str]],
         n_iter: int = 10,
         min_abs_weight: float = 0.1,
@@ -304,7 +304,7 @@ class IngredientTagger:
 
         Parameters
         ----------
-        training_features : list[list[dict]]
+        training_features : list[list[FeatureDict]]
             List of sentence_features() lists for each sentence.
         truth : list[list[str]]
             List of true label lists for each sentence.
@@ -381,7 +381,9 @@ class IngredientTagger:
             self.model.quantize(quantize_bits)
 
     def _make_labeldict(
-        self, sentence_features: list[list[dict]], sentence_labels: list[list[str]]
+        self,
+        sentence_features: list[list[FeatureDict]],
+        sentence_labels: list[list[str]],
     ) -> None:
         """Generate dict of unambiguous token stems and their labels.
 
@@ -394,10 +396,10 @@ class IngredientTagger:
 
         Parameters
         ----------
-        sentence_token_stems : list[list[str]]
-            Stems for each token in each sentence
+        sentence_features : list[list[FeatureDict]]
+            List of FeatureDicts for each sentence.
         sentence_labels : list[list[str]]
-            Label for each token in each sentence
+            Label for each token in each sentence.
         """
         counts = defaultdict(lambda: defaultdict(int))
         for features, labels in zip(sentence_features, sentence_labels):
