@@ -12,7 +12,8 @@ from functools import partial
 from itertools import islice
 from typing import Iterable
 
-from ingredient_parser.en import PreProcessor
+from ingredient_parser.en import FeatureDict, PreProcessor
+from tqdm import tqdm
 
 from ap._constants import ILLEGAL_TRANSITIONS
 from ap.greedy.perceptron import (
@@ -24,13 +25,11 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class EpochResults:
-    weights: dict[str, dict[str, int]]
-    feature_updates: dict[str, int]
-    iterations: int
+    weights: dict[str, dict[str, float]]
 
 
 def _convert_features(
-    features: dict[str, str | bool],
+    features: FeatureDict,
     prev_label: str,
     prev_label2: str,
     prev_label3: str,
@@ -94,17 +93,17 @@ def _convert_features(
 
 
 def train_ap_single_epoch(
-    training_data: list[tuple[list[dict], list[str]]],
+    training_data: list[tuple[list[FeatureDict], list[str]]],
     labels: set[str],
-    initial_weights: dict[str, dict[str, int]],
+    initial_weights: dict[str, dict[str, float]],
 ) -> EpochResults:
     """Train a single iteration of the AveragedPerceptron model.
 
     Parameters
     ----------
-    training_data : list[tuple[list[dict], list[str]]]
-        Training data to train model with.
-    initial_weights : dict[str, dict[str, int]]
+    training_data : list[tuple[list[FeatureDict], list[str]]]
+        List of (FeatureDicts, true label) tuples for each training sentence.
+    initial_weights : dict[str, dict[str, float]]
         Initial model weights.
     """
     model = AveragedPerceptron()
@@ -135,11 +134,9 @@ def train_ap_single_epoch(
             # historical labels being correct
             prev_label = guess
 
-    return EpochResults(
-        weights=model.weights,
-        feature_updates=model._feature_updates,
-        iterations=model._iteration,
-    )
+    model.average_weights()
+
+    return EpochResults(weights=model.weights)
 
 
 def chunked(iterable: Iterable, n: int) -> Iterable:
@@ -190,8 +187,8 @@ def chunked(iterable: Iterable, n: int) -> Iterable:
 
 
 def merge_weights(
-    weight_dicts: list[dict[str, dict[str, int]]], n: int
-) -> dict[str, dict[str, int]]:
+    weight_dicts: list[dict[str, dict[str, float]]], n: int
+) -> dict[str, dict[str, float]]:
     """Merge weights from each model.
 
     The merging is done by the weighted sum of each weight, where the sum weight is 1/n.
@@ -203,20 +200,22 @@ def merge_weights(
 
     Parameters
     ----------
-    weight_dicts : list[dict[str, dict[str, int]]]
+    weight_dicts : list[dict[str, dict[str, float]]]
         List of weight dicts.
     n : int
         Sum weight
 
     Returns
     -------
-    dict[str, dict[str, int]]
+    dict[str, dict[str, float]]
         Dict of merged weights.
     """
-    merged_weights = defaultdict(lambda: defaultdict(float))
+    merged_weights: dict[str, dict[str, float]] = {}
     for epoch_weights in weight_dicts:
         for feature, feat_weights in epoch_weights.items():
+            merged_weights.setdefault(feature, {})
             for label, weight in feat_weights.items():
+                merged_weights[feature].setdefault(label, 0.0)
                 merged_weights[feature][label] += weight / n
 
     return merged_weights
@@ -459,7 +458,7 @@ class IngredientTagger:
 
     def train(
         self,
-        training_features: list[list[dict]],
+        training_features: list[list[FeatureDict]],
         truth: list[list[str]],
         n_iter: int = 10,
         min_abs_weight: float = 0.1,
@@ -472,7 +471,7 @@ class IngredientTagger:
 
         Parameters
         ----------
-        training_features : list[list[dict]]
+        training_features : list[list[FeatureDict]]
             List of sentence_features() lists for each sentence.
         truth : list[list[str]]
             List of true label lists for each sentence.
@@ -492,8 +491,8 @@ class IngredientTagger:
             If True, show progress bar for iterations.
             Default is True.
         """
-        if len(self.model.labels) == 0:
-            raise ValueError("Set the model labels before training.")
+        if len(self.labels) == 0:
+            raise ValueError("Set the tagger labels before training.")
 
         if make_label_dict:
             self._make_labeldict(training_features, truth)
@@ -507,38 +506,27 @@ class IngredientTagger:
 
         n_shards = 8
         shard_size = int((len(training_data) + n_shards) / n_shards)
-        sharded_training_data = chunked(training_data, shard_size)
+        sharded_training_data = list(chunked(training_data, shard_size))
 
         initial_weights = {}
-        feature_updates = {}
-        total_iterations = 0
         with cf.ProcessPoolExecutor(max_workers=n_shards) as executor:
-            futures = [
-                executor.submit(
-                    train_ap_single_epoch, shard, self.labels, initial_weights
+            for _ in tqdm(range(n_iter), disable=not show_progress):
+                futures = [
+                    executor.submit(
+                        train_ap_single_epoch, shard, self.labels, initial_weights
+                    )
+                    for shard in sharded_training_data
+                ]
+                epoch_results = [f.result() for f in cf.as_completed(futures)]
+                initial_weights = merge_weights(
+                    [r.weights for r in epoch_results], n_shards
                 )
-                for shard in sharded_training_data
-            ]
-            epoch_results = [f.result() for f in cf.as_completed(futures)]
 
-            for result in epoch_results:
-                total_iterations += result.iterations
-
-            initial_weights = merge_weights(
-                [r.weights for r in epoch_results], n_shards
-            )
-            feature_updates = merge_feature_updates(
-                [r.feature_updates for r in epoch_results]
-            )
-
-        self.model = AveragedPerceptron()
-        self.model.labels = self.labels
         self.model.weights = initial_weights
-        self.model._iterations = total_iterations
-        self.model._feature_updates = feature_updates
+        self.model.labels = self.labels
 
-        self.model.filter_features()
-        self.model.average_weights()
+        # self.model.filter_features()
+        # self.model.average_weights()
         self.model.prune_weights(min_abs_weight)
         if quantize_bits:
             self.model.quantize(quantize_bits)

@@ -255,7 +255,11 @@ class AveragedPerceptron:
             initial_weight_count += len(weights)
             pruned_count += len(weights) - len(new_feature_weights)
 
-        pruned_pc = 100 * pruned_count / initial_weight_count
+        if pruned_count == 0:
+            pruned_pc = 0
+        else:
+            pruned_pc = 100 * pruned_count / initial_weight_count
+
         logger.debug(
             (
                 f"Pruned {pruned_pc:.2f}% of weights for having absolute "
