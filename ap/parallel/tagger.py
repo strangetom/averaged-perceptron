@@ -9,7 +9,7 @@ import random
 from collections import defaultdict
 from dataclasses import dataclass
 from functools import partial
-from itertools import islice
+from itertools import islice, product
 from typing import Iterable
 
 from ingredient_parser.en import FeatureDict, PreProcessor
@@ -26,6 +26,9 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EpochResults:
     weights: dict[str, dict[str, float]]
+    feature_updates: dict[str, int]  # key = feature
+    accum_weights: dict[str, float]  # key = (feature, label)
+    iterations: int
 
 
 def _convert_features(
@@ -134,9 +137,18 @@ def train_ap_single_epoch(
             # historical labels being correct
             prev_label = guess
 
-    model.average_weights()
+    # Update total to account for iterations since last update
+    for feature, weights in model.weights.items():
+        for label, weight in weights.items():
+            key = (feature, label)
+            model._totals[key] += (model._iteration - model._tstamps[key]) * weight
 
-    return EpochResults(weights=model.weights)
+    return EpochResults(
+        weights=model.weights,
+        feature_updates=model._feature_updates,
+        accum_weights=model._totals,
+        iterations=model._iteration,
+    )
 
 
 def chunked(iterable: Iterable, n: int) -> Iterable:
@@ -221,28 +233,26 @@ def merge_weights(
     return merged_weights
 
 
-def merge_feature_updates(feat_update_dicts: list[dict[str, int]]) -> dict[str, int]:
-    """Merge feature update counts by summed updates across all models.
-
-    Each element of the feat_update_dicts input and the output is a dict of
-    (feature, count) pairs.
+def merge_dicts(dicts: list[dict[str, int | float]]) -> dict[str, int | float]:
+    """Merge dicts by summing values for features across all dicts.
 
     Parameters
     ----------
-    feat_update_dicts : list[dict[str, int]]
-        List of feature update dicts.
+    dicts : list[dict[str, int | float]]
+        List of dicts to merge.
 
     Returns
     -------
-    dict[str, int]
-        Summed feature update counts.
+    dict[str, int | float]
+        Merged dict.
     """
-    merged_feature_updates = defaultdict(int)
-    for feat_updates in feat_update_dicts:
-        for feature, count in feat_updates.items():
-            merged_feature_updates[feature] += count
+    merged_dict = {}
+    for d in dicts:
+        for feature, value in d.items():
+            merged_dict.setdefault(feature, 0)
+            merged_dict[feature] += value
 
-    return merged_feature_updates
+    return merged_dict
 
 
 class IngredientTagger:
@@ -509,6 +519,9 @@ class IngredientTagger:
         sharded_training_data = list(chunked(training_data, shard_size))
 
         initial_weights = {}
+        feature_updates = {}
+        iterations = 0
+        accum_weights = {}
         with cf.ProcessPoolExecutor(max_workers=n_shards) as executor:
             for _ in tqdm(range(n_iter), disable=not show_progress):
                 futures = [
@@ -518,15 +531,29 @@ class IngredientTagger:
                     for shard in sharded_training_data
                 ]
                 epoch_results = [f.result() for f in cf.as_completed(futures)]
+
+                for r in epoch_results:
+                    iterations += r.iterations
                 initial_weights = merge_weights(
                     [r.weights for r in epoch_results], n_shards
                 )
+                feature_updates = merge_dicts(
+                    [r.feature_updates for r in epoch_results]
+                )
+                accum_weights = merge_dicts([r.accum_weights for r in epoch_results])
 
         self.model.weights = initial_weights
         self.model.labels = self.labels
+        self.model._feature_updates = feature_updates
+        self.model._iteration = iterations
+        self.model._tstamps = {
+            (feature, label): iterations
+            for feature, label in product(self.model.weights.keys(), self.labels)
+        }
+        self.model._totals = accum_weights
 
-        # self.model.filter_features()
-        # self.model.average_weights()
+        self.model.filter_features()
+        self.model.average_weights()
         self.model.prune_weights(min_abs_weight)
         if quantize_bits:
             self.model.quantize(quantize_bits)
