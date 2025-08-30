@@ -12,7 +12,7 @@ This repository relies on some of the files in the [ingredient-parser](https://g
 
 ```bash
 # Clone repos
-$ git clones https://github.com/strangetom/ingredient-parser
+$ git clone https://github.com/strangetom/ingredient-parser
 $ git clone https://github.com/strangetom/averaged-perceptron
 # Set up venv
 $ cd averaged-perceptron
