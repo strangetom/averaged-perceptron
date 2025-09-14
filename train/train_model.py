@@ -166,6 +166,7 @@ def train_model(
         test_results_to_detailed_results(
             sentences_test,
             tokens_test,
+            features_test,
             truth_test,
             labels_pred,
             scores_pred,
