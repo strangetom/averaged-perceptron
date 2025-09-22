@@ -3,4 +3,5 @@ scikit-learn
 tqdm
 pre-commit
 matplotlib
+tabulate
 -e ../ingredient-parser
