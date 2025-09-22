@@ -19,7 +19,7 @@ docstring-code-format = true
 
 [tool.pyright]
 include = ["ap", "train"]
-exclude = ["**/__pycache__"]
+exclude = ["**/__pycache__", "venv"]
 reportUnusedImport = true
 reportUnusedClass = true
 reportUnuedFunction = true
