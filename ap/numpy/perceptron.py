@@ -151,7 +151,7 @@ class AveragedPerceptronNumpy:
         Parameters
         ----------
         label_index : int
-            Index of label to update weight for.
+            Index of label to update total for.
         feature_indices : list[int]
             List of indices corresponding to features to update weights for.
         """
@@ -221,9 +221,6 @@ class AveragedPerceptronNumpy:
         self._totals[feature_indices, label_indices] += (
             iters * self.weights[feature_indices, label_indices]
         )
-
-        # Increment feature update count
-        self._feat_updates[feature_indices] += 1
 
         # Average weights
         self.weights[feature_indices, label_indices] = (
