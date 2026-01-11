@@ -8,50 +8,80 @@ logger = logging.getLogger(__name__)
 
 
 class AveragedPerceptronNumpy:
-    def __init__(self, labels: list[str], n_features: int = 2**20) -> None:
+    def __init__(self, labels: list[str], training_mode: bool = False) -> None:
         """
         Parameters
         ----------
         labels : list[str]
             List of possible labels.
-        n_features : int, optional
-            Size of the feature hash space.
-            Larger reduces collisions but increases memory usage.
+        training_mode : bool, optional
+            If True, initialise weights matrix and other matrices needed for training.
+            If False (default), do not initialise these matrices. In this case, the
+            weights matrix must be set externally.
         """
-        self.n_features = n_features
-
         # reverse=True is used here to ensure consistency with greedy AP.
         # In self.predcit, if there's a tie for the highest score the greedy AP resolves
         # using max(labels) i.e. reverse alphabetically.
         # In this version, we peform the same operation using np.argmax which resolves
         # ties using the index of the first occurance, therefore we need the label
         # indices to be in reverse alphabetical order.
-        self.labels = sorted(list(labels), reverse=True) if labels else []
+        self.labels = sorted(labels, reverse=True) if labels else []
         self.label_to_idx = {label: i for i, label in enumerate(self.labels)}
         self.n_labels = len(self.labels)
 
-        # Matrix of weights: [n_features, n_labels]
-        self.weights = np.zeros((self.n_features, self.n_labels), dtype=np.float32)
+        if training_mode:
+            initial_features = 10_000
 
-        # Accumulated weight for each feature/label combination
-        self._totals = np.zeros((self.n_features, self.n_labels), dtype=np.float64)
-        # The last iteration each feature/label combination was changed.
-        # This is to avoid having to update every key in self._totals every iteration,
-        # we only update each feature/label key when it changes, accounting for the
-        # iterations since it last changed.
-        self._tstamps = np.zeros((self.n_features, self.n_labels), dtype=np.int32)
+            # Matrix of weights: [n_features, n_labels]
+            self.weights = np.zeros((initial_features, self.n_labels), dtype=np.float32)
 
-        # Count the number of times each feature has been updated (independent of the
-        # label) during training.
-        self._feat_updates = np.zeros((self.n_features, 1), dtype=np.int32)
-        # The minimum number of feature updates required to consider the feature in
-        # the prediction step.
-        self.min_feat_updates = 0
+            # Accumulated weight for each feature/label combination
+            self._totals = np.zeros((initial_features, self.n_labels), dtype=np.float64)
+            # The last iteration each feature/label combination was changed.
+            # This is to avoid having to update every key in self._totals every
+            # iteration, we only update each feature/label key when it changes,
+            # accounting for the iterations since it last changed.
+            self._tstamps = np.zeros((initial_features, self.n_labels), dtype=np.int32)
 
-        self._iteration: int = 0
+            # Count the number of times each feature has been updated (independent of
+            # the label) during training.
+            self._feat_updates = np.zeros((initial_features,), dtype=np.int32)
+            # The minimum number of feature updates required to consider the feature in
+            # the prediction step.
+            self.min_feat_updates: int = 0
+
+            self._iteration: int = 0
 
     def __repr__(self):
         return f"AveragedPerceptronNumpy(labels={self.labels})"
+
+    def resize(self) -> None:
+        """Resize matrices by doubling the number of rows.
+
+        This is called by IngredientTagger during training once the vocabulary reaches
+        the current number of rows of the matrices.
+        """
+        current_capacity = self.weights.shape[0]
+        new_capacity = current_capacity * 2
+
+        # Helper to resize a single matrix and copy data from old matrix into new one.
+        def resize_mat(old_mat: np.ndarray) -> np.ndarray:
+            ndim = old_mat.ndim
+            dtype = old_mat.dtype
+            if ndim == 1:
+                new_mat = np.zeros((new_capacity,), dtype=dtype)
+                new_mat[:current_capacity] = old_mat
+            else:  # assume ndim=2, since we don't use anything with higher dimensions.
+                cols = old_mat.shape[1]
+                new_mat = np.zeros((new_capacity, cols), dtype=dtype)
+                new_mat[:current_capacity, :] = old_mat
+
+            return new_mat
+
+        self.weights = resize_mat(self.weights)
+        self._totals = resize_mat(self._totals)
+        self._tstamps = resize_mat(self._tstamps)
+        self._feat_updates = resize_mat(self._feat_updates)
 
     def _confidence(self, scores: np.ndarray) -> np.ndarray:
         """Calculate softmax confidence for each labels.
@@ -114,14 +144,17 @@ class AveragedPerceptronNumpy:
             Class label given features and confidence value.
         """
         # Don't consider until they have been updated more than min_feat_updates times.
-        # feature_indices = [
-        #     idx for idx in feature_indices
-        #     if self._feat_updates[idx] >= self.min_feat_updates
-        # ]
+        feature_indices_arr = np.array(feature_indices)
+        feature_indices_arr = feature_indices_arr[
+            self._feat_updates[feature_indices_arr] >= self.min_feat_updates
+        ]
 
         # Sum weights for active features across all labels at once
         # Shape: (n_labels,) i.e. the summed score for each label.
-        scores = self.weights[feature_indices].sum(axis=0)
+        if len(feature_indices_arr) > 0:
+            scores = self.weights[feature_indices_arr].sum(axis=0)
+        else:
+            scores = np.zeros(self.n_labels)
 
         # Apply label constraints by setting scores for constrained labels to the less
         # than the minimum of the scores. We have do this instead of just setting the

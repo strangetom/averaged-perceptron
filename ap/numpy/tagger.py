@@ -7,7 +7,6 @@ import mimetypes
 import random
 from collections import defaultdict
 
-import mmh3
 from ingredient_parser.en import FeatureDict, PreProcessor
 from tqdm import tqdm
 
@@ -46,16 +45,17 @@ class IngredientTaggerNumpy:
         weights_file: str | None = None,
         only_positive_bool_features: bool = False,
         apply_label_constraints: bool = True,
-        n_features: int = 2**20,
     ):
         self.labels = labels
         self.labeldict = {}
 
-        self.n_features = n_features
-        self.model = AveragedPerceptronNumpy(n_features=n_features, labels=labels)
+        self.model = AveragedPerceptronNumpy(labels=labels, training_mode=True)
 
         if weights_file is not None:
             self.load(weights_file)
+        else:
+            self.feature_vocab = {}
+            self.next_feature_index = 0
 
         self.only_positive_bool_features = only_positive_bool_features
         self.apply_label_constraints = apply_label_constraints
@@ -63,8 +63,12 @@ class IngredientTaggerNumpy:
     def __repr__(self):
         return f"IngredientTaggerNumpy(labels={self.labels})"
 
-    def _hash_features(self, features: set[str]) -> list[int]:
-        """Convert string features to integer indices using hashing.
+    def _features_to_idx(
+        self, features: set[str], insert_missing: bool = False
+    ) -> list[int]:
+        """Map feature string to indices by lookup in vocab dict.
+
+        If insert_missing is True, add feature missing from vocab dict.
 
         Whilst order is not important (hence this function accepting a set), we return
         a list because we can use that directly when indexing numpy arays.
@@ -73,16 +77,35 @@ class IngredientTaggerNumpy:
         ----------
         features : set[str]
             Set of feature strings to hash.
+        insert_missing : bool, optional
+            If True, insert missing features into feature vocab.
 
         Returns
         -------
         list[int]
             List of integer indices for string features.
+
+        Raises
+        ------
+        TypeError
+            Description
         """
         if not isinstance(features, set):
-            raise TypeError("features argument for _hash_features must be a set.")
+            raise TypeError("features argument for _features_to_idx must be a set.")
 
-        return [mmh3.hash(f) % self.n_features for f in features]
+        if insert_missing:
+            for feat in features:
+                if feat not in self.feature_vocab:
+                    self.feature_vocab[feat] = self.next_feature_index
+                    self.next_feature_index += 1
+
+            # Resize AveragedPerceptron matrices if the vocab now exceeds their rows.
+            if self.next_feature_index >= self.model.weights.shape[0]:
+                self.model.resize()
+
+        return [
+            self.feature_vocab[feat] for feat in features if feat in self.feature_vocab
+        ]
 
     def tag(self, sentence: str) -> list[tuple[str, str, float]]:
         """Tag a sentence with labels using Averaged Perceptron model.
@@ -108,7 +131,7 @@ class IngredientTaggerNumpy:
                 converted_features = self._convert_features(
                     features, prev_label, prev_label2, prev_label3
                 )
-                feature_indices = self._hash_features(converted_features)
+                feature_indices = self._features_to_idx(converted_features)
                 label, confidence = self.model.predict(
                     feature_indices, constrained_labels, return_score=True
                 )
@@ -150,7 +173,7 @@ class IngredientTaggerNumpy:
                 converted_features = self._convert_features(
                     features, prev_label, prev_label2, prev_label3
                 )
-                feature_indices = self._hash_features(converted_features)
+                feature_indices = self._features_to_idx(converted_features)
                 label, confidence = self.model.predict(
                     feature_indices, constrained_labels, return_score=True
                 )
@@ -376,7 +399,9 @@ class IngredientTaggerNumpy:
                         converted_features = self._convert_features(
                             features, prev_label, prev_label2, prev_label3
                         )
-                        feature_indices = self._hash_features(converted_features)
+                        feature_indices = self._features_to_idx(
+                            converted_features, insert_missing=True
+                        )
                         # Do not calculate score for prediction during training because
                         # the weights have not been averaged, so the values could be
                         # massive and cause OverflowErrors.
