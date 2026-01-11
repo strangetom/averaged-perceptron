@@ -15,7 +15,7 @@ from sklearn.model_selection import train_test_split
 from tabulate import tabulate
 from tqdm import tqdm
 
-from ap import IngredientTagger, IngredientTaggerViterbi
+from ap import IngredientTagger, IngredientTaggerNumpy, IngredientTaggerViterbi
 
 from .test_results_to_detailed_results import test_results_to_detailed_results
 from .test_results_to_html import test_results_to_html
@@ -57,7 +57,7 @@ def change_log_level(level: int) -> Generator[None, None, None]:
 
 def train_model(
     vectors: DataVectors,
-    model_type: Literal["ap", "ap_viterbi"],
+    model_type: Literal["ap", "ap_numpy", "ap_viterbi"],
     split: float,
     save_model: Path,
     seed: int | None,
@@ -75,7 +75,7 @@ def train_model(
     ----------
     vectors : DataVectors
         Vectors loaded from training csv files
-    model_type : Literal["ap", "ap_viterbi"]
+    model_type : Literal["ap", "ap_numpy", "ap_viterbi"]
         Model type to train.
         ap = AveragedPerceptron.
         ap_viterbi = AveragedPerceptron using viterbi decoding.
@@ -145,13 +145,18 @@ def train_model(
     logger.info(f"{len(features_test):,} testing vectors.")
 
     logger.info(f'Training "{model_type}" model with training data.')
+    labels = set(chain.from_iterable(truth_train))
     if model_type == "ap":
         tagger = IngredientTagger()
+        tagger.labels = labels
+        tagger.model.labels = tagger.labels
+    elif model_type == "ap_numpy":
+        tagger = IngredientTaggerNumpy(labels=list(labels))
     elif model_type == "ap_viterbi":
         tagger = IngredientTaggerViterbi()
+        tagger.labels = labels
+        tagger.model.labels = tagger.labels
 
-    tagger.labels = set(chain.from_iterable(truth_train))
-    tagger.model.labels = tagger.labels
     tagger.train(
         features_train,
         truth_train,
