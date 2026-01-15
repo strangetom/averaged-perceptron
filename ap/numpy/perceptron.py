@@ -196,9 +196,6 @@ class AveragedPerceptronNumpy:
         tuple[str, float]
             Class label given features and confidence value.
         """
-        if self.weights.size == 0 and not self.training_mode:
-            raise ValueError("AveragedPerceptronNumpy model does not have any weights.")
-
         feature_indices = self._features_to_idx(features)
 
         # Don't consider until they have been updated more than min_feat_updates times.

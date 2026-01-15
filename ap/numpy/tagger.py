@@ -73,6 +73,9 @@ class IngredientTaggerNumpy:
         list[tuple[str, str, float]]
             List of (token, label, confidence) tuples.
         """
+        if self.model.weights.size == 0:
+            raise ValueError("AveragedPerceptronNumpy model does not have any weights.")
+
         labels, labels_only = [], []
         p = PreProcessor(sentence)
         prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
@@ -115,6 +118,9 @@ class IngredientTaggerNumpy:
         list[tuple[str, float]]
             List of (label, confidence) tuples.
         """
+        if self.model.weights.size == 0:
+            raise ValueError("AveragedPerceptronNumpy model does not have any weights.")
+
         labels, labels_only = [], []
         prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
         for features in sentence_features:
