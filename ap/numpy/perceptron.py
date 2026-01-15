@@ -31,7 +31,7 @@ class AveragedPerceptronNumpy:
 
         self.training_mode = training_mode
         if self.training_mode:
-            self.feature_vocab = {}
+            self.feature_vocab: dict[str, int] = {}
             self.next_feature_index = 0
             initial_features = 10_000
 
@@ -59,7 +59,7 @@ class AveragedPerceptronNumpy:
             # Initialise to empty objects for inference.
             # These will need to be set to real values prior to inference.
             self.weights = np.array([])
-            self.feature_vocab = {}
+            self.feature_vocab: dict[str, int] = {}
 
     def __repr__(self):
         return f"AveragedPerceptronNumpy(labels={self.labels})"
@@ -355,7 +355,7 @@ class AveragedPerceptronNumpy:
         self.weights[np.abs(self.weights) < min_abs_weight] = 0
         pruned_count = np.count_nonzero(self.weights)
 
-        pruned_pc = 100 - 100 * pruned_count / initial_weight_count
+        pruned_pc = 100 * (1 - pruned_count / initial_weight_count)
         logger.debug(
             (
                 f"Pruned {pruned_pc:.2f}% of weights for having absolute "
