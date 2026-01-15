@@ -29,7 +29,10 @@ class AveragedPerceptronNumpy:
         self.label_to_idx = {label: i for i, label in enumerate(self.labels)}
         self.n_labels = len(self.labels)
 
-        if training_mode:
+        self.training_mode = training_mode
+        if self.training_mode:
+            self.feature_vocab = {}
+            self.next_feature_index = 0
             initial_features = 10_000
 
             # Matrix of weights: [n_features, n_labels]
@@ -52,10 +55,16 @@ class AveragedPerceptronNumpy:
 
             self._iteration: int = 0
 
+        else:
+            # Initialise to empty objects for inference.
+            # These will need to be set to real values prior to inference.
+            self.weights = np.array([])
+            self.feature_vocab = {}
+
     def __repr__(self):
         return f"AveragedPerceptronNumpy(labels={self.labels})"
 
-    def resize(self) -> None:
+    def _resize(self) -> None:
         """Resize matrices by doubling the number of rows.
 
         This is called by IngredientTagger during training once the vocabulary reaches
@@ -82,6 +91,50 @@ class AveragedPerceptronNumpy:
         self._totals = resize_mat(self._totals)
         self._tstamps = resize_mat(self._tstamps)
         self._feat_updates = resize_mat(self._feat_updates)
+
+    def _features_to_idx(self, features: set[str]) -> np.ndarray:
+        """Map feature string to indices by lookup in vocab dict.
+
+        If insert_missing is True, add feature missing from vocab dict.
+
+        Whilst order is not important (hence this function accepting a set), we return
+        a list because we can use that directly when indexing numpy arays.
+
+        Parameters
+        ----------
+        features : set[str]
+            Set of feature strings to hash.
+
+        Returns
+        -------
+        np.ndarray
+            Numpy array of integer indices for string features.
+
+        Raises
+        ------
+        TypeError
+            Description
+        """
+        if not isinstance(features, set):
+            raise TypeError("features argument for _features_to_idx must be a set.")
+
+        if self.training_mode:
+            for feat in features:
+                if feat not in self.feature_vocab:
+                    self.feature_vocab[feat] = self.next_feature_index
+                    self.next_feature_index += 1
+
+            # Resize AveragedPerceptron matrices if the vocab now exceeds their rows.
+            if self.next_feature_index >= self.weights.shape[0]:
+                self._resize()
+
+        return np.array(
+            [
+                self.feature_vocab[feat]
+                for feat in features
+                if feat in self.feature_vocab
+            ]
+        )
 
     def _confidence(self, scores: np.ndarray) -> np.ndarray:
         """Calculate softmax confidence for each labels.
@@ -121,7 +174,7 @@ class AveragedPerceptronNumpy:
 
     def predict(
         self,
-        feature_indices: list[int],
+        features: set[str],
         constrained_labels: set[str],
         return_score: bool = False,
     ) -> tuple[str, float]:
@@ -129,8 +182,8 @@ class AveragedPerceptronNumpy:
 
         Parameters
         ----------
-        feature_indices : list[int]
-            List of indices correponding to features.
+        features : set[str]
+            Set of features for token.
         constrained_labels : set[str]
             Set of labels that may not be predicted for current feature set due to
             constraints from prior predictions.
@@ -143,16 +196,20 @@ class AveragedPerceptronNumpy:
         tuple[str, float]
             Class label given features and confidence value.
         """
+        if self.weights.size == 0 and not self.training_mode:
+            raise ValueError("AveragedPerceptronNumpy model does not have any weights.")
+
+        feature_indices = self._features_to_idx(features)
+
         # Don't consider until they have been updated more than min_feat_updates times.
-        feature_indices_arr = np.array(feature_indices)
-        feature_indices_arr = feature_indices_arr[
-            self._feat_updates[feature_indices_arr] >= self.min_feat_updates
+        feature_indices = feature_indices[
+            self._feat_updates[feature_indices] >= self.min_feat_updates
         ]
 
         # Sum weights for active features across all labels at once
         # Shape: (n_labels,) i.e. the summed score for each label.
-        if len(feature_indices_arr) > 0:
-            scores = self.weights[feature_indices_arr].sum(axis=0)
+        if len(feature_indices) > 0:
+            scores = self.weights[feature_indices].sum(axis=0)
         else:
             scores = np.zeros(self.n_labels)
 
@@ -178,15 +235,15 @@ class AveragedPerceptronNumpy:
 
         return best_label, best_confidence
 
-    def _update_totals(self, label_index: int, feature_indices: list[int]):
+    def _update_totals(self, label_index: int, feature_indices: np.ndarray):
         """Update weights for feature by given change
 
         Parameters
         ----------
         label_index : int
             Index of label to update total for.
-        feature_indices : list[int]
-            List of indices corresponding to features to update weights for.
+        feature_indices : np.ndarray
+            Numpy array of indices corresponding to features to update weights for.
         """
         # Calculate how many iterations passed since this weight was last touched
         iters = self._iteration - self._tstamps[feature_indices, label_index]
@@ -203,7 +260,7 @@ class AveragedPerceptronNumpy:
         # Increment feature update count
         self._feat_updates[feature_indices] += 1
 
-    def update(self, truth: str, guess: str, feature_indices: list[int]) -> None:
+    def update(self, truth: str, guess: str, features: set[str]) -> None:
         """Update weights for given features.
 
         This only makes changes if the true and predicted labels are different.
@@ -214,8 +271,8 @@ class AveragedPerceptronNumpy:
             True label for given features.
         guess : str
             Predicted label for given features.
-        feature_indices : list[int]
-            List of indices correponding to features.
+        features : set[str]
+            Features.
 
         Returns
         -------
@@ -229,6 +286,7 @@ class AveragedPerceptronNumpy:
 
         # Update the weights and accumulated totals for the features and labels are
         # changing.
+        feature_indices = self._features_to_idx(features)
         # For true label
         truth_idx = self.label_to_idx[truth]
         self._update_totals(truth_idx, feature_indices)

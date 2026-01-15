@@ -82,7 +82,7 @@ class AveragedPerceptron:
         Parameters
         ----------
         features : set[str]
-            Set of features for token,
+            Set of features for token.
         constrained_labels : set[str]
             Set of labels that may not be predicted for current feature set due to
             constraints from prior predictions.

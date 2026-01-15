@@ -53,59 +53,12 @@ class IngredientTaggerNumpy:
 
         if weights_file is not None:
             self.load(weights_file)
-        else:
-            self.feature_vocab = {}
-            self.next_feature_index = 0
 
         self.only_positive_bool_features = only_positive_bool_features
         self.apply_label_constraints = apply_label_constraints
 
     def __repr__(self):
         return f"IngredientTaggerNumpy(labels={self.labels})"
-
-    def _features_to_idx(
-        self, features: set[str], insert_missing: bool = False
-    ) -> list[int]:
-        """Map feature string to indices by lookup in vocab dict.
-
-        If insert_missing is True, add feature missing from vocab dict.
-
-        Whilst order is not important (hence this function accepting a set), we return
-        a list because we can use that directly when indexing numpy arays.
-
-        Parameters
-        ----------
-        features : set[str]
-            Set of feature strings to hash.
-        insert_missing : bool, optional
-            If True, insert missing features into feature vocab.
-
-        Returns
-        -------
-        list[int]
-            List of integer indices for string features.
-
-        Raises
-        ------
-        TypeError
-            Description
-        """
-        if not isinstance(features, set):
-            raise TypeError("features argument for _features_to_idx must be a set.")
-
-        if insert_missing:
-            for feat in features:
-                if feat not in self.feature_vocab:
-                    self.feature_vocab[feat] = self.next_feature_index
-                    self.next_feature_index += 1
-
-            # Resize AveragedPerceptron matrices if the vocab now exceeds their rows.
-            if self.next_feature_index >= self.model.weights.shape[0]:
-                self.model.resize()
-
-        return [
-            self.feature_vocab[feat] for feat in features if feat in self.feature_vocab
-        ]
 
     def tag(self, sentence: str) -> list[tuple[str, str, float]]:
         """Tag a sentence with labels using Averaged Perceptron model.
@@ -131,9 +84,8 @@ class IngredientTaggerNumpy:
                 converted_features = self._convert_features(
                     features, prev_label, prev_label2, prev_label3
                 )
-                feature_indices = self._features_to_idx(converted_features)
                 label, confidence = self.model.predict(
-                    feature_indices, constrained_labels, return_score=True
+                    converted_features, constrained_labels, return_score=True
                 )
 
             labels.append((token.text, label, confidence))
@@ -173,9 +125,8 @@ class IngredientTaggerNumpy:
                 converted_features = self._convert_features(
                     features, prev_label, prev_label2, prev_label3
                 )
-                feature_indices = self._features_to_idx(converted_features)
                 label, confidence = self.model.predict(
-                    feature_indices, constrained_labels, return_score=True
+                    converted_features, constrained_labels, return_score=True
                 )
 
             labels.append((label, confidence))
@@ -399,9 +350,6 @@ class IngredientTaggerNumpy:
                         converted_features = self._convert_features(
                             features, prev_label, prev_label2, prev_label3
                         )
-                        feature_indices = self._features_to_idx(
-                            converted_features, insert_missing=True
-                        )
                         # Do not calculate score for prediction during training because
                         # the weights have not been averaged, so the values could be
                         # massive and cause OverflowErrors.
@@ -411,9 +359,9 @@ class IngredientTaggerNumpy:
                         # might occur during inference and therefore never adjusts
                         # the weights appropriately.
                         guess, _ = self.model.predict(
-                            feature_indices, set(), return_score=False
+                            converted_features, set(), return_score=False
                         )
-                        self.model.update(true_label, guess, feature_indices)
+                        self.model.update(true_label, guess, converted_features)
 
                     prev_label3 = prev_label2
                     prev_label2 = prev_label
