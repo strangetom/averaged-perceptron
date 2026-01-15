@@ -304,16 +304,11 @@ class AveragedPerceptronNumpy:
         None
         """
         # Final pass to bring all totals up to date
-        feature_indices, label_indices = self.weights.nonzero()
-        iters = self._iteration - self._tstamps[feature_indices, label_indices]
-        self._totals[feature_indices, label_indices] += (
-            iters * self.weights[feature_indices, label_indices]
-        )
+        iters = self._iteration - self._tstamps
+        self._totals += iters * self.weights
 
         # Average weights
-        self.weights[feature_indices, label_indices] = (
-            self._totals[feature_indices, label_indices] / self._iteration
-        )
+        self.weights = self._totals / self._iteration
 
         return None
 
