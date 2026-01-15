@@ -64,7 +64,7 @@ class AveragedPerceptronNumpy:
     def __repr__(self):
         return f"AveragedPerceptronNumpy(labels={self.labels})"
 
-    def _resize(self) -> None:
+    def _resize_matrices(self) -> None:
         """Resize matrices by doubling the number of rows.
 
         This is called by IngredientTagger during training once the vocabulary reaches
@@ -126,7 +126,7 @@ class AveragedPerceptronNumpy:
 
             # Resize AveragedPerceptron matrices if the vocab now exceeds their rows.
             if self.next_feature_index >= self.weights.shape[0]:
-                self._resize()
+                self._resize_matrices()
 
         return np.array(
             [
@@ -326,16 +326,16 @@ class AveragedPerceptronNumpy:
             # Nothing to filter
             return None
 
-        initial_weight_count = np.count_nonzero(self.weights)
+        # Find number of feature with any nonzero weights by summing the absolute values
+        # in each row then counting the nonzero sums.
+        initial_weight_count = np.count_nonzero(np.abs(self.weights).sum(axis=1))
         # Set row to 0 where feature has not been updated at least min_feature_updates
         # times.
-        idx_to_zero = np.argwhere(
-            self._feat_updates[self._feat_updates < self.min_feat_updates]
-        )
+        idx_to_zero = np.argwhere(self._feat_updates < self.min_feat_updates)
         self.weights[idx_to_zero, :] = 0
-        filtered_count = np.count_nonzero(self.weights)
+        remaining_count = np.count_nonzero(np.abs(self.weights).sum(axis=1))
 
-        filtered_pc = 100 - 100 * filtered_count / initial_weight_count
+        filtered_pc = 100 * (1 - remaining_count / initial_weight_count)
         logger.debug(
             (
                 f"Removed {filtered_pc:.2f}% of features for updating "
