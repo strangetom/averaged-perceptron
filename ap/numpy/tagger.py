@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 
-import gzip
+import io
 import json
 import logging
 import mimetypes
 import random
+import tarfile
+import time
 from collections import defaultdict
 
+import numpy as np
 from ingredient_parser.en import FeatureDict, PreProcessor
 from tqdm import tqdm
 
@@ -243,58 +246,96 @@ class IngredientTaggerNumpy:
 
         return constrained_labels
 
-    def save(self, path: str, compress: bool = True) -> None:
+    def save(self, path: str) -> None:
         """Save trained model to given path.
 
-        The weights and labels are saved as a tuple.
+        The model comprises 3 files:
+          1. weights.npy   - numpy array of weights.
+          2. features.json - list of features, ordered per the weights matrix rows
+          3. labels.json   - list of labels, ordered per the weights matrix columns
+
+        These are all saved to a .tar.gz file.
 
         Parameters
         ----------
         path : str
             Path to save model weights to.
-        compress : bool, optional
-            If True, compress .json file using gzip.
-            Default is True.
         """
-        data = {
-            "labels": list(self.model.labels),
-            "weights": self.model.weights,
-            "labeldict": self.labeldict,
-        }
-        if compress:
-            if not path.endswith(".gz"):
-                path = path + ".gz"
+        if path.endswith(".tar"):
+            path = path + ".gz"
+        elif not path.endswith(".tar.gz"):
+            path = path + ".tar.gz"
 
-            with gzip.open(path, "wt", encoding="utf-8") as f:
-                json.dump(data, f)
-        else:
-            with open(path, "w") as f:
-                # The seperator argument removes spaces from the normal defaults
-                json.dump(data, f, separators=(",", ":"))
+        weights = self.model.weights
+        features = list(self.model.feature_vocab)
+        labels = self.model.labels
+
+        # The weights matrix may be larger than the number of features due to how it's
+        # resized. Discard any rows after the total number of features.
+        resized_weights = weights[: len(features), :]
+
+        with tarfile.open(path, "w:gz") as tar:
+            # Add features file
+            features_data = json.dumps(features, indent=2).encode("utf-8")
+            features_buffer = io.BytesIO(features_data)
+            features_buffer.seek(0)
+            features_info = tarfile.TarInfo(name="features.json")
+            features_info.size = features_buffer.getbuffer().nbytes
+            features_info.mtime = time.time()
+            tar.addfile(features_info, features_buffer)
+
+            # Add labels file
+            labels_data = json.dumps(labels, indent=2).encode("utf-8")
+            labels_buffer = io.BytesIO(labels_data)
+            labels_buffer.seek(0)
+            labels_info = tarfile.TarInfo(name="labels.json")
+            labels_info.size = labels_buffer.getbuffer().nbytes
+            labels_info.mtime = time.time()
+            tar.addfile(labels_info, labels_buffer)
+
+            # Add weights matrix
+            npy_buffer = io.BytesIO()
+            np.save(npy_buffer, resized_weights)
+            npy_buffer.seek(0)
+            npy_info = tarfile.TarInfo(name="weights.npy")
+            npy_info.size = npy_buffer.getbuffer().nbytes
+            npy_info.mtime = time.time()
+            tar.addfile(npy_info, npy_buffer)
 
     def load(self, path: str) -> None:
         """Load saved model at given path.
+
+        The expected model is a .tar.gz file containing
+        * features.json
+        * labels.json
+        * weights.npy
 
         Parameters
         ----------
         path : str
             Path to model to load.
-            .json and .json.gz are accepted formats.
         """
         mimetype, encoding = mimetypes.guess_type(path)
-        if mimetype != "application/json":
-            raise ValueError("Model must be a .json or .json.gz file.")
+        if not (mimetype == "application/x-tar" and encoding == "gzip"):
+            raise ValueError("Model must be a .tar.gz file.")
 
-        if encoding == "gzip":
-            with open(path, "rb") as f:
-                data = json.loads(gzip.decompress(f.read()))
-        else:
-            with open(path, "r") as f:
-                data = json.load(f)
+        with tarfile.open(path, "r:gz") as tar:
+            # Extract and read the features file
+            features_file = tar.extractfile("features.json")
+            features = json.load(features_file)
 
-        self.model.weights = data["weights"]
-        self.labels = set(data["labels"])
-        self.labeldict = data["labeldict"]
+            # Extract and read the labels file
+            labels_file = tar.extractfile("labels.json")
+            labels = json.load(labels_file)
+
+            # Extract and read the NPY file
+            weights_file = tar.extractfile("weights.npy")
+            weights_buffer = io.BytesIO(weights_file.read())
+            weights = np.load(weights_buffer)
+
+        self.model.weights = weights
+        self.model.feature_vocab = {feat: idx for idx, feat in enumerate(features)}
+        self.labels = labels
         self.model.labels = self.labels
 
     def train(
