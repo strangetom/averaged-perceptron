@@ -228,7 +228,7 @@ class AveragedPerceptronNumpy:
 
         best_confidence = 1.0
         if return_score:
-            best_confidence = self._confidence(scores)[best_idx]
+            best_confidence = float(self._confidence(scores)[best_idx])
 
         return best_label, best_confidence
 
