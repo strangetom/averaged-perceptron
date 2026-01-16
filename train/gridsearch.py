@@ -238,10 +238,10 @@ def train_model_grid_search(
         make_label_dict=parameters.make_label_dict,
         show_progress=False,
     )
-    tagger.save(str(save_model_path))
+    saved_model_path = tagger.save(str(save_model_path))
 
     # Get model size, in MB
-    model_size = os.path.getsize(save_model_path) / 1024**2
+    model_size = os.path.getsize(saved_model_path) / 1024**2
 
     # Evaluate model
     labels_pred = []
@@ -256,7 +256,7 @@ def train_model_grid_search(
     stats = evaluate(labels_pred, truth_test, seed, combine_name_labels)
 
     if not keep_model:
-        save_model_path.unlink(missing_ok=True)
+        Path(saved_model_path).unlink(missing_ok=True)
 
     return {
         "model_size": model_size,

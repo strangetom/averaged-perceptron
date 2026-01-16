@@ -28,7 +28,7 @@ from .training_utils import (
     load_datasets,
 )
 
-DEFAULT_MODEL_LOCATION = "PARSER.json.gz"
+DEFAULT_MODEL_LOCATION = "PARSER"
 
 logger = logging.getLogger(__name__)
 
@@ -168,7 +168,8 @@ def train_model(
         show_progress=show_progress,
     )
     if keep_model:
-        tagger.save(str(save_model))
+        p = tagger.save(str(save_model))
+        logger.info(f"Model saved to {p}.")
 
     logger.info("Evaluating model with test data.")
     labels_pred = []

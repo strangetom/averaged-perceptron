@@ -286,7 +286,7 @@ class IngredientTaggerNumpy:
 
         return constrained_labels
 
-    def save(self, path: str) -> None:
+    def save(self, path: str) -> str:
         """Save trained model to given path.
 
         The model comprises 3 files:
@@ -300,6 +300,11 @@ class IngredientTaggerNumpy:
         ----------
         path : str
             Path to save model weights to.
+
+        Returns
+        -------
+        str
+            File path to saved model.
         """
         if path.endswith(".tar"):
             path = path + ".gz"
@@ -341,6 +346,8 @@ class IngredientTaggerNumpy:
             npy_info.size = npy_buffer.getbuffer().nbytes
             npy_info.mtime = time.time()
             tar.addfile(npy_info, npy_buffer)
+
+        return path
 
     def load(self, path: str) -> None:
         """Load saved model at given path.
