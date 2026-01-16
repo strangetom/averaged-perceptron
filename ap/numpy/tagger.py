@@ -44,15 +44,55 @@ class IngredientTaggerNumpy:
 
     def __init__(
         self,
-        labels: list[str],
+        *,
+        labels: list[str] | None = None,
         weights_file: str | None = None,
         only_positive_bool_features: bool = False,
         apply_label_constraints: bool = True,
     ):
-        self.labels = labels
-        self.labeldict = {}
+        """Initialise IngredientTaggerNumpy
 
-        self.model = AveragedPerceptronNumpy(labels=labels, training_mode=True)
+        Parameters
+        ----------
+        labels : list[str] | None, optional
+            List of labels, only required for training.
+        weights_file : str | None, optional
+            Path to weights file, only required for inference.
+        only_positive_bool_features : bool, optional
+            If True, only use features with boolean values if the value is True.
+            If False, always use features with boolean values.
+            Default is False.
+        apply_label_constraints : bool, optional
+            If True, constrain the predictions of the current label based on the
+            predicted sequence so far. This only applies during inference and not during
+            training.
+            If False, no constraints are applied.
+            Default is True.
+
+        Raises
+        ------
+        ValueError
+            Description
+        """
+        if labels is None and weights_file is None:
+            raise ValueError(
+                (
+                    "Either a list of labels must be provided (for training) "
+                    "or a weights file must be provided (for inference)."
+                )
+            )
+        elif labels is not None and weights_file is not None:
+            raise ValueError(
+                (
+                    "Only one of a list of labels must be provided (for training) "
+                    "or a weights file must be provided (for inference)."
+                )
+            )
+
+        self.labeldict = {}
+        if labels is not None:
+            self.labels = labels
+            self.model = AveragedPerceptronNumpy(labels=labels, training_mode=True)
 
         if weights_file is not None:
             self.load(weights_file)
@@ -322,17 +362,27 @@ class IngredientTaggerNumpy:
         with tarfile.open(path, "r:gz") as tar:
             # Extract and read the features file
             features_file = tar.extractfile("features.json")
-            features = json.load(features_file)
+            if features_file:
+                features = json.load(features_file)
+            else:
+                raise FileNotFoundError(f"Could not find features.json in {path}.")
 
             # Extract and read the labels file
             labels_file = tar.extractfile("labels.json")
-            labels = json.load(labels_file)
+            if labels_file:
+                labels = json.load(labels_file)
+            else:
+                raise FileNotFoundError(f"Could not find labels.json in {path}.")
 
             # Extract and read the NPY file
             weights_file = tar.extractfile("weights.npy")
-            weights_buffer = io.BytesIO(weights_file.read())
+            if weights_file:
+                weights_buffer = io.BytesIO(weights_file.read())
+            else:
+                raise FileNotFoundError(f"Could not find weights.npy in {path}.")
             weights = np.load(weights_buffer)
 
+        self.model = AveragedPerceptronNumpy(labels=labels)
         self.model.weights = weights
         self.model.feature_vocab = {feat: idx for idx, feat in enumerate(features)}
         self.labels = labels
