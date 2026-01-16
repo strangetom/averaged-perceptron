@@ -2,15 +2,15 @@
 
 ## Introduction
 
-Baseline implementation to was written to be easily readable and without having any dependencies.
+The baseline implementation (the "Greedy" implementation) was written to be simple and understandable. It is a pure Python implementation with no third party dependencies and achieves reasonable execution performance.
 
-But it is basically a lot of maths.
+However the model is largely just doing a lot of maths and there are Python libraries optimised for doing lots of maths, such as [Numpy](https://numpy.org). Therefore, the Greedy implementation has been rewritten using Numpy to see how much faster we can make it.
 
-Therefore, using [Numpy](https://numpy.org/) should allow the execution performance to be optimised.
+The documentation below describes the changes made to the `AveragedPerceptron` class to create the `AveragedPerceptronNumpy` class. It's worth noting that the `IngredientTaggerNumpy` is largely the same and the `IngredientTagger` class. The key differences are in the loading and saving of the model - everything else is the same. 
 
 ## Changes to the data structures
 
-In the greedy implementation of the Averaged Perceptron, the weights were stored as a `dict` of `dict`s, where both levels of `dict` only had the elements need to represent non-zero weights.
+In the Greedy implementation of the Averaged Perceptron, the weights were stored as a `dict` of `dict`s, where both levels of `dict` only had the elements need to represent non-zero weights.
 
 ```python
 weights = {
@@ -105,7 +105,7 @@ The use of a Numpy array to store the weights means that it's no longer practica
 2. The list of features, in the same order as the weights matrix rows
 3. The weights matrix
 
-To keep all these files together, all these data are saved to a `.tar.gz` archive. The labels and features are saved a JSON files. The weights are saved as an .`npy` file.
+To keep all these files together, all these data are saved to a `.tar.gz` archive. The labels and features are saved a JSON files within this archive. The weights are saved as an .`npy` file within the archive.
 
 ## Performance comparison
 
