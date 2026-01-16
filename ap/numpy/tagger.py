@@ -428,6 +428,10 @@ class IngredientTaggerNumpy:
         self.model.prune_weights(min_abs_weight)
         if quantize_bits:
             self.model.quantize(quantize_bits)
+        self.model.simplify_weights()
+        # Set training_mode False now so that we don't try to resize the model matrices
+        # when evaluating the model and there are features not already in the vocab.
+        self.model.training_mode = False
 
     def _make_labeldict(
         self,
