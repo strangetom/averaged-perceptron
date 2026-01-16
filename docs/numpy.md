@@ -109,11 +109,22 @@ To keep all these files together, all these data are saved to a `.tar.gz` archiv
 
 ## Performance comparison
 
-Comparison of the Greedy and Numpy Averaged Perceptron models, using the same hyperparameters.
-
-#### Training
+Comparison of training the Greedy and Numpy Averaged Perceptron models, using the same hyperparameters.
 
 | Model  | Model size | Time              |
 | ------ | ---------- | ----------------- |
 | Greedy | 0.388 MB   | 0:17:33 (+0%)     |
 | Numpy  | 0.324 MB   | 0:06:38 (-62.20%) |
+
+> [!NOTE]
+>
+> The speed up shown in the table represents the speed up during training, where the `AveragedPerceptron` is the bottleneck.
+>
+> During inference there will typically be pre-processing and post-processing steps that reduce the improvement seen here. The `benchmark.py` script in this repository gives a more realistic view of the performance improvement seen during inference with pre- and post-processing.
+>
+> | Model  | Processing rate  | Time per sentence |
+> | ------ | ---------------- | ----------------- |
+> | Greedy | 609.75 (+0%)     | 1640 us (+0%)     |
+> | Numpy  | 819.35 (+34.37%) | 1220 us (-25.61%) |
+>
+> 
