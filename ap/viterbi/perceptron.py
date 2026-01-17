@@ -469,13 +469,22 @@ class AveragedPerceptronViterbi:
             # Nothing to filter
             return None
 
-        filtered_count, initial_weight_count = 0, len(self.weights)
+        filtered_count = 0
+        # Count initial number of features that have at least one non-zero weight.
+        initial_feature_count = 0
+        for feature, weights in self.weights.items():
+            if not all(w == 0 for w in weights.values()):
+                initial_feature_count += 1
+
         for feature in list(self.weights.keys()):
             if self._feature_updates.get(feature, 0) < self.min_feat_updates:
+                if not all(w == 0 for w in self.weights[feature].values()):
+                    # Only count a feature as filtered if it has at least one non-zero
+                    # weight.
+                    filtered_count += 1
                 del self.weights[feature]
-                filtered_count += 1
 
-        filtered_pc = 100 * filtered_count / initial_weight_count
+        filtered_pc = 100 * filtered_count / initial_feature_count
         logger.debug(
             (
                 f"Removed {filtered_pc:.2f}% of features for updating "
@@ -492,7 +501,7 @@ class AveragedPerceptronViterbi:
             Minimum absolute value of weight to keep.
         """
         new_weights = {}
-        pruned_count, initial_weight_count = 0, 0
+        remaining_count, initial_weight_count = 0, 0
         for feature, weights in self.weights.items():
             new_feature_weights = {
                 label: weight
@@ -500,13 +509,12 @@ class AveragedPerceptronViterbi:
                 if abs(weight) >= min_abs_weight and weight != 0
             }
 
+            initial_weight_count += sum(1 for w in weights.values() if w != 0)
             if new_feature_weights != {}:
                 new_weights[feature] = new_feature_weights
+                remaining_count += len(new_feature_weights)
 
-            initial_weight_count += len(weights)
-            pruned_count += len(weights) - len(new_feature_weights)
-
-        pruned_pc = 100 * pruned_count / initial_weight_count
+        pruned_pc = 100 * (1 - remaining_count / initial_weight_count)
         logger.debug(
             (
                 f"Pruned {pruned_pc:.2f}% of weights for having absolute "

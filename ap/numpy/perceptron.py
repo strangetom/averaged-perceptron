@@ -320,6 +320,11 @@ class AveragedPerceptronNumpy:
 
         If min_feat_updates is 0, do nothing.
 
+        Note: We have to also set the rows in the _totals matrix to 0 here so that the
+        features remain at zero weight for all labels when averaging. If we don't, then
+        the features would retain whatever accumulated weight total they had at the last
+        iteration the feature was updated.
+
         Returns
         -------
         None
@@ -330,14 +335,18 @@ class AveragedPerceptronNumpy:
 
         # Find number of feature with any nonzero weights by summing the absolute values
         # in each row then counting the nonzero sums.
-        initial_weight_count = np.count_nonzero(np.abs(self.weights).sum(axis=1))
+        initial_feature_count = np.count_nonzero(np.abs(self.weights).sum(axis=1))
         # Set row to 0 where feature has not been updated at least min_feature_updates
         # times.
         idx_to_zero = np.argwhere(self._feat_updates < self.min_feat_updates)
+
         self.weights[idx_to_zero, :] = 0
+        # We also need to set the rows in the _totals matrix to zero for these too so
+        # they remain 0 after averaging.
+        self._totals[idx_to_zero, :] = 0
         remaining_count = np.count_nonzero(np.abs(self.weights).sum(axis=1))
 
-        filtered_pc = 100 * (1 - remaining_count / initial_weight_count)
+        filtered_pc = 100 * (1 - remaining_count / initial_feature_count)
         logger.debug(
             (
                 f"Removed {filtered_pc:.2f}% of features for updating "
@@ -355,9 +364,9 @@ class AveragedPerceptronNumpy:
         """
         initial_weight_count = np.count_nonzero(self.weights)
         self.weights[np.abs(self.weights) < min_abs_weight] = 0
-        pruned_count = np.count_nonzero(self.weights)
+        remaining_count = np.count_nonzero(self.weights)
+        pruned_pc = 100 * (1 - remaining_count / initial_weight_count)
 
-        pruned_pc = 100 * (1 - pruned_count / initial_weight_count)
         logger.debug(
             (
                 f"Pruned {pruned_pc:.2f}% of weights for having absolute "

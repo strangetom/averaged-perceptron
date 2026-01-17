@@ -255,7 +255,7 @@ class AveragedPerceptron:
             Minimum absolute value of weight to keep.
         """
         new_weights = {}
-        pruned_count, initial_weight_count = 0, 0
+        remaining_count, initial_weight_count = 0, 0
         for feature, weights in self.weights.items():
             new_feature_weights = {
                 label: weight
@@ -263,13 +263,12 @@ class AveragedPerceptron:
                 if abs(weight) >= min_abs_weight and weight != 0
             }
 
+            initial_weight_count += sum(1 for w in weights.values() if w != 0)
             if new_feature_weights != {}:
                 new_weights[feature] = new_feature_weights
+                remaining_count += len(new_feature_weights)
+        pruned_pc = 100 * (1 - remaining_count / initial_weight_count)
 
-            initial_weight_count += len(weights)
-            pruned_count += len(weights) - len(new_feature_weights)
-
-        pruned_pc = 100 * pruned_count / initial_weight_count
         logger.debug(
             (
                 f"Pruned {pruned_pc:.2f}% of weights for having absolute "
