@@ -115,16 +115,13 @@ class AveragedPerceptronNumpy:
         TypeError
             Description
         """
-        if not isinstance(features, set):
-            raise TypeError("features argument for _features_to_idx must be a set.")
-
         if self.training_mode:
             for feat in features:
                 if feat not in self.feature_vocab:
                     self.feature_vocab[feat] = self.next_feature_index
                     self.next_feature_index += 1
 
-            # Resize AveragedPerceptron matrices if the vocab now exceeds their rows.
+            # Resize matrices if the vocab now exceeds the current number of rows.
             if self.next_feature_index >= self.weights.shape[0]:
                 self._resize_matrices()
 
@@ -198,8 +195,8 @@ class AveragedPerceptronNumpy:
         """
         feature_indices = self._features_to_idx(features)
 
-        # Don't consider until they have been updated more than min_feat_updates times.
-        # We only do this during training.
+        # Don't consider features until they have been updated more than
+        # min_feat_updates times. We only do this during training.
         if self.training_mode:
             feature_indices = feature_indices[
                 self._feat_updates[feature_indices] >= self.min_feat_updates
@@ -277,7 +274,6 @@ class AveragedPerceptronNumpy:
         -------
         None
         """
-
         self._iteration += 1
 
         if truth == guess:
@@ -412,7 +408,8 @@ class AveragedPerceptronNumpy:
         We also simplify the feature vocab to remove the entries corresponding to those
         rows too.
         """
-        # Find row indices where absolute sum of weights is non zero. We keep these
+        # Find row indices where absolute sum of weights is non zero. We keep these and
+        # discard the rest.
         nonzero_idx = np.argwhere(np.abs(self.weights).sum(axis=1) > 0)
 
         new_feature_vocab = {}
@@ -423,4 +420,4 @@ class AveragedPerceptronNumpy:
                 next_feature_index += 1
 
         self.feature_vocab = new_feature_vocab
-        self.weights = self.weights[np.abs(self.weights).sum(axis=1) > 0]
+        self.weights = self.weights[nonzero_idx]
