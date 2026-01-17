@@ -82,7 +82,7 @@ class AveragedPerceptron:
         Parameters
         ----------
         features : set[str]
-            Set of features for token,
+            Set of features for token.
         constrained_labels : set[str]
             Set of labels that may not be predicted for current feature set due to
             constraints from prior predictions.
@@ -210,6 +210,11 @@ class AveragedPerceptron:
 
         If min_feat_updates is 0, do nothing.
 
+        Note: We don't need to make any modifications to the _totals dict as part of
+        this because when we perform the averaging we do it by iterating over the
+        weights dictionary, so anything removed from that dict here is not considered
+        when averaging.
+
         Returns
         -------
         None
@@ -218,13 +223,18 @@ class AveragedPerceptron:
             # Nothing to filter
             return None
 
-        filtered_count, initial_weight_count = 0, len(self.weights)
+        # Count initial number of features that have at least one update.
+        initial_feature_count = sum(
+            1 for count in self._feature_updates.values() if count > 0
+        )
+
+        filtered_count = 0
         for feature in list(self.weights.keys()):
             if self._feature_updates.get(feature, 0) < self.min_feat_updates:
                 del self.weights[feature]
                 filtered_count += 1
 
-        filtered_pc = 100 * filtered_count / initial_weight_count
+        filtered_pc = 100 * filtered_count / initial_feature_count
         logger.debug(
             (
                 f"Removed {filtered_pc:.2f}% of features for updating "
@@ -241,7 +251,7 @@ class AveragedPerceptron:
             Minimum absolute value of weight to keep.
         """
         new_weights = {}
-        pruned_count, initial_weight_count = 0, 0
+        remaining_count, initial_weight_count = 0, 0
         for feature, weights in self.weights.items():
             new_feature_weights = {
                 label: weight
@@ -249,13 +259,12 @@ class AveragedPerceptron:
                 if abs(weight) >= min_abs_weight and weight != 0
             }
 
+            initial_weight_count += sum(1 for w in weights.values() if w != 0)
             if new_feature_weights != {}:
                 new_weights[feature] = new_feature_weights
+                remaining_count += len(new_feature_weights)
 
-            initial_weight_count += len(weights)
-            pruned_count += len(weights) - len(new_feature_weights)
-
-        pruned_pc = 100 * pruned_count / initial_weight_count
+        pruned_pc = 100 * (1 - remaining_count / initial_weight_count)
         logger.debug(
             (
                 f"Pruned {pruned_pc:.2f}% of weights for having absolute "
@@ -301,4 +310,4 @@ class AveragedPerceptron:
             new_weights[feature] = new_feature_weights
 
         self.weights = new_weights
-        logger.debug(f"Quantized model weights using {nbits} of precision.")
+        logger.debug(f"Quantized model weights using {nbits} bits of precision.")

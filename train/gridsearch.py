@@ -17,7 +17,7 @@ from sklearn.model_selection import train_test_split
 from tabulate import tabulate
 from tqdm import tqdm
 
-from ap import IngredientTagger, IngredientTaggerViterbi
+from ap import IngredientTagger, IngredientTaggerNumpy, IngredientTaggerViterbi
 
 from .train_model import DEFAULT_MODEL_LOCATION
 from .training_utils import (
@@ -38,7 +38,7 @@ class HyperParameters:
     min_feat_updates: int
     quantize_bits: int | None
     make_label_dict: bool
-    model_type: Literal["ap", "ap_viterbi"]
+    model_type: Literal["ap", "ap_viterbi", "ap_numpy"]
 
 
 def default_hyperparams() -> HyperParameters:
@@ -206,20 +206,28 @@ def train_model_grid_search(
     save_model_path = Path(save_model).with_stem("model-" + uuid)
 
     # Train model
+    labels = set(chain.from_iterable(truth_train))
     if parameters.model_type == "ap":
         tagger = IngredientTagger(
             only_positive_bool_features=parameters.only_positive_bool_features,
             apply_label_constraints=parameters.apply_label_constraints,
         )
+        tagger.labels = labels
+        tagger.model.labels = tagger.labels
     elif parameters.model_type == "ap_viterbi":
         tagger = IngredientTaggerViterbi(
+            only_positive_bool_features=parameters.only_positive_bool_features,
+        )
+        tagger.labels = labels
+        tagger.model.labels = tagger.labels
+    elif parameters.model_type == "ap_numpy":
+        tagger = IngredientTaggerNumpy(
+            labels=list(labels),
             only_positive_bool_features=parameters.only_positive_bool_features,
         )
     else:
         raise ValueError(f"{parameters.model_type} is unknown model type.")
 
-    tagger.labels = set(chain.from_iterable(truth_train))
-    tagger.model.labels = tagger.labels
     tagger.train(
         features_train,
         truth_train,
@@ -230,10 +238,10 @@ def train_model_grid_search(
         make_label_dict=parameters.make_label_dict,
         show_progress=False,
     )
-    tagger.save(str(save_model_path))
+    saved_model_path = tagger.save(str(save_model_path))
 
     # Get model size, in MB
-    model_size = os.path.getsize(save_model_path) / 1024**2
+    model_size = os.path.getsize(saved_model_path) / 1024**2
 
     # Evaluate model
     labels_pred = []
@@ -248,7 +256,7 @@ def train_model_grid_search(
     stats = evaluate(labels_pred, truth_test, seed, combine_name_labels)
 
     if not keep_model:
-        save_model_path.unlink(missing_ok=True)
+        Path(saved_model_path).unlink(missing_ok=True)
 
     return {
         "model_size": model_size,

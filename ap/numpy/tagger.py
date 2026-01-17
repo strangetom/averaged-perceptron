@@ -1,25 +1,28 @@
 #!/usr/bin/env python3
 
-import gzip
+import io
 import json
 import logging
 import mimetypes
 import random
+import tarfile
+import time
 from collections import defaultdict
 
+import numpy as np
 from ingredient_parser.en import FeatureDict, PreProcessor
 from tqdm import tqdm
 
 from ap._constants import ILLEGAL_TRANSITIONS
 
 from .perceptron import (
-    AveragedPerceptron,
+    AveragedPerceptronNumpy,
 )
 
 logger = logging.getLogger(__name__)
 
 
-class IngredientTagger:
+class IngredientTaggerNumpy:
     """Class to tag ingredient sentence tokens.
 
     Attributes
@@ -41,13 +44,55 @@ class IngredientTagger:
 
     def __init__(
         self,
+        *,
+        labels: list[str] | None = None,
         weights_file: str | None = None,
         only_positive_bool_features: bool = False,
         apply_label_constraints: bool = True,
     ):
-        self.model = AveragedPerceptron()
+        """Initialise IngredientTaggerNumpy
+
+        Parameters
+        ----------
+        labels : list[str] | None, optional
+            List of labels, only required for training.
+        weights_file : str | None, optional
+            Path to weights file, only required for inference.
+        only_positive_bool_features : bool, optional
+            If True, only use features with boolean values if the value is True.
+            If False, always use features with boolean values.
+            Default is False.
+        apply_label_constraints : bool, optional
+            If True, constrain the predictions of the current label based on the
+            predicted sequence so far. This only applies during inference and not during
+            training.
+            If False, no constraints are applied.
+            Default is True.
+
+        Raises
+        ------
+        ValueError
+            Description
+        """
+        if labels is None and weights_file is None:
+            raise ValueError(
+                (
+                    "Either a list of labels must be provided (for training) "
+                    "or a weights file must be provided (for inference)."
+                )
+            )
+        elif labels is not None and weights_file is not None:
+            raise ValueError(
+                (
+                    "Only one of a list of labels must be provided (for training) "
+                    "or a weights file must be provided (for inference)."
+                )
+            )
+
         self.labeldict = {}
-        self.labels: set[str] = set()
+        if labels is not None:
+            self.labels = labels
+            self.model = AveragedPerceptronNumpy(labels=labels, training_mode=True)
 
         if weights_file is not None:
             self.load(weights_file)
@@ -56,7 +101,7 @@ class IngredientTagger:
         self.apply_label_constraints = apply_label_constraints
 
     def __repr__(self):
-        return f"IngredientTagger(labels={self.labels})"
+        return f"IngredientTaggerNumpy(labels={self.labels})"
 
     def tag(self, sentence: str) -> list[tuple[str, str, float]]:
         """Tag a sentence with labels using Averaged Perceptron model.
@@ -71,6 +116,9 @@ class IngredientTagger:
         list[tuple[str, str, float]]
             List of (token, label, confidence) tuples.
         """
+        if self.model.weights.size == 0:
+            raise ValueError("AveragedPerceptronNumpy model does not have any weights.")
+
         labels, labels_only = [], []
         p = PreProcessor(sentence)
         prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
@@ -113,6 +161,9 @@ class IngredientTagger:
         list[tuple[str, float]]
             List of (label, confidence) tuples.
         """
+        if self.model.weights.size == 0:
+            raise ValueError("AveragedPerceptronNumpy model does not have any weights.")
+
         labels, labels_only = [], []
         prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
         for features in sentence_features:
@@ -235,69 +286,113 @@ class IngredientTagger:
 
         return constrained_labels
 
-    def save(self, path: str, compress: bool = True) -> str:
+    def save(self, path: str) -> str:
         """Save trained model to given path.
 
-        The weights and labels are saved as a tuple.
+        The model comprises 3 files:
+          1. weights.npy   - numpy array of weights.
+          2. features.json - list of features, ordered per the weights matrix rows
+          3. labels.json   - list of labels, ordered per the weights matrix columns
+
+        These are all saved to a .tar.gz file.
 
         Parameters
         ----------
         path : str
             Path to save model weights to.
-        compress : bool, optional
-            If True, compress .json file using gzip.
-            Default is True.
 
         Returns
         -------
         str
             File path to saved model.
         """
-        data = {
-            "labels": list(self.model.labels),
-            "weights": self.model.weights,
-            "labeldict": self.labeldict,
-        }
+        if path.endswith(".tar"):
+            path = path + ".gz"
+        elif not path.endswith(".tar.gz"):
+            path = path + ".tar.gz"
 
-        if not path.endswith(".json"):
-            path = path + ".json"
+        weights = self.model.weights
+        features = list(self.model.feature_vocab)
+        labels = self.model.labels
 
-        if compress:
-            if not path.endswith(".gz"):
-                path = path + ".gz"
+        # The weights matrix may be larger than the number of features due to how it's
+        # resized. Discard any rows after the total number of features.
+        resized_weights = weights[: len(features), :]
 
-            with gzip.open(path, "wt", encoding="utf-8") as f:
-                json.dump(data, f)
-        else:
-            with open(path, "w") as f:
-                # The seperator argument removes spaces from the normal defaults
-                json.dump(data, f, separators=(",", ":"))
+        with tarfile.open(path, "w:gz") as tar:
+            # Add features file
+            features_data = json.dumps(features, indent=2).encode("utf-8")
+            features_buffer = io.BytesIO(features_data)
+            features_buffer.seek(0)
+            features_info = tarfile.TarInfo(name="features.json")
+            features_info.size = features_buffer.getbuffer().nbytes
+            features_info.mtime = time.time()
+            tar.addfile(features_info, features_buffer)
+
+            # Add labels file
+            labels_data = json.dumps(labels, indent=2).encode("utf-8")
+            labels_buffer = io.BytesIO(labels_data)
+            labels_buffer.seek(0)
+            labels_info = tarfile.TarInfo(name="labels.json")
+            labels_info.size = labels_buffer.getbuffer().nbytes
+            labels_info.mtime = time.time()
+            tar.addfile(labels_info, labels_buffer)
+
+            # Add weights matrix
+            npy_buffer = io.BytesIO()
+            np.save(npy_buffer, resized_weights)
+            npy_buffer.seek(0)
+            npy_info = tarfile.TarInfo(name="weights.npy")
+            npy_info.size = npy_buffer.getbuffer().nbytes
+            npy_info.mtime = time.time()
+            tar.addfile(npy_info, npy_buffer)
 
         return path
 
     def load(self, path: str) -> None:
         """Load saved model at given path.
 
+        The expected model is a .tar.gz file containing
+        * features.json
+        * labels.json
+        * weights.npy
+
         Parameters
         ----------
         path : str
             Path to model to load.
-            .json and .json.gz are accepted formats.
         """
         mimetype, encoding = mimetypes.guess_type(path)
-        if mimetype != "application/json":
-            raise ValueError("Model must be a .json or .json.gz file.")
+        if not (mimetype == "application/x-tar" and encoding == "gzip"):
+            raise ValueError("Model must be a .tar.gz file.")
 
-        if encoding == "gzip":
-            with open(path, "rb") as f:
-                data = json.loads(gzip.decompress(f.read()))
-        else:
-            with open(path, "r") as f:
-                data = json.load(f)
+        with tarfile.open(path, "r:gz") as tar:
+            # Extract and read the features file
+            features_file = tar.extractfile("features.json")
+            if features_file:
+                features = json.load(features_file)
+            else:
+                raise FileNotFoundError(f"Could not find features.json in {path}.")
 
-        self.model.weights = data["weights"]
-        self.labels = set(data["labels"])
-        self.labeldict = data["labeldict"]
+            # Extract and read the labels file
+            labels_file = tar.extractfile("labels.json")
+            if labels_file:
+                labels = json.load(labels_file)
+            else:
+                raise FileNotFoundError(f"Could not find labels.json in {path}.")
+
+            # Extract and read the NPY file
+            weights_file = tar.extractfile("weights.npy")
+            if weights_file:
+                weights_buffer = io.BytesIO(weights_file.read())
+            else:
+                raise FileNotFoundError(f"Could not find weights.npy in {path}.")
+            weights = np.load(weights_buffer)
+
+        self.model = AveragedPerceptronNumpy(labels=labels)
+        self.model.weights = weights
+        self.model.feature_vocab = {feat: idx for idx, feat in enumerate(features)}
+        self.labels = labels
         self.model.labels = self.labels
 
     def train(
@@ -390,6 +485,10 @@ class IngredientTagger:
         self.model.prune_weights(min_abs_weight)
         if quantize_bits:
             self.model.quantize(quantize_bits)
+        self.model.simplify_weights()
+        # Set training_mode False now so that we don't try to resize the model matrices
+        # when evaluating the model and there are features not already in the vocab.
+        self.model.training_mode = False
 
     def _make_labeldict(
         self,

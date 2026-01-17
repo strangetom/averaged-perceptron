@@ -45,7 +45,7 @@ We will then investigate improvements various improvements to this.
   * [Model optimisation](model-optimisation.md)
   * [Constrained transitions](constrained-transitions.md)
   * [Viterbi decoding](viterbi.md)
-  * ...
+  * [Execution performance optimisation](numpy.md)
 
 > [!IMPORTANT]
 >

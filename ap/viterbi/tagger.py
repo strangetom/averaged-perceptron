@@ -135,7 +135,7 @@ class IngredientTaggerViterbi:
 
         return converted
 
-    def save(self, path: str, compress: bool = True) -> None:
+    def save(self, path: str, compress: bool = True) -> str:
         """Save trained model to given path.
 
         The weights and labels are saved as a tuple.
@@ -147,12 +147,21 @@ class IngredientTaggerViterbi:
         compress : bool, optional
             If True, compress .json file using gzip.
             Default is True.
+
+        Returns
+        -------
+        str
+            File path to saved model.
         """
         data = {
             "labels": list(self.model.labels),
             "weights": self.model.weights,
             "labeldict": self.labeldict,
         }
+
+        if not path.endswith(".json"):
+            path = path + ".json"
+
         if compress:
             if not path.endswith(".gz"):
                 path = path + ".gz"
@@ -162,6 +171,8 @@ class IngredientTaggerViterbi:
         else:
             with open(path, "w") as f:
                 json.dump(data, f, separators=(",", ":"))
+
+        return path
 
     def load(self, path: str) -> None:
         """Load saved model at given path.

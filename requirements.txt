@@ -4,4 +4,5 @@ tqdm
 pre-commit
 matplotlib
 tabulate
+numpy
 -e ../ingredient-parser

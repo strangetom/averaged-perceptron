@@ -7,15 +7,21 @@ import time
 from ingredient_parser.en import PostProcessor, PreProcessor
 from ingredient_parser.en._utils import pluralise_units
 
-from ap import IngredientTagger
+from ap import IngredientTagger, IngredientTaggerNumpy, IngredientTaggerViterbi
 
-TAGGER = IngredientTagger("PARSER.json.gz")
+MODEL = {
+    "ap": IngredientTagger("PARSER.json.gz"),
+    "ap_viterbi": IngredientTaggerViterbi("PARSER.json.gz"),
+    "ap_numpy": IngredientTaggerNumpy(weights_file="PARSER.tar.gz"),
+}
 
 
-def parse_ingredient(sentence):
+def parse_ingredient(model: str, sentence: str):
+    tagger = MODEL[model]
+
     processed_sentence = PreProcessor(sentence)
     labels, scores = zip(
-        *TAGGER.tag_from_features(processed_sentence.sentence_features())
+        *tagger.tag_from_features(processed_sentence.sentence_features())
     )
     tokens = [t.text for t in processed_sentence.tokenized_sentence]
     pos_tags = [t.pos_tag for t in processed_sentence.tokenized_sentence]
@@ -46,12 +52,20 @@ def parse_ingredient(sentence):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Ingredient Parser benchmark")
     parser.add_argument(
+        "--model",
+        "-m",
+        choices=["ap", "ap_viterbi", "ap_numpy"],
+        help="Model to benchmark.",
+        default="ap",
+    )
+    parser.add_argument(
         "-n", type=int, help="Number of sentences to use from each source.", default=100
     )
     parser.add_argument(
         "--iterations", "-i", type=int, help="Number of iterations to run.", default=500
     )
     args = parser.parse_args()
+    print(f"Benchmarking '{args.model}' model.")
 
     with sqlite3.connect(
         "train/data/training.sqlite3", detect_types=sqlite3.PARSE_DECLTYPES
@@ -78,7 +92,7 @@ if __name__ == "__main__":
     start = time.time()
     for i in range(args.iterations):
         for sent in sentences:
-            parse_ingredient(sent)
+            parse_ingredient(args.model, sent)
 
     duration = time.time() - start
     total_sentences = args.iterations * len(sentences)

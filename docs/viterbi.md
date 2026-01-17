@@ -270,7 +270,7 @@ def update(
 
 ## Performance comparison
 
-Comparison of the greedy and Viterbi Averaged Perceptron models, using the same hyperparameters.
+Comparison of the Greedy and Viterbi Averaged Perceptron models, using the same hyperparameters.
 
 | Model   | Word accuracy | Sentence accuracy | Model size | Time    |
 | ------- | ------------- | ----------------- | ---------- | ------- |

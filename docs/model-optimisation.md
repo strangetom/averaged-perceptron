@@ -108,7 +108,7 @@ The figure in brackets in the accuracy columns shows the change from the baselin
 
 | Minimum update count | Word accuracy   | Sentence accuracy | Model size              |
 | -------------------- | --------------- | ----------------- | ----------------------- |
-| 0                    | 98.13% (+0%)    | 95.08% (-0%)      | 866,146 bytes (+0%)     |
+| 0                    | 98.13% (+0%)    | 95.08% (+0%)      | 866,146 bytes (+0%)     |
 | 5                    | 98.09% (-0.04%) | 95.09% (+0.01%)   | 719,536 bytes (-16.93%) |
 | 10                   | 98.09% (-0.04%) | 95.07% (-0.01%)   | 635,318 bytes (-26.65%) |
 | 20                   | 98.10% (-0.03%) | 95.03% (-0.05%)   | 514,431 bytes (-40.61%) |
