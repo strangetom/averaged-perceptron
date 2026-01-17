@@ -210,6 +210,11 @@ class AveragedPerceptron:
 
         If min_feat_updates is 0, do nothing.
 
+        Note: We don't need to make any modifications to the _totals dict as part of
+        this because when we perform the averaging we do it by iterating over the
+        weights dictionary, so anything removed from that dict here is not considered
+        when averaging.
+
         Returns
         -------
         None
@@ -218,13 +223,22 @@ class AveragedPerceptron:
             # Nothing to filter
             return None
 
-        filtered_count, initial_weight_count = 0, len(self.weights)
+        filtered_count = 0
+        # Count initial number of features that have at least one non-zero weight.
+        initial_feature_count = 0
+        for feature, weights in self.weights.items():
+            if not all(w == 0 for w in weights.values()):
+                initial_feature_count += 1
+
         for feature in list(self.weights.keys()):
             if self._feature_updates.get(feature, 0) < self.min_feat_updates:
+                if not all(w == 0 for w in self.weights[feature].values()):
+                    # Only count a feature as filtered if it has at least one non-zero
+                    # weight.
+                    filtered_count += 1
                 del self.weights[feature]
-                filtered_count += 1
 
-        filtered_pc = 100 * filtered_count / initial_weight_count
+        filtered_pc = 100 * filtered_count / initial_feature_count
         logger.debug(
             (
                 f"Removed {filtered_pc:.2f}% of features for updating "
