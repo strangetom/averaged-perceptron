@@ -250,6 +250,10 @@ class AveragedPerceptron:
         min_abs_weight : float
             Minimum absolute value of weight to keep.
         """
+        if min_abs_weight == 0:
+            # Nothing to prune
+            return None
+
         new_weights = {}
         remaining_count, initial_weight_count = 0, 0
         for feature, weights in self.weights.items():

@@ -368,6 +368,10 @@ class AveragedPerceptronNumpy:
         min_abs_weight : float
             Minimum absolute value of weight to keep.
         """
+        if min_abs_weight == 0:
+            # Nothing to prune
+            return None
+
         initial_weight_count = np.count_nonzero(self.weights)
         self.weights[np.abs(self.weights) < min_abs_weight] = 0
         remaining_count = np.count_nonzero(self.weights)
