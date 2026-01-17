@@ -558,4 +558,4 @@ class AveragedPerceptronViterbi:
             new_weights[feature] = new_feature_weights
 
         self.weights = new_weights
-        logger.debug(f"Quantized model weights using {nbits} of precision.")
+        logger.debug(f"Quantized model weights using {nbits} bits of precision.")

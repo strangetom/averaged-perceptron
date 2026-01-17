@@ -394,7 +394,7 @@ class AveragedPerceptronNumpy:
         max_weight = np.max(self.weights)
         scale = (2 ** (nbits - 1) - 1) / max_weight
         self.weights = np.round(self.weights * scale).astype(np.int32)
-        logger.debug(f"Quantized model weights using {nbits} of precision.")
+        logger.debug(f"Quantized model weights using {nbits} bits of precision.")
 
     def simplify_weights(self) -> None:
         """Simplify weights matrix by discarding any rows that are all zeros.

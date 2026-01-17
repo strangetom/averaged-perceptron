@@ -267,8 +267,8 @@ class AveragedPerceptron:
             if new_feature_weights != {}:
                 new_weights[feature] = new_feature_weights
                 remaining_count += len(new_feature_weights)
-        pruned_pc = 100 * (1 - remaining_count / initial_weight_count)
 
+        pruned_pc = 100 * (1 - remaining_count / initial_weight_count)
         logger.debug(
             (
                 f"Pruned {pruned_pc:.2f}% of weights for having absolute "
@@ -314,4 +314,4 @@ class AveragedPerceptron:
             new_weights[feature] = new_feature_weights
 
         self.weights = new_weights
-        logger.debug(f"Quantized model weights using {nbits} of precision.")
+        logger.debug(f"Quantized model weights using {nbits} bits of precision.")
