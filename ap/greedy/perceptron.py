@@ -223,20 +223,16 @@ class AveragedPerceptron:
             # Nothing to filter
             return None
 
-        filtered_count = 0
-        # Count initial number of features that have at least one non-zero weight.
-        initial_feature_count = 0
-        for feature, weights in self.weights.items():
-            if not all(w == 0 for w in weights.values()):
-                initial_feature_count += 1
+        # Count initial number of features that have at least one update.
+        initial_feature_count = sum(
+            1 for count in self._feature_updates.values() if count > 0
+        )
 
+        filtered_count = 0
         for feature in list(self.weights.keys()):
             if self._feature_updates.get(feature, 0) < self.min_feat_updates:
-                if not all(w == 0 for w in self.weights[feature].values()):
-                    # Only count a feature as filtered if it has at least one non-zero
-                    # weight.
-                    filtered_count += 1
                 del self.weights[feature]
+                filtered_count += 1
 
         filtered_pc = 100 * filtered_count / initial_feature_count
         logger.debug(

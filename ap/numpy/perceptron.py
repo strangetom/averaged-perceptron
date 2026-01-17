@@ -333,20 +333,30 @@ class AveragedPerceptronNumpy:
             # Nothing to filter
             return None
 
-        # Find number of feature with any nonzero weights by summing the absolute values
-        # in each row then counting the nonzero sums.
-        initial_feature_count = np.count_nonzero(np.abs(self.weights).sum(axis=1))
-        # Set row to 0 where feature has not been updated at least min_feature_updates
-        # times.
-        idx_to_zero = np.argwhere(self._feat_updates < self.min_feat_updates)
+        # Initial feature count is number of features that have ever been updated.
+        initial_feature_count = np.count_nonzero(self._feat_updates)
 
-        self.weights[idx_to_zero, :] = 0
+        # Set row indices where feature has not been updated at least
+        # min_feature_updates times.
+        # We're only considering rows with at least one feature update here to make the
+        # calculation of the logging message easier. We could just do
+        # np.argwhere(self._feat_updates < self.min_feat_updates), but that would also
+        # include features that have never been updated.
+        idx_to_zero = np.argwhere(
+            np.logical_and(
+                0 < self._feat_updates, self._feat_updates < self.min_feat_updates
+            )
+        )
+
+        # Set weights for these rows to 0.
         # We also need to set the rows in the _totals matrix to zero for these too so
         # they remain 0 after averaging.
+        self.weights[idx_to_zero, :] = 0
         self._totals[idx_to_zero, :] = 0
-        remaining_count = np.count_nonzero(np.abs(self.weights).sum(axis=1))
 
-        filtered_pc = 100 * (1 - remaining_count / initial_feature_count)
+        filtered_count = idx_to_zero.shape[0]
+
+        filtered_pc = 100 * filtered_count / initial_feature_count
         logger.debug(
             (
                 f"Removed {filtered_pc:.2f}% of features for updating "
