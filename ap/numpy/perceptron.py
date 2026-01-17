@@ -424,4 +424,5 @@ class AveragedPerceptronNumpy:
                 next_feature_index += 1
 
         self.feature_vocab = new_feature_vocab
-        self.weights = self.weights[nonzero_idx]
+        # Can't use nonzero_idx to index here because it has the wrong dimensions.
+        self.weights = self.weights[np.abs(self.weights).sum(axis=1) > 0]
