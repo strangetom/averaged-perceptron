@@ -163,15 +163,8 @@ class AveragedPerceptronViterbi:
                 # I_NAME_TOK cannot be the first label because it must follow B_NAME_TOK
                 continue
 
-            # Do not consider features that haven't been updated more than
-            # min_feat_updates times.
-            active_features = set()
-            for feat in features_seq[0]:
-                if self._feature_updates.get(feat, 0) >= self.min_feat_updates:
-                    active_features.add(feat)
-
             score = self._score(
-                active_features | label_features("-START-", pos), current_label
+                features_seq[0] | label_features("-START-", pos), current_label
             )
             # Select the best score, store it and set the backpointer to the
             # previous label that resulted in this score.
@@ -183,13 +176,6 @@ class AveragedPerceptronViterbi:
         for t, features in enumerate(features_seq[1:], 1):
             # Extract POS tag for current feature set.
             pos = self._get_pos_from_features(features)
-
-            # Do not consider features that haven't been updated more than
-            # min_feat_updates times.
-            active_features = set()
-            for feat in features:
-                if self._feature_updates.get(feat, 0) >= self.min_feat_updates:
-                    active_features.add(feat)
 
             # Iterate over all combinations of previous and current labels for each
             # set of features.
@@ -211,7 +197,7 @@ class AveragedPerceptronViterbi:
                         continue
 
                 score = lattice[t - 1][prev_label].score + self._score(
-                    active_features | label_features(prev_label, pos), current_label
+                    features | label_features(prev_label, pos), current_label
                 )
                 # Select the best score, store it and set the backpointer to the
                 # previous label that resulted in this score.
