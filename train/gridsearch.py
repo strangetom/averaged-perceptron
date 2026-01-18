@@ -288,9 +288,11 @@ def grid_search(args: argparse.Namespace):
             for future in tqdm(cf.as_completed(futures), total=len(futures))
         ]
 
-    # Sort with highest sentence accuracy first
+    # Sort with highest sentence accuracy first, then highest token accuracy
     eval_results = sorted(
-        eval_results, key=lambda x: x["stats"].sentence.accuracy, reverse=True
+        eval_results,
+        key=lambda x: (x["stats"].sentence.accuracy, x["stats"].token.accuracy),
+        reverse=True,
     )
 
     headers = [
