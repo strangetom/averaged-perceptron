@@ -15,7 +15,12 @@ from sklearn.model_selection import train_test_split
 from tabulate import tabulate
 from tqdm import tqdm
 
-from ap import IngredientTagger, IngredientTaggerNumpy, IngredientTaggerViterbi
+from ap import (
+    IngredientTagger,
+    IngredientTaggerBISECL,
+    IngredientTaggerNumpy,
+    IngredientTaggerViterbi,
+)
 
 from .test_results_to_detailed_results import test_results_to_detailed_results
 from .test_results_to_html import test_results_to_html
@@ -57,7 +62,7 @@ def change_log_level(level: int) -> Generator[None, None, None]:
 
 def train_model(
     vectors: DataVectors,
-    model_type: Literal["ap", "ap_numpy", "ap_viterbi"],
+    model_type: Literal["ap", "ap_numpy", "ap_viterbi", "ap_bisecl"],
     split: float,
     save_model: Path,
     seed: int | None,
@@ -156,14 +161,18 @@ def train_model(
         tagger = IngredientTaggerViterbi()
         tagger.labels = labels
         tagger.model.labels = tagger.labels
+    elif model_type == "ap_bisecl":
+        tagger = IngredientTaggerBISECL()
+        tagger.labels = labels
+        tagger.model.labels = tagger.labels
 
     tagger.train(
         features_train,
         truth_train,
-        n_iter=20,
-        min_abs_weight=2,
-        min_feat_updates=5,
-        quantize_bits=8,
+        n_iter=10,
+        min_abs_weight=0,
+        min_feat_updates=0,
+        quantize_bits=None,
         make_label_dict=False,
         show_progress=show_progress,
     )

@@ -94,7 +94,7 @@ if __name__ == "__main__":
         "--model",
         type=str,
         default="ap",
-        choices=["ap", "ap_numpy", "ap_viterbi"],
+        choices=["ap", "ap_numpy", "ap_viterbi", "ap_bisecl"],
         help="Type of model to train..",
     )
     train_parser.add_argument(
@@ -182,7 +182,7 @@ if __name__ == "__main__":
         "--model",
         type=str,
         default="ap",
-        choices=["ap", "ap_numpy", "ap_viterbi"],
+        choices=["ap", "ap_numpy", "ap_viterbi", "ap_bisecl"],
         help="Type of model to train..",
     )
     multiple_parser.add_argument(
