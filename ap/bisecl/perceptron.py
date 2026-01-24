@@ -2,6 +2,7 @@
 
 import logging
 from collections import defaultdict
+from itertools import product
 from math import exp
 
 logger = logging.getLogger(__name__)
@@ -158,7 +159,7 @@ class AveragedPerceptronBISECL:
         constrain_transitions: bool = True,
     ) -> list[tuple[str, float]]:
         """Predict the label sequence for a sequence of tokens described by sequence of
-        features sets using Viterbi algorithm.
+        features sets using bidrectional sequence classification algorithm.
 
         Parameters
         ----------
@@ -176,27 +177,35 @@ class AveragedPerceptronBISECL:
         list[tuple[str, float]]
             List of (label, score) tuples for sequence.
         """
+        # Sort labels to ensure that ties are always resolved in the same way.
+        sorted_labels = sorted(self.labels, reverse=True)
+
         current_labels: dict[int, str] = {}
         label_confidence: dict[int, float] = {}
         indices_to_label = set(range(len(features_seq)))
 
+        # While there are still indices to label, iterate over all combinations of index
+        # and label, calculating the score. Keep track of the best score and assign the
+        # label to that index.
+        # Then remove that index from the set remaining and repeat, assiging the label
+        # to the index that results in the highest score across the remaining unlabelled
+        # indices.
         while indices_to_label:
             best_score = -float("inf")
             best_candidate = (-1, "_UNASSIGNED_")
             scores: dict[int, dict[str, float]] = defaultdict(dict)
 
-            for i in indices_to_label:
+            for i, label in product(indices_to_label, sorted_labels):
                 stem = token_stems[i]
                 pos = token_pos[i]
-                for label in self.labels:
-                    features = features_seq[i] | self.label_features(
-                        current_labels, i, stem, pos, label, len(features_seq)
-                    )
-                    score = self._score(features, label)
-                    scores[i][label] = score
-                    if score > best_score:
-                        best_score = score
-                        best_candidate = (i, label)
+                features = features_seq[i] | self.label_features(
+                    current_labels, i, stem, pos, label, len(features_seq)
+                )
+                score = self.score(features, label)
+                scores[i][label] = score
+                if score > best_score:
+                    best_score = score
+                    best_candidate = (i, label)
 
             idx, label = best_candidate
             current_labels[idx] = label
@@ -205,13 +214,14 @@ class AveragedPerceptronBISECL:
             else:
                 label_confidence[idx] = 1.0
 
+            # Now a label has been assigned to this index, remove from set.
             indices_to_label.remove(idx)
 
         return [
             (current_labels[i], label_confidence[i]) for i in range(len(features_seq))
         ]
 
-    def _score(self, features: set[str], current_label: str) -> int:
+    def score(self, features: set[str], current_label: str) -> int:
         """Calculate score for current label given the features for the token at the
         current position and the given previous label.
 

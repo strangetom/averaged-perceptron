@@ -6,6 +6,7 @@ import logging
 import mimetypes
 import random
 from collections import defaultdict
+from itertools import product
 
 from ingredient_parser.en import FeatureDict, PreProcessor
 from tqdm import tqdm
@@ -240,6 +241,9 @@ class IngredientTaggerBISECL:
         # Set min_feature_updates for model
         self.model.min_feat_updates = min_feat_updates
 
+        # Sort labels to ensure that ties are always resolved in the same way.
+        sorted_labels = sorted(self.labels, reverse=True)
+
         # Convert training features to set outside the training loop so we don't do it
         # at every epoch.
         converted_training_features = [
@@ -274,17 +278,16 @@ class IngredientTaggerBISECL:
                     best_score = -float("inf")
                     best_candidate = (-1, "_UNASSIGNED_")
 
-                    for i in indices_to_label:
+                    for i, label in product(indices_to_label, sorted_labels):
                         stem = stem_seq[i]
                         pos = pos_seq[i]
-                        for label in self.labels:
-                            features = features_seq[i] | self.model.label_features(
-                                current_labels, i, stem, pos, label, len(features_seq)
-                            )
-                            score = self.model._score(features, label)
-                            if score > best_score:
-                                best_score = score
-                                best_candidate = (i, label)
+                        features = features_seq[i] | self.model.label_features(
+                            current_labels, i, stem, pos, label, len(features_seq)
+                        )
+                        score = self.model.score(features, label)
+                        if score > best_score:
+                            best_score = score
+                            best_candidate = (i, label)
 
                     pred_idx, predict_label = best_candidate
                     true_label = truth_labels[pred_idx]
