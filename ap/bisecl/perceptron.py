@@ -95,28 +95,24 @@ class AveragedPerceptronBISECL:
             "prev_label3+prev_label2+prev_label="
             + "+".join((prev_label3, prev_label2, prev_label)),
             "prev_label+pos=" + prev_label + "+" + token_pos,
+            "prev_label+stem=" + prev_label + "+" + token_stem,
             "prev_label+current_label=" + prev_label + "+" + label,
             "next_label=" + next_label,
             "next_label2=" + next_label2,
             "next_label3=" + next_label3,
             "next_label+pos=" + next_label + "+" + token_pos,
+            "next_label+stem=" + next_label + "+" + token_stem,
             "next_label2+next_label=" + "+".join((next_label2, next_label)),
             "next_label3+next_label2=" + "+".join((next_label3, next_label2)),
             "next_label3+next_label2+next_label="
             + "+".join((next_label3, next_label2, next_label)),
             "next_label+current_label=" + next_label + "+" + label,
             "prev_label+pos+next_label="
-            + prev_label
-            + "+"
-            + token_pos
-            + "+"
-            + next_label,
+            + "+".join((prev_label, token_pos, next_label)),
+            "prev_label+stem+next_label="
+            + "+".join((prev_label, token_stem, next_label)),
             "prev_label+current_label+next_label="
-            + prev_label
-            + "+"
-            + label
-            + "+"
-            + next_label,
+            + "+".join((prev_label, label, next_label)),
         }
 
     def _confidence(self, scores: dict[str, str]) -> list[float]:
