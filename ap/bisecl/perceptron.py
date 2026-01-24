@@ -115,7 +115,7 @@ class AveragedPerceptronBISECL:
             + "+".join((prev_label, label, next_label)),
         }
 
-    def _confidence(self, scores: dict[str, str]) -> list[float]:
+    def _confidence(self, scores: dict[str, float]) -> dict[str, float]:
         """Calculate softmax confidence for each labels.
 
         To avoid OverflowError exceptions, this is implemented as log softmax.
@@ -138,16 +138,16 @@ class AveragedPerceptronBISECL:
 
         Parameters
         ----------
-        scores : dict[str, LatticeElement]
-            Dict of non-zero scores for labels
+        scores : dict[str, float]
+            Dict of scores for labels
 
         Returns
         -------
-        list[float]
-            List of confidences for labels
+        dict[str, float]
+            Dict of confidences for labels
         """
-        max_score = max(s.score for s in scores.values())
-        return [round(exp(s.score - max_score), 3) for s in scores.values()]
+        max_score = max(scores.values())
+        return {label: round(exp(s - max_score), 3) for label, s in scores.items()}
 
     def predict_sequence(
         self,
@@ -177,11 +177,13 @@ class AveragedPerceptronBISECL:
             List of (label, score) tuples for sequence.
         """
         current_labels: dict[int, str] = {}
+        label_confidence: dict[int, float] = {}
         indices_to_label = set(range(len(features_seq)))
 
         while indices_to_label:
             best_score = -float("inf")
             best_candidate = (-1, "_UNASSIGNED_")
+            scores: dict[int, dict[str, float]] = defaultdict(dict)
 
             for i in indices_to_label:
                 stem = token_stems[i]
@@ -191,15 +193,23 @@ class AveragedPerceptronBISECL:
                         current_labels, i, stem, pos, label, len(features_seq)
                     )
                     score = self._score(features, label)
+                    scores[i][label] = score
                     if score > best_score:
                         best_score = score
                         best_candidate = (i, label)
 
             idx, label = best_candidate
             current_labels[idx] = label
+            if return_score:
+                label_confidence[idx] = self._confidence(scores[idx])[label]
+            else:
+                label_confidence[idx] = 1.0
+
             indices_to_label.remove(idx)
 
-        return [(current_labels[i], 1.0) for i in range(len(features_seq))]
+        return [
+            (current_labels[i], label_confidence[i]) for i in range(len(features_seq))
+        ]
 
     def _score(self, features: set[str], current_label: str) -> int:
         """Calculate score for current label given the features for the token at the
