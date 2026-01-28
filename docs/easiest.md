@@ -1,14 +1,14 @@
-# Easiest first algorithm
+# Easiest First Algorithm
 
 ## Introduction
 
-A limitation of the greedy implementation of the Averaged Perceptron model is that always assigns label in a left to right direction. The assigned label for tokens to the left of a token under consideration provide useful information in helping determine the most likely label for the current token. What if we could also use the labels of tokens to the right of the current token to help assign a label to the current token?
+A limitation of the greedy implementation of the Averaged Perceptron model is that always assigns label in a left to right direction. The assigned label for tokens to the left of a token under consideration provide useful information in helping determine the likeliest label for the current token. What if we could also use the labels of tokens to the right of the current token to help assign a label to the current token?
 
 The "easiest-first" algorithm allows this by changing the order in which labels are assigned. Instead of assigning label in a left to right direction, labels are assigned based on the easiest label to assign to an unlabelled token. In this algorithm, easiest refers to the highest score across all labels across all unlabelled tokens. This means that when considering each token there may be tokens in the surrounding context window that already have labels assigned, which can help in determining the label for the current token.
 
-## How it works with the Averaged Perceptron
+## How It Works with the Averaged Perceptron
 
-### Algorithm outline
+### Algorithm Outline
 
 The basic algorithm in fairly straightforward. Starting with a completely unlabelled sequence of tokens, iteration over each token. For each token, iterate over all possible labels and calculate the score for each label based on the features of that token and the labels of surrounding tokens (which may be unassigned).
 
@@ -188,9 +188,9 @@ def label_features(
 
 We can include label features based a context window of arbitrary size. The code above assumed we are only looking at one token either side of the token under consideration, but this can be easily expanded to include more tokens.
 
-## Model training
+## Model Training
 
-The model training process looks very similar to the greedy Averaged Perceptron implementation, with some additional complexity due to the easiest-first approach. The prediction of the label for each token is done identically to the `predict()` function described above, however once a label has been assigned to a token we need to check it against the true label and update the weights if it was wrong.
+The model training process looks very similar to the greedy Averaged Perceptron implementation, with some additional complexity due to the easiest-first approach. The prediction of the label for each token is done identically to the `predict()` function described above. However once a label has been assigned to a token we need to check it against the true label and update the weights if it was wrong.
 
 ```python
 while indices_to_label:
@@ -295,9 +295,9 @@ def update(
         self._update_feature(truth, feat, weights.get(truth, 0.0), 1.0)
 ```
 
-## Performance comparison
+## Performance Comparison
 
-Comparison of the Greedy and Easiest-first Averaged Perceptron models, using the same hyper parameters.
+Comparison of the Greedy and Easiest-first Averaged Perceptron models, using the same hyperparameters.
 
 | Model         | Word accuracy | Sentence accuracy | Model size | Time |
 | ------------- | ------------- | ----------------- | ---------- | ---- |

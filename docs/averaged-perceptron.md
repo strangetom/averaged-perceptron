@@ -8,7 +8,7 @@
 
 ### Features
 
-In general, the best information we have can have for predicted the label for a token is the token itself and the surrounding tokens (i.e. it's context). Unfortunately it is on practical is create an exhaustive database of all possible tokens and their context. Instead we extract various bits of information from each token and it's context and use these to help is predict the correct label. Each of bits of information (*"features"*) will naturally provide less information than the token itself, but the combination of the features will help us predict the label, especially for tokens we haven't seen before.
+In general, the best information we have can have for predicted the label for a token is the token itself and the surrounding tokens (i.e. it's context). Unfortunately it is on practical is create an exhaustive database of all possible tokens and their context. Instead, we extract various bits of information from each token and it's context and use these to help is predict the correct label. Each of bits of information (*"features"*) will naturally provide less information than the token itself, but the combination of the features will help us predict the label, especially for tokens we haven't seen before.
 
 The most obvious feature is the token itself. Other useful features can be things such as 
 
@@ -55,7 +55,7 @@ The features of a token will be stored as a `set` of `str`. As an example, for t
 
 ### Prediction
 
-Given a set of features for a token, we can predict it's label by summing the weight for each label across each of the features for the token.
+Given a set of features for a token, we can predict its label by summing the weight for each label across each of the features for the token.
 
 ```py
 def predict(self, features: set[str]) -> str:
@@ -106,13 +106,13 @@ self.weights = {
 }
 ```
 
-We only include non-zero weights in the `weights` data structure. If the feature is present in the `dict`, it means all label weights for that feature are zero. If the feature is present, only labels with non-zero weights are stored.
+We only include nonzero weights in the `weights` data structure. If the feature is present in the `dict`, it means all label weights for that feature are zero. If the feature is present, only labels with nonzero weights are stored.
 
 The `weights` structure is organised like because the weights are sparse. For any given token, most of the features are not relevant.
 
 ### Training
 
-Lets train the model to learn the weights so we can predict the label for a sequence of tokens.
+Let's train the model to learn the weights so we can predict the label for a sequence of tokens.
 
 The Averaged Perceptron model is error driven. This means that all weights start of as 0 and we only modify the weights whenever the model makes a mistake. When we first start training, we can naturally expect a lots of mistakes and a lot of updates. As the training progress, the rate of weight updates will decrease.
 
@@ -147,7 +147,7 @@ Since we update the weights after each prediction, the model will quickly tend t
 
 > [!NOTE]
 >
-> The Averaged Perceptron model only has a single hyper-parameter that can be tuned during training: `n_epochs`. This is the number of times we iterate over all the training data, shuffling the order between each training epoch. 
+> The Averaged Perceptron model only has a single hyperparameter that can be tuned during training: `n_epochs`. This is the number of times we iterate over all of the training data, shuffling the order between each training epoch. 
 
 ### Averaging
 
@@ -161,7 +161,7 @@ We need a way to capture how the weights change over the entire training process
 >
 > If we train for 10 epochs, with 20 sentences, each sentence having 5 tokens, then we need to average over 10 x 20 x 5 = 1000 updates.
 
-The most simplistic way to do the averaging would be to keep track of the accumulated the weights for each feature at each inner loop iteration, then divide by the total number of iterations. This would extremely inefficient as we would have to update the accumulated values for *every* feature even if we don't modify it's weights.
+The most simplistic way to do the averaging would be to keep track of the accumulated the weights for each feature at each inner loop iteration, then divide by the total number of iterations. This would extremely inefficient as we would have to update the accumulated values for *every* feature even if we don't modify its weights.
 
 A more efficient approach is to only update the accumulated values whenever the weight changes. To do this we keep track of when the weights for a feature last changed and when it changes again, we can calculate the accumulated weight for all that time it didn't change.
 
@@ -224,7 +224,7 @@ def _update_feature(self, label: str, feature: str, weight: float, change: float
 
 `self._totals` keeps track of the accumulated value for each (feature, label) pair that gets updated (we don't bother for features who's weights never change). 
 
-When the weight of a label for a feature changes, we calculate the accumulated weight since the last change and add that to the value in `self._totals`, then we update the timestamp (`self._tstamps`) to the current iteration and modify the weight; incrementing or decrementing as appropriate.
+When the weight of a label for a feature changes, we calculate the accumulated weight since the last change and add that to the value in `self._totals`. Then we update the timestamp (`self._tstamps`) to the current iteration and modify the weight; incrementing or decrementing as appropriate.
 
 Once the training process has finished, we can update all the totals with the accumulated weights for the total number of iterations, then divide by the number of iterations to get the averaged weight.
 
@@ -249,7 +249,7 @@ def average_weights(self):
         self.weights[feat] = avg_feat_weights
 ```
 
-### Calculating probabilities
+### Calculating Probabilities
 
 When predicted the label for a token we can calculate the confidence in the label from the scores we calculate from the weight. We can treat each score as a log probability and normalise [^2].
 
@@ -264,12 +264,13 @@ $$
 \log{(p_i)} = \log{(\exp{(s_i)})} - \log{\sum^N_{i=1}\exp{(s_i)}} \\
 \log{(p_i)} = s_i - \log{\sum^N_{i=1}\exp{(s_i)}}
 $$
-If the model is very confident in the chosen label, meaning the score for the selected label is much higher than the scores for the other label, then the sum in second term becomes dominated by the largest values. Therefore we can simplify this further
+
+If the model is very confident in the chosen label, meaning the score for the selected label is much higher than the scores for the other label, then the sum in second term becomes dominated by the largest values. Therefore, we can simplify this further
 $$
 \log{(p_i)} = s_i - \max{(s)}
 $$
 
-> In general, we find that the model is very confident in it's prediction, so the probability is usually 1.0.
+> In general, we find that the model is very confident in its prediction, so the probability is usually 1.0.
 
 ## References
 

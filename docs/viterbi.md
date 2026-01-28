@@ -1,4 +1,4 @@
-# Viterbi algorithm
+# Viterbi Algorithm
 
 ## Introduction
 
@@ -8,13 +8,13 @@ The Viterbi algorithm is a way to address this limitation by choosing the sequen
 
 This comes at a cost though. The Viterbi algorithm is a more complex algorithm to implement and the run time performance significantly slower.
 
-## How it works with the Averaged Perceptron
+## How It Works with the Averaged Perceptron
 
 > [!NOTE]
 >
-> This is not an general explanation of the Viterbi algorithm. Instead we focus on the specific implementation for this application.
+> This is not a general explanation of the Viterbi algorithm. Instead, we focus on the specific implementation for this application.
 
-### Algorithm outline
+### Algorithm Outline
 
 Rather than commit to a label for a given token as we process each token, we will instead consider all possible label transitions for each token, score them and keep track of those scores. Once we have done this across the whole sequence, we can backtrack through the scores for each token and select the path that maximises the overall score.
 
@@ -43,7 +43,7 @@ The lattice is populated one column at a time. Each element of a column represen
 
 > **Why do we only keep the best score?**
 >
-> Once we've calculated all these scores and kept the best score of each (previous label, current label) pair, we then back track through the lattice to pick the path with the maximum overall score.
+> Once we've calculated all these scores and kept the best score of each (previous label, current label) pair, we then backtrack through the lattice to pick the path with the maximum overall score.
 >
 > If a given lattice element is in that path, then the only way to maximise the global score is the use the best score for that element. Using any other score will necessarily result in a lower overall score. Therefore, we don't need to keep track of the lower scores because they can never result in a higher global score.
 
@@ -53,7 +53,7 @@ The result then the sequence of labels (in reverse) for the sentence that maximi
 
 ### Implementation
 
-#### 1. Initialise the lattice
+#### 1. Initialise the Lattice
 
 We will define a `LatticeElement` dataclass to store the best score and backpointer to the label for the previous token that resulted in that score.
 
@@ -91,7 +91,7 @@ lattice = [
 ]
 ```
 
-#### 2. Iterate forward through the sequence
+#### 2. Iterate Forward Through the Sequence
 
 The first column of the lattice has to handled specially. For all columns after this one, we can transition from any possible to label to any current label. However for the first column, we can only transition from the **-START-** label any current label.
 
@@ -170,11 +170,11 @@ for t, features in enumerate(features_seq[1:], 1):
 >
 > Many examples and tutorials of the Viterbi algorithms are given in the context of Hidden Markov Models. For these contexts, there are explicit transition probabilities (the probability of transition from one label to another) and emission probabilities (the probability of the label given the properties of the element in the sequence).
 >
-> The same idea still applies here, we just don't separate them out. The feature set we use to calculate the score contains both transition features (based on the previous label) and emission features (based on the properties of the element in the sequence), and the inclusion of the score of the lattice element for the previous means we capture the same probabilities just in a different way.
+> The same idea still applies here, we just don't separate the two. The feature set we use to calculate the score contains both transition features (based on the previous label) and emission features (based on the properties of the element in the sequence). The inclusion of the score of the lattice element for the previous element means we capture the same probabilities just in a different way.
 
 Note that the score calculation here also include the score of previous label currently being considered. This is because we want to maximise the score for the *transition* from previous label to current label.
 
-#### 3. Back track to find the label sequence
+#### 3. Backtrack to Find the Label Sequence
 
 With a fully populated lattice, we can back track through to find the optimal sequence of labels.
 
@@ -186,7 +186,7 @@ The first step is to find the best label for the last element of the sequence.
 backpointer = self._argmax(labels, lattice[-1])
 ```
 
-where `_argmax` just returns the label with the highest score.
+Where `_argmax` just returns the label with the highest score.
 
 Now we can iterate backwards through lattice following the backpointers.
 
@@ -202,7 +202,7 @@ for score_dict in reversed(lattice):
 
 This gives us the optimal label sequence (but in reverse).
 
-## Model training
+## Model Training
 
 The way we train the model has to be adjusted slightly to be compatible with the Viterbi algorithm. In the greedy Averaged Perceptron, we predicted each token in turn and could update the weights immediately after each prediction as necessary. When using the Viterbi algorithm, we have to predict a whole sequence in one go, then update the weights for each incorrect token in the sequence.
 
@@ -268,7 +268,7 @@ def update(
 
 `truth_features` are the features from the true sequence for the token that was incorrectly labelled. Importantly, `truth_features` contains the features based on the *true* previous label.
 
-## Performance comparison
+## Performance Comparison
 
 Comparison of the Greedy and Viterbi Averaged Perceptron models, using the same hyperparameters.
 

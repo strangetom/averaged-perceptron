@@ -1,4 +1,4 @@
-# Model optimisation
+# Model Optimisation
 
 ## Introduction
 
@@ -40,11 +40,11 @@ def save(self, path: str, compress: bool = True) -> None:
 Weight pruning is the process of removing weights with values below a set threshold. There are a couple of advantages to doing this:
 
 * Reducing the model size, and therefore improving execution speed.
-* Making the model more general by reducing over fitting to the training data that can result in weights with very small values.
+* Making the model more general by reducing overfitting to the training data that can result in weights with very small values.
 
 The objective of the pruning process is to find the balance between reduction in model size and the decrease in model accuracy that eventually results from too much pruning.
 
-### Performance comparison
+### Performance Comparison
 
 The figure in brackets in the accuracy columns shows the change from the baseline results when there is no pruning.
 
@@ -76,9 +76,9 @@ If model size was particularly important, we could go even further and reduce th
 >
 > > Goldberg, Yoav, and Michael Elhadad. "Learning sparser perceptron models." *Acl*. MIT Press, 2011.
 
-Post-training feature pruning keeps track of the number of updates for each feature during the training process. While the number of updates remains below a set threshold, the feature is ignored when predicting the label for a token. Updates are made to the feature as usual and, once the number of updates exceeds the threshold, the feature is considered as usual and it comes with it's update history.
+Post-training feature pruning keeps track of the number of updates for each feature during the training process. While the number of updates remains below a set threshold, the feature is ignored when predicting the label for a token. Updates are made to the feature as usual and, once the number of updates exceeds the threshold, the feature is considered as usual and it comes with its update history.
 
-A filtering step is necessary after training to remove feature whose update count is below the threshold from the weights. Without this step. those features will be saved. When loading a previously saved model, the model will not have the update counts and so will consider all of the features loaded from the file.
+A filtering step is necessary after training to remove feature whose update count is below the threshold from the weights. Without this step, those features will be saved. When loading a previously saved model, the model will not have the update counts and so will consider all the features loaded from the file.
 
 ```python
 def filter_features(self) -> None:
@@ -102,7 +102,7 @@ def filter_features(self) -> None:
 
 
 
-### Performance comparison
+### Performance Comparison
 
 The figure in brackets in the accuracy columns shows the change from the baseline results when there is no pruning.
 
@@ -120,10 +120,12 @@ The figure in brackets in the accuracy columns shows the change from the baselin
 
 Quantization is a technique to reduce the computational and memory cost of running inference using a model by representing the weights with lower precision data types.
 
-The quantization technique described here is symmetric linear quantization. The weights are scaled linearly relative to the largest absolute weight value, which is mapped to the largest value representable by the chosen lower precision data type i.e.
+The quantization technique described here is symmetric linear quantization. The weights are scaled linearly relative to the largest absolute weight value, which is mapped to the largest value representable by the chosen lower precision datatype i.e.
+
 $$
 [-w_{max}, w_{max}] \rightarrow [-q_{max}, q_{max}]
 $$
+
 The quantization is done such that an original weight of zero is mapped a quantized weight of zero. This is particularly important for the Averaged Perceptron model, where the majority of the model weights are zero.
 
 Quantization can be performed to an arbitrary level of precision although.
@@ -172,7 +174,7 @@ def quantize(self, nbits: int | None = None) -> None:
 >
 > For the Averaged Perceptron, this is not necessary. The Averaged Perceptron uses the weight additively and compares the relative magnitude. We could apply the scale factor to restore the original scale, but since this is multiplicative and therefore would scale all weights equally the relative magnitudes would not change. Therefore, there is no need to store the scale factor.
 
-### Performance comparison
+### Performance Comparison
 
 All these results were obtained without any model optimisations. If weight or feature pruning was applied, it would be done before the quantization.
 
