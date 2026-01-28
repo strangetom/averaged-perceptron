@@ -44,12 +44,24 @@ We will then investigate improvements various improvements to this.
 * [Averaged Perceptron](averaged-perceptron.md) 
   * [Model optimisation](model-optimisation.md)
   * [Constrained transitions](constrained-transitions.md)
-  * [Viterbi decoding](viterbi.md)
   * [Execution performance optimisation](numpy.md)
+* Implementation Variations
+  * [Viterbi decoding](viterbi.md)
+  * [Easiest first decoding](easiest.md)
+
 
 > [!IMPORTANT]
 >
 > Where possible, model accuracy results will be provided to show the relative improvement (or not) of each technique discussed. It will not necessarily be valid to compare the performance results across different techniques as there won't be any guarantee that the training conditions were the same when the results were generated. 
+
+## Implementations
+
+The `ap/` folder of this repository contains the following implementations:
+
+* `greedy` implements the basic greedy averaged perceptron.
+* `numpy` is a numpy implementation of the `greedy`.
+* `viterbi` implements Viterbi decoding for the basic greedy averaged perceptron.
+* `bisecl` implements "easiest-first" decoding for the basic greedy averaged perceptron.
 
 
 
