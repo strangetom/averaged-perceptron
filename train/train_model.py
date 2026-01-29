@@ -171,10 +171,10 @@ def train_model(
     tagger.train(
         features_train,
         truth_train,
-        n_iter=10,
-        min_abs_weight=0,
-        min_feat_updates=0,
-        quantize_bits=None,
+        n_iter=20,
+        min_abs_weight=2,
+        min_feat_updates=5,
+        quantize_bits=8,
         make_label_dict=False,
         show_progress=show_progress,
     )
