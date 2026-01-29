@@ -14,7 +14,7 @@ If the labelling scheme being used does forbid certain transitions, then we can 
 >
 > Applying label transition constraints during training will prevent the model making prediction errors that would normally update the weights and improve the model's overall performance.
 
-## Analytical constraints
+## Analytical Constraints
 
 Analytical constraints are constraints on label transitions that arise as a result of how the labelling scheme has been designed.
 
@@ -36,13 +36,13 @@ else:
 
 
 
-## Data-driven constraints
+## Data-Driven Constraints
 
 Data-driven constraints are derived from label transitions never observed in the training data. We need to carefully review these constraints before we use them to make sure the constraint is reasonable and not just a limitation of the training data.
 
-For example if we look at the training data and find the pairs of labels that are never seen, we find that (B_NAME_TOK, B_NAME_TOK) is never seen. This is a reasonable constraints to apply because we would never expect to see two ingredient names adjacent without any intervening tokens like punctuation. Whilst it might technically be possible for us to encounter such as sentence in the wild, the sentence would not be well-formed and it would not be reasonable to assume that this library can automatically handle poorly-formed sentences.
+For example, if we look at the training data and find the pairs of labels that are never seen, we find that (B_NAME_TOK, B_NAME_TOK) is never seen. This is a reasonable constraints to apply because we would never expect to see two ingredient names adjacent without any intervening tokens like punctuation. Whilst it might technically be possible for us to encounter such as sentence in the wild, the sentence would not be well-formed and it would not be reasonable to assume that this library can automatically handle poorly-formed sentences.
 
-## Performance comparison
+## Performance Comparison
 
 Comparison of Averaged Perceptron models, trained with and without label constraints during inference.
 
@@ -51,7 +51,7 @@ Comparison of Averaged Perceptron models, trained with and without label constra
 | With               | 97.96%        | 94.80%            |
 | Without            | 97.97%        | 94.54%            |
 
-## Transitions constraints during Viterbi decoding
+## Transitions Constraints During Viterbi Decoding
 
 Applying the transition constraints during Viterbi decoding is a little more complex than applying the constraints to the greedy Averaged Perceptron.
 

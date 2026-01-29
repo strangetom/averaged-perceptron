@@ -17,7 +17,12 @@ from sklearn.model_selection import train_test_split
 from tabulate import tabulate
 from tqdm import tqdm
 
-from ap import IngredientTagger, IngredientTaggerNumpy, IngredientTaggerViterbi
+from ap import (
+    IngredientTagger,
+    IngredientTaggerEasiestFirst,
+    IngredientTaggerNumpy,
+    IngredientTaggerViterbi,
+)
 
 from .train_model import DEFAULT_MODEL_LOCATION
 from .training_utils import (
@@ -38,7 +43,7 @@ class HyperParameters:
     min_feat_updates: int
     quantize_bits: int | None
     make_label_dict: bool
-    model_type: Literal["ap", "ap_viterbi", "ap_numpy"]
+    model_type: Literal["ap", "ap_viterbi", "ap_numpy", "ap_easiest_first"]
 
 
 def default_hyperparams() -> HyperParameters:
@@ -217,6 +222,7 @@ def train_model_grid_search(
     elif parameters.model_type == "ap_viterbi":
         tagger = IngredientTaggerViterbi(
             only_positive_bool_features=parameters.only_positive_bool_features,
+            apply_label_constraints=parameters.apply_label_constraints,
         )
         tagger.labels = labels
         tagger.model.labels = tagger.labels
@@ -224,7 +230,14 @@ def train_model_grid_search(
         tagger = IngredientTaggerNumpy(
             labels=list(labels),
             only_positive_bool_features=parameters.only_positive_bool_features,
+            apply_label_constraints=parameters.apply_label_constraints,
         )
+    elif parameters.model_type == "ap_easiest_first":
+        tagger = IngredientTaggerEasiestFirst(
+            only_positive_bool_features=parameters.only_positive_bool_features,
+        )
+        tagger.labels = labels
+        tagger.model.labels = tagger.labels
     else:
         raise ValueError(f"{parameters.model_type} is unknown model type.")
 

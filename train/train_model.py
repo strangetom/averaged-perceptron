@@ -15,7 +15,12 @@ from sklearn.model_selection import train_test_split
 from tabulate import tabulate
 from tqdm import tqdm
 
-from ap import IngredientTagger, IngredientTaggerNumpy, IngredientTaggerViterbi
+from ap import (
+    IngredientTagger,
+    IngredientTaggerEasiestFirst,
+    IngredientTaggerNumpy,
+    IngredientTaggerViterbi,
+)
 
 from .test_results_to_detailed_results import test_results_to_detailed_results
 from .test_results_to_html import test_results_to_html
@@ -57,7 +62,7 @@ def change_log_level(level: int) -> Generator[None, None, None]:
 
 def train_model(
     vectors: DataVectors,
-    model_type: Literal["ap", "ap_numpy", "ap_viterbi"],
+    model_type: Literal["ap", "ap_numpy", "ap_viterbi", "ap_easiest_first"],
     split: float,
     save_model: Path,
     seed: int | None,
@@ -156,6 +161,12 @@ def train_model(
         tagger = IngredientTaggerViterbi()
         tagger.labels = labels
         tagger.model.labels = tagger.labels
+    elif model_type == "ap_easiest_first":
+        tagger = IngredientTaggerEasiestFirst()
+        tagger.labels = labels
+        tagger.model.labels = tagger.labels
+    else:
+        raise ValueError(f"Unknown model type: {model_type}.")
 
     tagger.train(
         features_train,

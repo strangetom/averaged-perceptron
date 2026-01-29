@@ -4,11 +4,11 @@
 
 The baseline implementation (the "Greedy" implementation) was written to be simple and understandable. It is a pure Python implementation with no third party dependencies and achieves reasonable execution performance.
 
-However the model is largely just doing a lot of maths and there are Python libraries optimised for doing lots of maths, such as [Numpy](https://numpy.org). Therefore, the Greedy implementation has been rewritten using Numpy to see how much faster we can make it.
+However, the model is largely just doing a lot of maths and there are Python libraries optimised for doing lots of maths, such as [NumPy](https://numpy.org). Therefore, the Greedy implementation has been rewritten using NumPy to see how much faster we can make it.
 
 The documentation below describes the changes made to the `AveragedPerceptron` class to create the `AveragedPerceptronNumpy` class. It's worth noting that the `IngredientTaggerNumpy` is largely the same and the `IngredientTagger` class. The key differences are in the loading and saving of the model - everything else is the same. 
 
-## Changes to the data structures
+## Changes to the Data Structures
 
 In the Greedy implementation of the Averaged Perceptron, the weights were stored as a `dict` of `dict`s, where both levels of `dict` only had the elements need to represent non-zero weights.
 
@@ -24,9 +24,9 @@ weights = {
 }
 ```
 
-This is efficient from a memory perspective because it only stores non-zero values. However it is less efficient from a calculation perspective because it requires a lot of look ups and we have to be sure to handle the cases where a key is not present.
+This is efficient from a memory perspective because it only stores nonzero values. However, it is less efficient from a calculation perspective because it requires a lot of look ups and we have to be sure to handle the cases where a key is not present.
 
-In the Numpy implementation, the weights are stored as a 2D numpy array, initialised to zeros, where the rows correspond to features and the columns correspond to labels.
+In the NumPy implementation, the weights are stored as a 2D NumPy array, initialised to zeros, where the rows correspond to features and the columns correspond to labels.
 
 $$
 weights = \begin{bmatrix}
@@ -38,9 +38,9 @@ weights = \begin{bmatrix}
 $$
 In addition, we also need `dict` that map from feature to row index and from label to column index.
 
-The other data structures used during training are similarly converted to Numpy arrays using the same row and column indexing.
+The other data structures used during training are similarly converted to NumPy arrays using the same row and column indexing.
 
-### Resizing arrays
+### Resizing Arrays
 
 Due to the weights matrix being a dense matrix of zeros, we need to know the number of features and labels to be able initialise the matrices to the correct sizes. The labels are known ahead of time, but the features are not.
 
@@ -56,7 +56,7 @@ Note that this matrix resizing is only required during training. If we encounter
 
 ## Vectorised calculations
 
-The main advantage of using Numpy is the ability to perform vectorised calculations. Many of the function in the greedy implementation become simpler to implement because we avoid having to write many of the loops.
+The main advantage of using NumPy is the ability to perform vectorized calculations. Many of the function in the greedy implementation become simpler to implement because we avoid having to write many of the loops.
 
 ### `.predict(...)`
 
@@ -97,24 +97,24 @@ def filter_features(...):
     self.weights[idx_to_zero, :] = 0
 ```
 
-## Saving the model
+## Saving the Model
 
-The use of a Numpy array to store the weights means that it's no longer practical to save the weights as JSON. There are 3 things we need to save to be able reload the model and use it again:
+The use of a NumPy array to store the weights means that it's no longer practical to save the weights as JSON. There are 3 things we need to save to be able reload the model and use it again:
 
 1. The list of labels, in the same order as the weights matrix columns
 2. The list of features, in the same order as the weights matrix rows
 3. The weights matrix
 
-To keep all these files together, all these data are saved to a `.tar.gz` archive. The labels and features are saved a JSON files within this archive. The weights are saved as an .`npy` file within the archive.
+To keep all these files together, all these data are saved to a `.tar.gz` archive. The labels and features are saved a JSON files within this archive. The weights are saved as an `.npy` file within the archive.
 
 ## Performance comparison
 
-Comparison of training the Greedy and Numpy Averaged Perceptron models, using the same hyperparameters.
+Comparison of training the Greedy and NumPy Averaged Perceptron models, using the same hyperparameters.
 
 | Model  | Model size | Time              |
 | ------ | ---------- | ----------------- |
 | Greedy | 0.388 MB   | 0:17:33 (+0%)     |
-| Numpy  | 0.324 MB   | 0:06:38 (-62.20%) |
+| NumPy  | 0.324 MB   | 0:06:38 (-62.20%) |
 
 > [!NOTE]
 >
@@ -127,4 +127,3 @@ Comparison of training the Greedy and Numpy Averaged Perceptron models, using th
 > | Greedy | 609.75 (+0%)     | 1640 us (+0%)     |
 > | Numpy  | 819.35 (+34.37%) | 1220 us (-25.61%) |
 >
-> 
