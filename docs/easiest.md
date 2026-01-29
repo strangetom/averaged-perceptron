@@ -4,7 +4,7 @@
 
 A limitation of the greedy implementation of the Averaged Perceptron model is that always assigns label in a left to right direction. The assigned label for tokens to the left of a token under consideration provide useful information in helping determine the likeliest label for the current token. What if we could also use the labels of tokens to the right of the current token to help assign a label to the current token?
 
-The "easiest-first" algorithm allows this by changing the order in which labels are assigned. Instead of assigning label in a left to right direction, labels are assigned based on the easiest label to assign to an unlabelled token. In this algorithm, easiest refers to the highest score across all labels across all unlabelled tokens. This means that when considering each token there may be tokens in the surrounding context window that already have labels assigned, which can help in determining the label for the current token.
+The "easiest-first" algorithm [^1] allows this by changing the order in which labels are assigned. Instead of assigning label in a left to right direction, labels are assigned based on the easiest label to assign to an unlabelled token. In this algorithm, easiest refers to the highest score across all labels across all unlabelled tokens. This means that when considering each token there may be tokens in the surrounding context window that already have labels assigned, which can help in determining the label for the current token.
 
 ## How It Works with the Averaged Perceptron
 
@@ -313,3 +313,7 @@ Comparison of the Greedy and Easiest-first Averaged Perceptron models, using the
 The "easiest-first" Averaged Perceptron takes significantly longer (~9.5x) to train because it has to perform $\mathcal{O}(N^2*L)$ calculations to assign the labels for a complete sequence (where N is the number of tokens and L is the number of labels). This is in contrast to the Greedy Averaged Perceptron, which only requires $\mathcal{O}(N*L)$.
 
 The differences in word and sentence accuracy may be explained by a lack of optimisation. Both models were trained with similar features and the same hyperparameters, which may not be optimal for the "easiest-first" Averaged Perceptron given the differences in how the label-based features are generated and used. Note that the "easiest-first" Averaged Perceptron does not implement label transition constraints, so these were also disabled for the Greedy Averaged Perceptron.
+
+## References
+
+[^1]: L. Shen, G. Satta, and A. Joshi, ‘Guided Learning for Bidirectional Sequence Classification’, in *Proceedings of the 45th Annual Meeting of the Association of Computational Linguistics*, A. Zaenen and A. van den Bosch, Eds, Prague, Czech Republic: Association for Computational Linguistics, Jun. 2007, pp. 760–767. Accessed: Jan. 19, 2026. [Online]. Available: https://aclanthology.org/P07-1096/
