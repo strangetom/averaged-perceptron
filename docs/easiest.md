@@ -299,13 +299,17 @@ def update(
 
 Comparison of the Greedy and Easiest-first Averaged Perceptron models, using the same hyperparameters.
 
-| Model         | Word accuracy | Sentence accuracy | Model size | Time |
-| ------------- | ------------- | ----------------- | ---------- | ---- |
-| Greedy        |               |                   |            |      |
-| Easiest-first |               |                   |            |      |
+| Model         | Word accuracy | Sentence accuracy | Model size | Time    |
+| ------------- | ------------- | ----------------- | ---------- | ------- |
+| Greedy        | 98.15%        | 94.74%            | 0.354 MB   | 0:16:22 |
+| Easiest-first | 97.80%        | 94.60%            | 0.299 MB   | 2:34:50 |
 
 > [!IMPORTANT]
 >
 > It is difficult to directly compare the word and sentence accuracies because the two models have different features: the greedy model can only use label-based features for tokens to the left in the sequence.
 >
 > In the comparison here, the label-based features were generated following the same principals, however the "easiest-first" model also generated those features for tokens to the right of the token under consideration.
+
+The "easiest-first" Averaged Perceptron takes significantly longer (~9.5x) to train because it has to perform $\mathcal{O}(N^2*L)$ calculations to assign the labels for a complete sequence (where N is the number of tokens and L is the number of labels). This is in contrast to the Greedy Averaged Perceptron, which only requires $\mathcal{O}(N*L)$.
+
+The differences in word and sentence accuracy may be explained by a lack of optimisation. Both models were trained with similar features and the same hyperparameters, which may not be optimal for the "easiest-first" Averaged Perceptron given the differences in how the label-based features are generated and used. Note that the "easiest-first" Averaged Perceptron does not implement label transition constraints, so these were also disabled for the Greedy Averaged Perceptron.
