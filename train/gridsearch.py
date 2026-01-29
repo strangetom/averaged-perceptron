@@ -19,7 +19,7 @@ from tqdm import tqdm
 
 from ap import (
     IngredientTagger,
-    IngredientTaggerBISECL,
+    IngredientTaggerEasiestFirst,
     IngredientTaggerNumpy,
     IngredientTaggerViterbi,
 )
@@ -43,7 +43,7 @@ class HyperParameters:
     min_feat_updates: int
     quantize_bits: int | None
     make_label_dict: bool
-    model_type: Literal["ap", "ap_viterbi", "ap_numpy", "ap_bisecl"]
+    model_type: Literal["ap", "ap_viterbi", "ap_numpy", "ap_easiest_first"]
 
 
 def default_hyperparams() -> HyperParameters:
@@ -232,8 +232,8 @@ def train_model_grid_search(
             only_positive_bool_features=parameters.only_positive_bool_features,
             apply_label_constraints=parameters.apply_label_constraints,
         )
-    elif parameters.model_type == "ap_bisecl":
-        tagger = IngredientTaggerBISECL(
+    elif parameters.model_type == "ap_easiest_first":
+        tagger = IngredientTaggerEasiestFirst(
             only_positive_bool_features=parameters.only_positive_bool_features,
         )
         tagger.labels = labels

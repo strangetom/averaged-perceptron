@@ -11,13 +11,22 @@ from itertools import product
 from ingredient_parser.en import FeatureDict, PreProcessor
 from tqdm import tqdm
 
-from .perceptron import AveragedPerceptronBISECL
+from .perceptron import AveragedPerceptronEasiestFirst
 
 logger = logging.getLogger(__name__)
 
 
-class IngredientTaggerBISECL:
-    """Class to tag ingredient sentence tokens.
+class IngredientTaggerEasiestFirst:
+    """Class to tag ingredient sentence tokens usng easiest first algorithm [1].
+
+    References
+    ----------
+    [1] L. Shen, G. Satta, and A. Joshi, ‘Guided Learning for Bidirectional Sequence
+        Classification’, in Proceedings of the 45th Annual Meeting of the Association of
+        Computational Linguistics, A. Zaenen and A. van den Bosch, Eds, Prague, Czech
+        Republic: Association for Computational Linguistics, Jun. 2007, pp. 760–767.
+        Accessed: Jan. 19, 2026. [Online]. Available: https://aclanthology.org/P07-1096/
+
 
     Attributes
     ----------
@@ -36,7 +45,7 @@ class IngredientTaggerBISECL:
         weights_file: str | None = None,
         only_positive_bool_features: bool = False,
     ):
-        self.model = AveragedPerceptronBISECL()
+        self.model = AveragedPerceptronEasiestFirst()
         self.labeldict = {}
         self.labels: set[str] = set()
 
@@ -46,7 +55,7 @@ class IngredientTaggerBISECL:
         self.only_positive_bool_features = only_positive_bool_features
 
     def __repr__(self):
-        return f"IngredientTaggerBISECL(labels={self.labels})"
+        return f"IngredientTaggerEasiestFirst(labels={self.labels})"
 
     def tag(self, sentence: str) -> list[tuple[str, str, float]]:
         """Tag a sentence with labels using Averaged Perceptron model.

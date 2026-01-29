@@ -8,7 +8,36 @@ from math import exp
 logger = logging.getLogger(__name__)
 
 
-class AveragedPerceptronBISECL:
+class AveragedPerceptronEasiestFirst:
+    """Averaged Perceptron implementatino usng easiest first algorithm [1].
+
+    References
+    ----------
+    [1] L. Shen, G. Satta, and A. Joshi, ‘Guided Learning for Bidirectional Sequence
+        Classification’, in Proceedings of the 45th Annual Meeting of the Association of
+        Computational Linguistics, A. Zaenen and A. van den Bosch, Eds, Prague, Czech
+        Republic: Association for Computational Linguistics, Jun. 2007, pp. 760–767.
+        Accessed: Jan. 19, 2026. [Online]. Available: https://aclanthology.org/P07-1096/
+
+    Attributes
+    ----------
+    labels : set[str]
+        Set of labels.
+    min_feat_updates : int
+        Minimum number of features updates for each feature before they contribute
+        towards scores.
+    weights : dict[str, dict[str, float | int]]
+        Dictionary of weights
+        {
+            "feature_a": {
+                "label_1": score_1,
+                "label_2": score_2,
+                ...
+            },
+            ...
+        }
+    """
+
     def __init__(self) -> None:
         # Dict of weights for each feature.
         # Keys are features, the value for each key is another dict where the keys are
@@ -36,7 +65,7 @@ class AveragedPerceptronBISECL:
         self._iteration: int = 0
 
     def __repr__(self):
-        return f"AveragedPerceptronBISECL(labels={self.labels})"
+        return f"AveragedPerceptronEasiestFirst(labels={self.labels})"
 
     def label_features(
         self,

@@ -17,7 +17,7 @@ from tqdm import tqdm
 
 from ap import (
     IngredientTagger,
-    IngredientTaggerBISECL,
+    IngredientTaggerEasiestFirst,
     IngredientTaggerNumpy,
     IngredientTaggerViterbi,
 )
@@ -62,7 +62,7 @@ def change_log_level(level: int) -> Generator[None, None, None]:
 
 def train_model(
     vectors: DataVectors,
-    model_type: Literal["ap", "ap_numpy", "ap_viterbi", "ap_bisecl"],
+    model_type: Literal["ap", "ap_numpy", "ap_viterbi", "ap_easiest_first"],
     split: float,
     save_model: Path,
     seed: int | None,
@@ -161,10 +161,12 @@ def train_model(
         tagger = IngredientTaggerViterbi()
         tagger.labels = labels
         tagger.model.labels = tagger.labels
-    elif model_type == "ap_bisecl":
-        tagger = IngredientTaggerBISECL()
+    elif model_type == "ap_easiest_first":
+        tagger = IngredientTaggerEasiestFirst()
         tagger.labels = labels
         tagger.model.labels = tagger.labels
+    else:
+        raise ValueError(f"Unknown model type: {model_type}.")
 
     tagger.train(
         features_train,
