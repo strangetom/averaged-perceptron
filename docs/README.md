@@ -61,7 +61,7 @@ The `ap/` folder of this repository contains the following implementations:
 * `greedy` implements the basic greedy averaged perceptron.
 * `numpy` is a numpy implementation of the `greedy`.
 * `viterbi` implements Viterbi decoding for the basic greedy averaged perceptron.
-* `bisecl` implements "easiest-first" decoding for the basic greedy averaged perceptron.
+* `easiestfirst` implements "easiest-first" decoding for the basic greedy averaged perceptron.
 
 
 
