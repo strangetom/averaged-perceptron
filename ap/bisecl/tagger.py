@@ -35,7 +35,6 @@ class IngredientTaggerBISECL:
         self,
         weights_file: str | None = None,
         only_positive_bool_features: bool = False,
-        apply_label_constraints: bool = True,
     ):
         self.model = AveragedPerceptronBISECL()
         self.labeldict = {}
@@ -45,7 +44,6 @@ class IngredientTaggerBISECL:
             self.load(weights_file)
 
         self.only_positive_bool_features = only_positive_bool_features
-        self.apply_label_constraints = apply_label_constraints
 
     def __repr__(self):
         return f"IngredientTaggerBISECL(labels={self.labels})"
@@ -68,9 +66,7 @@ class IngredientTaggerBISECL:
         features = [self._convert_features(f) for f in sentence_features]
         stems = [f["stem"] for f in sentence_features]
         pos = [f["pos"] for f in sentence_features]
-        label_scores = self.model.predict_sequence(
-            features, stems, pos, constrain_transitions=self.apply_label_constraints
-        )
+        label_scores = self.model.predict_sequence(features, stems, pos)
 
         labels = [
             (token.text, label, score)
@@ -99,9 +95,7 @@ class IngredientTaggerBISECL:
         features = [self._convert_features(f) for f in sentence_features]
         stems = [f["stem"] for f in sentence_features]
         pos = [f["pos"] for f in sentence_features]
-        return self.model.predict_sequence(
-            features, stems, pos, constrain_transitions=self.apply_label_constraints
-        )
+        return self.model.predict_sequence(features, stems, pos)
 
     def _convert_features(self, features: FeatureDict) -> set[str]:
         """Convert features dict to set of strings.

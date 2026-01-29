@@ -156,7 +156,6 @@ class AveragedPerceptronBISECL:
         token_stems: list[str],
         token_pos: list[str],
         return_score: bool = False,
-        constrain_transitions: bool = True,
     ) -> list[tuple[str, float]]:
         """Predict the label sequence for a sequence of tokens described by sequence of
         features sets using bidrectional sequence classification algorithm.
@@ -168,9 +167,6 @@ class AveragedPerceptronBISECL:
         return_score : bool, optional
             If True, return score for each predicted label.
             If False, returned score is always 1.0.
-        constrain_transitions : bool, optional
-            If True, constrain label transitions to only allowed transitions.
-            Default is True
 
         Returns
         -------
