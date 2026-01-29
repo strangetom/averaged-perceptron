@@ -222,6 +222,7 @@ def train_model_grid_search(
     elif parameters.model_type == "ap_viterbi":
         tagger = IngredientTaggerViterbi(
             only_positive_bool_features=parameters.only_positive_bool_features,
+            apply_label_constraints=parameters.apply_label_constraints,
         )
         tagger.labels = labels
         tagger.model.labels = tagger.labels
@@ -229,6 +230,7 @@ def train_model_grid_search(
         tagger = IngredientTaggerNumpy(
             labels=list(labels),
             only_positive_bool_features=parameters.only_positive_bool_features,
+            apply_label_constraints=parameters.apply_label_constraints,
         )
     elif parameters.model_type == "ap_bisecl":
         tagger = IngredientTaggerBISECL(
