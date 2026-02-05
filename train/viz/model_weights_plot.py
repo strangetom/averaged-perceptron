@@ -2,12 +2,15 @@
 
 import argparse
 import gzip
+import io
 import json
 import pathlib
+import tarfile
 from collections import defaultdict
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Various formatting parameters
 mpl.rcParams["text.color"] = "#ebdbb2"
@@ -116,7 +119,7 @@ def plot(features: FeatureWeights, output: pathlib.Path) -> pathlib.Path:
     return output
 
 
-def load_model_features(model_path: str) -> FeatureWeights:
+def load_json_model_features(model_path: str) -> FeatureWeights:
     """Load model features.
 
     Parameters
@@ -132,13 +135,58 @@ def load_model_features(model_path: str) -> FeatureWeights:
     with open(model_path, "rb") as f:
         data = json.loads(gzip.decompress(f.read()))
 
-    features: FeatureWeights = defaultdict(lambda: defaultdict(list))
+    feature_weights: FeatureWeights = defaultdict(lambda: defaultdict(list))
     for feature, weights in data["weights"].items():
         feature_name = feature.split("=", 1)[0]
         for label, weight in weights.items():
-            features[feature_name][label].append(weight)
+            feature_weights[feature_name][label].append(weight)
 
-    return features
+    return feature_weights
+
+
+def load_numpy_model_features(model_path: str) -> FeatureWeights:
+    """Load model features.
+
+    Parameters
+    ----------
+    model_path : str
+        Path to model.
+
+    Returns
+    -------
+    FeatureWeights
+        Weights for each feature.
+    """
+    with tarfile.open(model_path, "r:gz") as tar:
+        # Extract and read the features file
+        features_file = tar.extractfile("features.json")
+        if features_file:
+            features = json.load(features_file)
+        else:
+            raise FileNotFoundError(f"Could not find features.json in {model_path}.")
+
+        # Extract and read the labels file
+        labels_file = tar.extractfile("labels.json")
+        if labels_file:
+            labels = json.load(labels_file)
+        else:
+            raise FileNotFoundError(f"Could not find labels.json in {model_path}.")
+
+        # Extract and read the NPY file
+        weights_file = tar.extractfile("weights.npy")
+        if weights_file:
+            weights_buffer = io.BytesIO(weights_file.read())
+        else:
+            raise FileNotFoundError(f"Could not find weights.npy in {model_path}.")
+        weights = np.load(weights_buffer)
+
+    feature_weights: FeatureWeights = defaultdict(lambda: defaultdict(list))
+    for i, feature in enumerate(features):
+        feature_name = feature.split("=", 1)[0]
+        for j, label in enumerate(labels):
+            feature_weights[feature_name][label].append(weights[i, j])
+
+    return feature_weights
 
 
 if __name__ == "__main__":
@@ -159,6 +207,12 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    features = load_model_features(args.model)
+    if "".join(args.model.suffixes[-2:]) == ".json.gz":
+        features = load_json_model_features(args.model)
+    elif "".join(args.model.suffixes[-2:]) == ".tar.gz":
+        features = load_numpy_model_features(args.model)
+    else:
+        raise ValueError("Cannot handle model with given file extension: {args.model}.")
+
     output = plot(features, args.output)
     print(f"Weights plot save to {output}.")
