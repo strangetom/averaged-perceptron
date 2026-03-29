@@ -42,14 +42,14 @@ The performance of this implementation is show below.
 ╒══════════════════════════╤══════════════════════════╕
 │ Sentence-level results   │ Word-level results       │
 ╞══════════════════════════╪══════════════════════════╡
-│ Accuracy: 95.04%         │ Accuracy: 98.17%         │
-│                          │ Precision (micro) 98.15% │
-│                          │ Recall (micro) 98.17%    │
-│                          │ F1 score (micro) 98.15%  │
+│ Accuracy: 95.18%         │ Accuracy: 98.19%         │
+│                          │ Precision (micro) 98.18% │
+│                          │ Recall (micro) 98.19%    │
+│                          │ F1 score (micro) 98.18%  │
 ╘══════════════════════════╧══════════════════════════╛
 ```
 
-The performance of this model is _similar_ (slightly worse for the sentence level results, slightly better for the work level results) to the current Conditional Random Fields model used by [ingredient-parser](https://github.com/strangetom/ingredient-parser) package. I believe this is a combination of two factors:
+The performance of this model is very _similar_ (slightly worse for the sentence level results, slightly better for the work level results) to the current Conditional Random Fields model used by [ingredient-parser](https://github.com/strangetom/ingredient-parser) package. I believe this is a combination of two factors:
 
 1. The application of label transition constraints.
 2. Using multiple previous labels to predict the current label. This model consider the 3 previous labels to the current label being predicted.
