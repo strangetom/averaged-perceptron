@@ -20,10 +20,10 @@ class AveragedPerceptronNumpy:
             weights matrix must be set externally.
         """
         # reverse=True is used here to ensure consistency with greedy AP.
-        # In self.predcit, if there's a tie for the highest score the greedy AP resolves
+        # In self.predict, if there's a tie for the highest score the greedy AP resolves
         # using max(labels) i.e. reverse alphabetically.
-        # In this version, we peform the same operation using np.argmax which resolves
-        # ties using the index of the first occurance, therefore we need the label
+        # In this version, we perform the same operation using np.argmax which resolves
+        # ties using the index of the first occurrence, therefore we need the label
         # indices to be in reverse alphabetical order.
         self.labels = sorted(labels, reverse=True) if labels else []
         self.label_to_idx = {label: i for i, label in enumerate(self.labels)}
@@ -98,7 +98,7 @@ class AveragedPerceptronNumpy:
         If insert_missing is True, add feature missing from vocab dict.
 
         Whilst order is not important (hence this function accepting a set), we return
-        a list because we can use that directly when indexing numpy arays.
+        a list because we can use that directly when indexing NumPy arrays.
 
         Parameters
         ----------
@@ -108,7 +108,7 @@ class AveragedPerceptronNumpy:
         Returns
         -------
         np.ndarray
-            Numpy array of integer indices for string features.
+            NumPy array of integer indices for string features.
 
         Raises
         ------
@@ -157,12 +157,12 @@ class AveragedPerceptronNumpy:
         Parameters
         ----------
         scores : np.ndarray
-            Numpy array of scores for each label.
+            NumPy array of scores for each label.
 
         Returns
         -------
         np.ndarray
-            Numpy array of confidence
+            NumPy array of confidence
         """
         max_score = np.max(scores)
         exp_scores = np.exp(scores - max_score)
@@ -239,7 +239,7 @@ class AveragedPerceptronNumpy:
         label_index : int
             Index of label to update total for.
         feature_indices : np.ndarray
-            Numpy array of indices corresponding to features to update weights for.
+            NumPy array of indices corresponding to features to update weights for.
         """
         # Calculate how many iterations passed since this weight was last touched
         iters = self._iteration - self._tstamps[feature_indices, label_index]
@@ -414,7 +414,8 @@ class AveragedPerceptronNumpy:
         """
         # Find row indices where absolute sum of weights is non zero. We keep these and
         # discard the rest.
-        nonzero_idx = np.argwhere(np.abs(self.weights).sum(axis=1) > 0)
+        mask = np.abs(self.weights).sum(axis=1) > 0
+        nonzero_idx = np.argwhere(mask)
 
         new_feature_vocab = {}
         next_feature_index = 0
@@ -425,4 +426,4 @@ class AveragedPerceptronNumpy:
 
         self.feature_vocab = new_feature_vocab
         # Can't use nonzero_idx to index here because it has the wrong dimensions.
-        self.weights = self.weights[np.abs(self.weights).sum(axis=1) > 0]
+        self.weights = self.weights[mask]

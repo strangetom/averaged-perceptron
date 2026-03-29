@@ -102,7 +102,7 @@ class AveragedPerceptronTernary:
         if non_zero_weights.size == 0:
             self.ternary_threshold = 0.0
         else:
-            # Apply the 0.7 heuristic to the mean of non-zero active weights
+            # Apply the 0.75 heuristic to the mean of non-zero active weights
             self.ternary_threshold = float(0.75 * np.mean(non_zero_weights))
 
     def _ternarize_weights(self, weights: np.ndarray) -> np.ndarray:
@@ -162,10 +162,8 @@ class AveragedPerceptronTernary:
     def _features_to_idx(self, features: set[str]) -> np.ndarray:
         """Map feature string to indices by lookup in vocab dict.
 
-        If insert_missing is True, add feature missing from vocab dict.
-
         Whilst order is not important (hence this function accepting a set), we return
-        a list because we can use that directly when indexing NumPy arays.
+        a list because we can use that directly when indexing NumPy arrays.
 
         Parameters
         ----------
@@ -176,11 +174,6 @@ class AveragedPerceptronTernary:
         -------
         np.ndarray
             NumPy array of integer indices for string features.
-
-        Raises
-        ------
-        TypeError
-            Description
         """
         if self.training_mode:
             for feat in features:
@@ -411,7 +404,8 @@ class AveragedPerceptronTernary:
         """
         # Find row indices where absolute sum of weights is non zero. We keep these and
         # discard the rest.
-        nonzero_idx = np.argwhere(np.abs(self.weights).sum(axis=1) > 0)
+        mask = np.abs(self.weights).sum(axis=1) > 0
+        nonzero_idx = np.argwhere(mask)
 
         new_feature_vocab = {}
         next_feature_index = 0
@@ -422,7 +416,7 @@ class AveragedPerceptronTernary:
 
         self.feature_vocab = new_feature_vocab
         # Can't use nonzero_idx to index here because it has the wrong dimensions.
-        self.weights = self.weights[np.abs(self.weights).sum(axis=1) > 0]
+        self.weights = self.weights[mask]
 
     def ternarize(self) -> None:
         """Final transformation of averaged weights into strict int8 ternary values.
