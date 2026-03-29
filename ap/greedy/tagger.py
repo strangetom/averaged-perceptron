@@ -184,7 +184,7 @@ class IngredientTagger:
         # Add extra features based on labels of previous tokens.
         converted.add("prev_label=" + prev_label)
         converted.add("prev_label2=" + prev_label2)
-        converted.add("prev_label3=" + prev_label2)
+        converted.add("prev_label3=" + prev_label3)
         converted.add("prev_label2+prev_label=" + "+".join((prev_label2, prev_label)))
         converted.add("prev_label3+prev_label2=" + "+".join((prev_label3, prev_label2)))
         converted.add(
