@@ -422,7 +422,7 @@ class IngredientTaggerNumpy:
         min_feat_updates : int, optional
             Minimum number of feature updates required to consider feature.
         quantize_bits : int | None, optional
-            Description
+            Number of bits to quantize weights to.
         make_label_dict : bool, optional
             If True, create a dict of labels for tokens that are unambiguous in the
             training data. Default i False.

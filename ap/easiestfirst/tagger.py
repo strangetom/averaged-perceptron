@@ -231,10 +231,12 @@ class IngredientTaggerEasiestFirst:
             Weights below this value will be pruned after training.
         min_feat_updates : int, optional
             Minimum number of feature updates required to consider feature.
+        quantize_bits : int | None, optional
+            Number of bits to quantize weights to.
         make_label_dict : bool, optional
             If True, create a dict of labels for tokens that are unambiguous in the
             training data. Default i False.
-        show_progress: bool, optional
+        show_progress : bool, optional
             If True, show progress bar for iterations.
             Default is True.
         """
