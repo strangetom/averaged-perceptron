@@ -19,7 +19,7 @@ MODEL = {
 def parse_ingredient(model: str, sentence: str):
     tagger = MODEL[model]
 
-    processed_sentence = PreProcessor(sentence)
+    processed_sentence = PreProcessor(sentence, custom_units={})
     labels, scores = zip(
         *tagger.tag_from_features(processed_sentence.sentence_features())
     )
@@ -34,7 +34,7 @@ def parse_ingredient(model: str, sentence: str):
         token = tokens[idx]
         label = labels[idx]
         if label != "UNIT":
-            tokens[idx] = pluralise_units(token)
+            tokens[idx] = pluralise_units(token, custom_units={})
 
     postprocessed_sentence = PostProcessor(
         sentence,
@@ -45,6 +45,7 @@ def parse_ingredient(model: str, sentence: str):
         discard_isolated_stop_words=True,
         string_units=False,
         volumetric_units_system="imperial",
+        custom_units={},
     )
     return postprocessed_sentence.parsed
 
