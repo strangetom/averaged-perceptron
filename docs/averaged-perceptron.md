@@ -2,7 +2,9 @@
 
 ## Introduction
 
-...[^1]
+The Averaged Perceptron is a simple machine learning model that is quite effective at sequence labelling tasks. A notable use for this kind of model is for part of speech tagging, where the tokens of a sentence are assigned a label that indicates the tokens' part of speech e.g. noun, verb, adjective[^1].
+
+The implementation described here is based on the same principles, modified as needed to work for the ingredient sentence token labelling task we are considering.
 
 ## Implementation
 
