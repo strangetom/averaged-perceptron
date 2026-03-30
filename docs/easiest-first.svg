@@ -1,0 +1,577 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="199.08525mm"
+   height="110.40337mm"
+   viewBox="0 0 199.08526 110.40337"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   sodipodi:docname="easiest-first.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="1"
+     inkscape:pagecheckerboard="true"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="3.4102907"
+     inkscape:cx="204.82125"
+     inkscape:cy="233.70441"
+     inkscape:window-width="1920"
+     inkscape:window-height="1020"
+     inkscape:window-x="0"
+     inkscape:window-y="32"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     fit-margin-top="10"
+     fit-margin-left="10"
+     fit-margin-right="10"
+     fit-margin-bottom="10" />
+  <defs
+     id="defs2">
+    <rect
+       x="588.77257"
+       y="376.74363"
+       width="8.9039691"
+       height="19.751832"
+       id="rect111648" />
+    <marker
+       style="overflow:visible"
+       id="Arrow1Mend"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-0.4,0,0,-0.4,-4,0)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         id="path39149" />
+    </marker>
+    <rect
+       x="738.12146"
+       y="228.62161"
+       width="140.9697"
+       height="49.331661"
+       id="rect29317" />
+    <marker
+       style="overflow:visible"
+       id="Arrow1Lend"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-0.8,0,0,-0.8,-10,0)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         id="path15415" />
+    </marker>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-3.7303794,-0.7639727)">
+    <rect
+       style="fill:#f9f5d7;fill-opacity:1;stroke-width:1.92229;stroke-linecap:square;stroke-linejoin:bevel;stroke-dasharray:11.5338, 11.5338"
+       id="rect958"
+       width="199.08501"
+       height="110.40337"
+       x="3.7303793"
+       y="0.7639727"
+       ry="0" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="33.420422"
+       y="49.620663"
+       id="text1656"><tspan
+         sodipodi:role="line"
+         id="tspan1654"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="33.420422"
+         y="49.620663">_UNASSIGNED_</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.7625px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="23.321102"
+       y="49.960178"
+       id="text1656-4"><tspan
+         sodipodi:role="line"
+         id="tspan1654-5"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.7625px;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="23.321102"
+         y="49.960178">[</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.7625px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="23.321102"
+       y="99.880714"
+       id="text1656-4-2"><tspan
+         sodipodi:role="line"
+         id="tspan1654-5-5"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.7625px;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="23.321102"
+         y="99.880714">[</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.7625px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="183.44763"
+       y="49.163895"
+       id="text1656-4-4"><tspan
+         sodipodi:role="line"
+         id="tspan1654-5-7"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.7625px;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="183.44763"
+         y="49.163895">...  ]</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.7625px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="183.44763"
+       y="99.539513"
+       id="text1656-4-2-4"><tspan
+         sodipodi:role="line"
+         id="tspan1654-5-5-4"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.7625px;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="183.44763"
+         y="99.539513">...  ]</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="111.40452"
+       y="49.447731"
+       id="text4590"><tspan
+         sodipodi:role="line"
+         id="tspan4588"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="111.40452"
+         y="49.447731">_UNASSIGNED_</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="150.39656"
+       y="49.27948"
+       id="text4590-1"><tspan
+         sodipodi:role="line"
+         id="tspan4588-5"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="150.39656"
+         y="49.27948">_UNASSIGNED_</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="72.412468"
+       y="49.662338"
+       id="text4594"><tspan
+         sodipodi:role="line"
+         id="tspan4592"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="72.412468"
+         y="49.662338">_UNASSIGNED_</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="33.420422"
+       y="99.541206"
+       id="text1656-5"><tspan
+         sodipodi:role="line"
+         id="tspan1654-4"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="33.420422"
+         y="99.541206">_UNASSIGNED_</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="111.40452"
+       y="99.368256"
+       id="text4590-7"><tspan
+         sodipodi:role="line"
+         id="tspan4588-6"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="111.40452"
+         y="99.368256">_UNASSIGNED_</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="150.39656"
+       y="99.200005"
+       id="text4590-1-5"><tspan
+         sodipodi:role="line"
+         id="tspan4588-5-6"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="150.39656"
+         y="99.200005">_UNASSIGNED_</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="79.980995"
+       y="99.722366"
+       id="text4594-9"><tspan
+         sodipodi:role="line"
+         id="tspan4592-3"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="79.980995"
+         y="99.722366">UNIT</tspan></text>
+    <text
+       xml:space="preserve"
+       transform="matrix(0.26458333,0,0,0.26458333,3.7303794,0.7639727)"
+       id="text29315"
+       style="font-size:12px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;white-space:pre;shape-inside:url(#rect29317)" />
+    <rect
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.49;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect38279"
+       width="31.828215"
+       height="29.275229"
+       x="28.97538"
+       y="9.4092665"
+       ry="0.93783152" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;line-height:1.75;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="31.333519"
+       y="14.061503"
+       id="text4500"><tspan
+         sodipodi:role="line"
+         id="tspan4498"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="31.333519"
+         y="14.061503">Label    Score</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="31.333519"
+         y="19.617756"
+         id="tspan5612"> QTY      431</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="31.333519"
+         y="25.174"
+         id="tspan8524"> UNIT     288</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="31.333519"
+         y="30.730259"
+         id="tspan8526"> SIZE     229</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="31.333519"
+         y="36.286503"
+         id="tspan8594"> PREP     203</tspan></text>
+    <rect
+       style="fill:#ff8080;fill-opacity:1;stroke:none;stroke-width:0.16697;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect30887-3"
+       width="26.407042"
+       height="4.8589864"
+       x="70.398567"
+       y="21.547117"
+       ry="0.89799285" />
+    <rect
+       style="fill:#ff8080;fill-opacity:1;stroke:none;stroke-width:0.16697;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect30887-3-7"
+       width="26.407042"
+       height="4.8589864"
+       x="31.545935"
+       y="66.227203"
+       ry="0.89799285" />
+    <rect
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.49;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect38279-6"
+       width="31.828215"
+       height="29.275229"
+       x="67.96743"
+       y="9.4092731"
+       ry="0.93783152" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;line-height:1.75;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="70.325569"
+       y="14.061487"
+       id="text4500-7"><tspan
+         sodipodi:role="line"
+         id="tspan4498-5"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="70.325569"
+         y="14.061487">Label    Score</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="70.325569"
+         y="19.617739"
+         id="tspan5612-3"> QTY      -72</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="70.325569"
+         y="25.173988"
+         id="tspan8524-5"> UNIT     500</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="70.325569"
+         y="30.730238"
+         id="tspan8526-6"> SIZE     -32</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="70.325569"
+         y="36.286488"
+         id="tspan8594-2"> PREP     125</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;line-height:1.75;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="109.31762"
+       y="14.061487"
+       id="text4500-2"><tspan
+         sodipodi:role="line"
+         id="tspan4498-7"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="109.31762"
+         y="14.061487">Label    Score</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="109.31762"
+         y="19.617739"
+         id="tspan5612-0"> QTY      -88</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="109.31762"
+         y="25.173983"
+         id="tspan8524-9"> UNIT     -65</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="109.31762"
+         y="30.730242"
+         id="tspan8526-3"> SIZE     120</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="109.31762"
+         y="36.286488"
+         id="tspan8594-6"> PREP     142</tspan></text>
+    <rect
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.49;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect38279-1"
+       width="31.828215"
+       height="29.275229"
+       x="106.95948"
+       y="9.4092731"
+       ry="0.93783152" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;line-height:1.75;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="148.30966"
+       y="14.061493"
+       id="text4500-2-0"><tspan
+         sodipodi:role="line"
+         id="tspan4498-7-6"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="148.30966"
+         y="14.061493">Label    Score</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="148.30966"
+         y="19.617744"
+         id="tspan5612-0-2"> QTY      -88</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="148.30966"
+         y="25.173988"
+         id="tspan8524-9-6"> UNIT     -65</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="148.30966"
+         y="30.730247"
+         id="tspan8526-3-1"> SIZE     120</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="148.30966"
+         y="36.286491"
+         id="tspan8594-6-8"> PREP     142</tspan></text>
+    <rect
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.49;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect38279-1-7"
+       width="31.828215"
+       height="29.275229"
+       x="145.95152"
+       y="9.4092712"
+       ry="0.93783152" />
+    <rect
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.49;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect38279-2"
+       width="31.828215"
+       height="29.275229"
+       x="28.97538"
+       y="59.636093"
+       ry="0.93783152" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;line-height:1.75;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="31.333519"
+       y="64.28833"
+       id="text4500-0"><tspan
+         sodipodi:role="line"
+         id="tspan4498-2"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="31.333519"
+         y="64.28833">Label    Score</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="31.333519"
+         y="69.844582"
+         id="tspan5612-37"> QTY      687</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="31.333519"
+         y="75.400833"
+         id="tspan8524-59"> UNIT     124</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="31.333519"
+         y="80.957077"
+         id="tspan8526-2"> SIZE     34</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="31.333519"
+         y="86.513329"
+         id="tspan8594-28"> PREP     -12</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;line-height:1.75;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="109.31762"
+       y="64.288315"
+       id="text4500-2-4"><tspan
+         sodipodi:role="line"
+         id="tspan4498-7-7"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="109.31762"
+         y="64.288315">Label    Score</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="109.31762"
+         y="69.844566"
+         id="tspan5612-0-8"> QTY       64</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="109.31762"
+         y="75.400818"
+         id="tspan8524-9-4"> UNIT     264</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="109.31762"
+         y="80.957062"
+         id="tspan8526-3-5"> SIZE      43</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="109.31762"
+         y="86.513313"
+         id="tspan8594-6-0"> PREP     -42</tspan></text>
+    <rect
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.49;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect38279-1-3"
+       width="31.828215"
+       height="29.275229"
+       x="106.95948"
+       y="59.636101"
+       ry="0.93783152" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;line-height:1.75;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="148.30966"
+       y="64.288322"
+       id="text4500-2-0-1"><tspan
+         sodipodi:role="line"
+         id="tspan4498-7-6-0"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="148.30966"
+         y="64.288322">Label    Score</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="148.30966"
+         y="69.844574"
+         id="tspan5612-0-2-6"> QTY      -88</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="148.30966"
+         y="75.400826"
+         id="tspan8524-9-6-3"> UNIT     -65</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="148.30966"
+         y="80.957069"
+         id="tspan8526-3-1-2"> SIZE     240</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583"
+         x="148.30966"
+         y="86.513321"
+         id="tspan8594-6-8-0"> PREP     352</tspan></text>
+    <rect
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.49;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect38279-1-7-6"
+       width="31.828215"
+       height="29.275229"
+       x="145.95152"
+       y="59.636101"
+       ry="0.93783152" />
+    <path
+       style="fill:none;stroke:#ff0000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.795, 0.795;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 44.550407,45.298069 V 39.558793"
+       id="path53135" />
+    <path
+       style="fill:none;stroke:#ff0000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.795, 0.795;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 83.881537,45.298069 V 39.558793"
+       id="path53135-3" />
+    <path
+       style="fill:none;stroke:#ff0000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.795, 0.795;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 122.87359,45.298069 V 39.558793"
+       id="path53135-0" />
+    <path
+       style="fill:none;stroke:#ff0000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.795, 0.795;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 161.86563,45.298069 V 39.558793"
+       id="path53135-7" />
+    <path
+       style="fill:none;stroke:#ff0000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.795, 0.795;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 44.889487,95.218052 V 89.478776"
+       id="path53135-8" />
+    <path
+       style="fill:none;stroke:#ff0000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.795, 0.795;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 122.87359,95.218052 V 89.478776"
+       id="path53135-6" />
+    <path
+       style="fill:none;stroke:#ff0000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.795, 0.795;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 161.86563,95.218052 V 89.478776"
+       id="path53135-88" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583;fill:#ff0000;fill-opacity:1"
+       x="7.4992599"
+       y="49.97258"
+       id="text55122"><tspan
+         sodipodi:role="line"
+         id="tspan55120"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;stroke-width:0.264583;fill:#ff0000;fill-opacity:1"
+         x="7.4992599"
+         y="49.97258">PASS 1</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="7.8292418"
+       y="99.89312"
+       id="text55122-4"><tspan
+         sodipodi:role="line"
+         id="tspan55120-3"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:monospace;-inkscape-font-specification:monospace;fill:#ff0000;fill-opacity:1;stroke-width:0.264583"
+         x="7.8292418"
+         y="99.89312">PASS 2</tspan></text>
+    <text
+       xml:space="preserve"
+       transform="matrix(0.26458333,0,0,0.26458333,3.7303794,0.7639727)"
+       id="text111646"
+       style="line-height:1.25;font-family:sans-serif;font-size:12px;letter-spacing:0px;white-space:pre;shape-inside:url(#rect111648)" />
+  </g>
+</svg>

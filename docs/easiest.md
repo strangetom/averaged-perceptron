@@ -14,7 +14,7 @@ The basic algorithm in fairly straightforward. Starting with a completely unlabe
 
 Determine the token-label pair that has the highest overall score and assign that label to that token. Repeat this process for the remaining unlabelled tokens, assigning the highest scoring label to the token for each iteration. Continue iterating this process until all tokens have been assigned labels.
 
-=== **INSERT IMAGE HERE** ===
+![easiest-first](easiest-first.svg)
 
 The key insight here is that sometimes the labels of the surrounding contextual token do not matter that much when assigning a label. The inherent features of that token alone are enough to make a confident assignment. As more tokens are labelled in the sequence, then future label assignments benefit from those easily assign labels.
 
