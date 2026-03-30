@@ -278,3 +278,9 @@ Comparison of the Greedy and Viterbi Averaged Perceptron models, using the same 
 | Viterbi | 97.67%        | 94.08%            | 1.04 MB    | 1:35:57 |
 
 Using the Viterbi algorithm does yield a notable improvement to sentence accuracy, but it comes at a significant increase in training time (12x longer).
+
+## Limitations
+
+The Viterbi implementation described here is a 1st-order implementation. This means that only the transition between the previous label and the current label is considered.
+
+From the Greedy Averaged Perceptron, we know that using up to 3 previous labels provides useful information, which is not being considered by the Viterbi algorithm. Higher order implementations of the Viterbi algorithm are possible but they come at a considerable performance penalty. This 1st-order implementation is 12x slower to train - a 2nd-order implementation would likely be yet another order of magnitude slower.
