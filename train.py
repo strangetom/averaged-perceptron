@@ -93,8 +93,14 @@ if __name__ == "__main__":
     train_parser.add_argument(
         "--model",
         type=str,
-        default="ap",
-        choices=["ap", "ap_numpy", "ap_viterbi", "ap_easiest_first", "ap_ternary"],
+        default="ap_greedy",
+        choices=[
+            "ap_greedy",
+            "ap_numpy",
+            "ap_viterbi",
+            "ap_easiest_first",
+            "ap_ternary",
+        ],
         help="Type of model to train..",
     )
     train_parser.add_argument(
@@ -176,13 +182,19 @@ if __name__ == "__main__":
         "--processes",
         default=os.cpu_count() - 1,
         type=int,
-        help="Number of processes to spawn. Default to number of cpu cores.",
+        help="Number of processes to spawn. Default to number of CPU cores.",
     )
     multiple_parser.add_argument(
         "--model",
         type=str,
-        default="ap",
-        choices=["ap", "ap_numpy", "ap_viterbi", "ap_easiest_first", "ap_ternary"],
+        default="ap_greedy",
+        choices=[
+            "ap_greedy",
+            "ap_numpy",
+            "ap_viterbi",
+            "ap_easiest_first",
+            "ap_ternary",
+        ],
         help="Type of model to train..",
     )
     multiple_parser.add_argument(
@@ -240,7 +252,7 @@ if __name__ == "__main__":
         "--processes",
         default=os.cpu_count() - 1,
         type=int,
-        help="Number of processes to spawn. Default to number of cpu cores.",
+        help="Number of processes to spawn. Default to number of CPU cores.",
     )
     gridsearch_parser.add_argument(
         "--seed",

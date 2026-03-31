@@ -46,7 +46,7 @@ class HyperParameters:
     quantize_bits: int | None
     make_label_dict: bool
     model_type: Literal[
-        "ap", "ap_viterbi", "ap_numpy", "ap_easiest_first", "ap_ternary"
+        "ap_greedy", "ap_viterbi", "ap_numpy", "ap_easiest_first", "ap_ternary"
     ]
 
 
@@ -60,7 +60,7 @@ def default_hyperparams() -> HyperParameters:
         min_feat_updates=0,
         quantize_bits=16,
         make_label_dict=False,
-        model_type="ap",
+        model_type="ap_greedy",
     )
 
 
@@ -216,7 +216,7 @@ def train_model_grid_search(
 
     # Train model
     labels = set(chain.from_iterable(truth_train))
-    if parameters.model_type == "ap":
+    if parameters.model_type == "ap_greedy":
         tagger = IngredientTagger(
             only_positive_bool_features=parameters.only_positive_bool_features,
             apply_label_constraints=parameters.apply_label_constraints,

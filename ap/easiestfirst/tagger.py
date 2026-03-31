@@ -234,6 +234,24 @@ class IngredientTaggerEasiestFirst:
             raise ValueError("Model must be a .tar.gz file.")
 
         with tarfile.open(path, "r:gz") as tar:
+            # Extract and read the hyper parameters file
+            hyperparameters_file = tar.extractfile("hyperparameters.json")
+            if hyperparameters_file:
+                hyperparameters = json.load(hyperparameters_file)
+            else:
+                raise FileNotFoundError(
+                    f"Could not find hyperparameters.json in {path}."
+                )
+
+            # Abort if saved model is not compatible with this class.
+            if hyperparameters["model_type"] not in ["ap_easiest_first"]:
+                raise ValueError(
+                    (
+                        f"Loaded model is '{hyperparameters['model_type']}' which "
+                        "is not compatible with 'ap_easiest_first'."
+                    )
+                )
+
             # Extract and read the weights file
             weights_file = tar.extractfile("weights.json")
             if weights_file:

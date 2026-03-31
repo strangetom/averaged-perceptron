@@ -66,7 +66,7 @@ def change_log_level(level: int) -> Generator[None, None, None]:
 def train_model(
     vectors: DataVectors,
     model_type: Literal[
-        "ap", "ap_numpy", "ap_viterbi", "ap_easiest_first", "ap_ternary"
+        "ap_greedy", "ap_numpy", "ap_viterbi", "ap_easiest_first", "ap_ternary"
     ],
     split: float,
     save_model: Path,
@@ -168,7 +168,7 @@ def train_model(
 
     logger.info(f'Training "{model_type}" model with training data.')
     labels = set(chain.from_iterable(truth_train))
-    if model_type == "ap":
+    if model_type == "ap_greedy":
         tagger = IngredientTagger(
             only_positive_bool_features=params.only_positive_bool_features,
             apply_label_constraints=params.apply_label_constraints,
@@ -191,7 +191,6 @@ def train_model(
     elif model_type == "ap_easiest_first":
         tagger = IngredientTaggerEasiestFirst(
             only_positive_bool_features=params.only_positive_bool_features,
-            apply_label_constraints=params.apply_label_constraints,
         )
         tagger.labels = labels
         tagger.model.labels = tagger.labels

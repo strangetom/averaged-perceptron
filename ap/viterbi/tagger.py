@@ -228,6 +228,24 @@ class IngredientTaggerViterbi:
             raise ValueError("Model must be a .tar.gz file.")
 
         with tarfile.open(path, "r:gz") as tar:
+            # Extract and read the hyper parameters file
+            hyperparameters_file = tar.extractfile("hyperparameters.json")
+            if hyperparameters_file:
+                hyperparameters = json.load(hyperparameters_file)
+            else:
+                raise FileNotFoundError(
+                    f"Could not find hyperparameters.json in {path}."
+                )
+
+            # Abort if saved model is not compatible with this class.
+            if hyperparameters["model_type"] not in ["ap_viterbi"]:
+                raise ValueError(
+                    (
+                        f"Loaded model is '{hyperparameters['model_type']}' which "
+                        "is not compatible with 'ap_viterbi'."
+                    )
+                )
+
             # Extract and read the weights file
             weights_file = tar.extractfile("weights.json")
             if weights_file:
@@ -316,7 +334,7 @@ class IngredientTaggerViterbi:
         training_data = list(zip(converted_training_features, sentence_pos_tags, truth))
 
         for iter_ in tqdm(range(n_iter), disable=not show_progress):
-            n = 0  # numer of total tokens this iteration
+            n = 0  # number of total tokens this iteration
             c = 0  # number of correctly labelled tokens this iteration
             for features, pos_tags, truth_labels in training_data:
                 predicted_sequence = self.model.predict_sequence(
