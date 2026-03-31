@@ -401,9 +401,17 @@ class AveragedPerceptronNumpy:
         if nbits is None:
             return
 
+        # Choose an appropriate type to minimise model size.
+        if nbits <= 8:
+            type_ = np.int8
+        elif nbits <= 16:
+            type_ = np.int16
+        else:
+            type_ = np.int32
+
         max_weight = np.max(self.weights)
         scale = (2 ** (nbits - 1) - 1) / max_weight
-        self.weights = np.round(self.weights * scale).astype(np.int32)
+        self.weights = np.round(self.weights * scale).astype(type_)
         logger.debug(f"Quantized model weights using {nbits} bits of precision.")
 
     def simplify_weights(self) -> None:
