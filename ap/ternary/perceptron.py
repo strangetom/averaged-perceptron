@@ -7,7 +7,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-class AveragedPerceptronNumpy:
+class AveragedPerceptronTernary:
     def __init__(self, labels: list[str], training_mode: bool = False) -> None:
         """
         Parameters
@@ -53,6 +53,9 @@ class AveragedPerceptronNumpy:
             # the prediction step.
             self.min_feat_updates: int = 0
 
+            # Threshold used to ternarization. This is only used during training.
+            self.ternary_threshold: float = 0.0
+
             self._iteration: int = 0
 
         else:
@@ -62,7 +65,69 @@ class AveragedPerceptronNumpy:
             self.feature_vocab: dict[str, int] = {}
 
     def __repr__(self):
-        return f"AveragedPerceptronNumpy(labels={self.labels})"
+        return f"AveragedPerceptronTernary(labels={self.labels})"
+
+    def update_ternary_threshold(self) -> None:
+        """Update the cached ternary threshold based on active latent weights.
+
+        This implementation follows the 0.75 * mean heuristic [1], ignoring unused
+        pre-allocated rows and zeros to prevent dilution.
+
+        References
+        ----------
+        [1] B. Liu, F. Li, X. Wang, B. Zhang, and J. Yan, ‘Ternary Weight Networks’, in
+            ICASSP 2023 - 2023 IEEE International Conference on Acoustics, Speech and
+            Signal Processing (ICASSP), Rhodes Island, Greece: IEEE, Jun. 2023, pp. 1–5.
+            doi: 10.1109/ICASSP49357.2023.10094626.
+        """
+        if self.training_mode:
+            # Slice to only include the current vocabulary
+            active_weights = self.weights[: self.next_feature_index]
+        else:
+            # During inference, simplify_weights() has already removed any rows that are
+            # all zeroes.
+            active_weights = self.weights
+
+        if active_weights.size == 0:
+            self.ternary_threshold = 0.0
+            return
+
+        # Filter for non-zero weights.
+        # Since a Perceptron is only interested in non-zero weights we need to remove
+        # the zeroes from this calculation that arise from the choice to store the
+        # weights as a dense matrix.
+        abs_weights = np.abs(active_weights)
+        non_zero_weights = abs_weights[abs_weights > 0]
+
+        if non_zero_weights.size == 0:
+            self.ternary_threshold = 0.0
+        else:
+            # Apply the 0.75 heuristic to the mean of non-zero active weights
+            self.ternary_threshold = float(0.75 * np.mean(non_zero_weights))
+
+    def _ternarize_weights(self, weights: np.ndarray) -> np.ndarray:
+        """Convert weights to ternary using ternary threshold.
+
+        The given threshold is used symmetrically in the conversion:
+        weight > threshold: 1
+        weight < -threshold: -1
+        otherwise: 0
+
+        Parameters
+        ----------
+        weights : np.ndarray
+            2D NumPy array of weights.
+
+        Returns
+        -------
+        np.ndarray
+            Ternary weights.
+        """
+        return np.where(
+            weights < -self.ternary_threshold,
+            -1,
+            np.where(weights > self.ternary_threshold, 1, 0),
+        )
 
     def _resize_matrices(self) -> None:
         """Resize matrices by doubling the number of rows.
@@ -95,8 +160,6 @@ class AveragedPerceptronNumpy:
     def _features_to_idx(self, features: set[str]) -> np.ndarray:
         """Map feature string to indices by lookup in vocab dict.
 
-        If insert_missing is True, add feature missing from vocab dict.
-
         Whilst order is not important (hence this function accepting a set), we return
         a list because we can use that directly when indexing NumPy arrays.
 
@@ -109,11 +172,6 @@ class AveragedPerceptronNumpy:
         -------
         np.ndarray
             NumPy array of integer indices for string features.
-
-        Raises
-        ------
-        TypeError
-            Description
         """
         if self.training_mode:
             for feat in features:
@@ -132,42 +190,6 @@ class AveragedPerceptronNumpy:
                 if feat in self.feature_vocab
             ]
         )
-
-    def _confidence(self, scores: np.ndarray) -> np.ndarray:
-        """Calculate softmax confidence for each labels.
-
-        To avoid OverflowError exceptions, this is implemented as log softmax.
-        The non-log form of softmax, for the ith element is:
-            p_i = exp(s_i) / sum_i[exp(s_i)]
-
-        Taking logs
-            log(p_i) = log( exp(s_i) / sum_i[exp(s_i)] )
-            log(p_i) = log(exp(s_i)) - log(sum_i[exp(s_i)])
-            log(p_i) = s_i - log(sum_i[exp(s_i)])
-
-        The second term is dominated by the largest value, so can be approximated as
-        max(s), giving
-
-            log(p_i) = s_i - max(s)
-
-        Then we can take the exp to get back the probability.
-
-        See also https://gregorygundersen.com/blog/2020/02/09/log-sum-exp/
-
-        Parameters
-        ----------
-        scores : np.ndarray
-            NumPy array of scores for each label.
-
-        Returns
-        -------
-        np.ndarray
-            NumPy array of confidence
-        """
-        max_score = np.max(scores)
-        exp_scores = np.exp(scores - max_score)
-        probability = exp_scores / exp_scores.sum()
-        return np.round(probability, 3)
 
     def predict(
         self,
@@ -195,19 +217,30 @@ class AveragedPerceptronNumpy:
         """
         feature_indices = self._features_to_idx(features)
 
-        # Don't consider features until they have been updated more than
-        # min_feat_updates times. We only do this during training.
         if self.training_mode:
+            # Don't consider features until they have been updated more than
+            # min_feat_updates times. We only do this during training.
             feature_indices = feature_indices[
                 self._feat_updates[feature_indices] >= self.min_feat_updates
             ]
 
-        # Sum weights for active features across all labels at once
-        # Shape: (n_labels,) i.e. the summed score for each label.
-        if len(feature_indices) > 0:
-            scores = self.weights[feature_indices].sum(axis=0)
+            # Sum weights for active features across all labels at once
+            # Shape: (n_labels,) i.e. the summed score for each label.
+            if len(feature_indices) > 0:
+                # When training we need to convert the active latent weights to ternary
+                # to use to calculate the scores.
+                active_latent = self.weights[feature_indices]
+                ternary_active = self._ternarize_weights(active_latent)
+                scores = ternary_active.sum(axis=0)
+            else:
+                scores = np.zeros(self.n_labels)
+
         else:
-            scores = np.zeros(self.n_labels)
+            # Inference only path.
+            if len(feature_indices) > 0:
+                scores = self.weights[feature_indices].sum(axis=0)
+            else:
+                scores = np.zeros(self.n_labels, dtype=np.int8)
 
         # Apply label constraints by setting scores for constrained labels to the less
         # than the minimum of the scores. We have do this instead of just setting the
@@ -219,15 +252,16 @@ class AveragedPerceptronNumpy:
                 for label in constrained_labels
                 if label in self.label_to_idx
             ]
-            scores[mask_indices] = np.min(scores) - 1
+            # Set score for constrained labels to less than lowest calculated score, but
+            # constrain to -128 so we don't overflow when using int8 numbers.
+            scores[mask_indices] = max([np.min(scores) - 1, np.int8(-128)])
 
         # Find the best label
         best_idx = np.argmax(scores)
         best_label = self.labels[best_idx]
 
+        # Because the weights are ternary, a score doesn't make much sense.
         best_confidence = 1.0
-        if return_score:
-            best_confidence = float(self._confidence(scores)[best_idx])
 
         return best_label, best_confidence
 
@@ -360,52 +394,6 @@ class AveragedPerceptronNumpy:
             )
         )
 
-    def prune_weights(self, min_abs_weight: float) -> None:
-        """Prune weights by removing weights smaller than min_abs_weight.
-
-        Parameters
-        ----------
-        min_abs_weight : float
-            Minimum absolute value of weight to keep.
-        """
-        if min_abs_weight == 0:
-            # Nothing to prune
-            return None
-
-        initial_weight_count = np.count_nonzero(self.weights)
-        self.weights[np.abs(self.weights) < min_abs_weight] = 0
-        remaining_count = np.count_nonzero(self.weights)
-        pruned_pc = 100 * (1 - remaining_count / initial_weight_count)
-
-        logger.debug(
-            (
-                f"Pruned {pruned_pc:.2f}% of weights for having absolute "
-                f"values small than {min_abs_weight}."
-            )
-        )
-
-    def quantize(self, nbits: int | None = None) -> None:
-        """Quantize weights to nbit signed integer using linear scaling.
-
-        Because the model weights are only used additively during inference, and we only
-        consider the relative magnitudes of the weights, there is no need for keep the
-        scaling factor because it would just be a multiplier of all of the weights.
-
-        Parameters
-        ----------
-        nbits : int, optional
-            Number of bits for integer scaling.
-            If None, no quantisation is performed.
-            Default is None.
-        """
-        if nbits is None:
-            return
-
-        max_weight = np.max(self.weights)
-        scale = (2 ** (nbits - 1) - 1) / max_weight
-        self.weights = np.round(self.weights * scale).astype(np.int32)
-        logger.debug(f"Quantized model weights using {nbits} bits of precision.")
-
     def simplify_weights(self) -> None:
         """Simplify weights matrix by discarding any rows that are all zeros.
 
@@ -427,3 +415,11 @@ class AveragedPerceptronNumpy:
         self.feature_vocab = new_feature_vocab
         # Can't use nonzero_idx to index here because it has the wrong dimensions.
         self.weights = self.weights[mask]
+
+    def ternarize(self) -> None:
+        """Final transformation of averaged weights into strict int8 ternary values.
+
+        This happens after weight averaging.
+        """
+        self.update_ternary_threshold()
+        self.weights = self._ternarize_weights(self.weights).astype(np.int8)

@@ -21,6 +21,7 @@ from ap import (
     IngredientTagger,
     IngredientTaggerEasiestFirst,
     IngredientTaggerNumpy,
+    IngredientTaggerTernary,
     IngredientTaggerViterbi,
 )
 
@@ -184,7 +185,7 @@ def train_model_grid_search(
     start_time = time.monotonic()
 
     # Split data into train and test sets
-    # The stratify argument means that each dataset is represented proprtionally
+    # The stratify argument means that each dataset is represented proportionally
     # in the train and tests sets, avoiding the possibility that train or tests sets
     # contain data from one dataset disproportionally.
     (
@@ -238,6 +239,12 @@ def train_model_grid_search(
         )
         tagger.labels = labels
         tagger.model.labels = tagger.labels
+    elif parameters.model_type == "ap_ternary":
+        tagger = IngredientTaggerTernary(
+            labels=list(labels),
+            only_positive_bool_features=parameters.only_positive_bool_features,
+            apply_label_constraints=parameters.apply_label_constraints,
+        )
     else:
         raise ValueError(f"{parameters.model_type} is unknown model type.")
 

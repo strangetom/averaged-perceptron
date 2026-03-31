@@ -19,6 +19,7 @@ from ap import (
     IngredientTagger,
     IngredientTaggerEasiestFirst,
     IngredientTaggerNumpy,
+    IngredientTaggerTernary,
     IngredientTaggerViterbi,
 )
 
@@ -165,6 +166,8 @@ def train_model(
         tagger = IngredientTaggerEasiestFirst()
         tagger.labels = labels
         tagger.model.labels = tagger.labels
+    elif model_type == "ap_ternary":
+        tagger = IngredientTaggerTernary(labels=list(labels))
     else:
         raise ValueError(f"Unknown model type: {model_type}.")
 
