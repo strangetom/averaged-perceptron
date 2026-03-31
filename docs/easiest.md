@@ -299,10 +299,10 @@ def update(
 
 Comparison of the Greedy and Easiest-first Averaged Perceptron models, using the same hyperparameters.
 
-| Model         | Word accuracy | Sentence accuracy | Model size | Time    |
-| ------------- | ------------- | ----------------- | ---------- | ------- |
-| Greedy        | 98.15%        | 94.74%            | 0.354 MB   | 0:16:22 |
-| Easiest-first | 97.80%        | 94.60%            | 0.299 MB   | 2:34:50 |
+| Model         | Word accuracy   | Sentence accuracy | Model size         | Time    |
+| ------------- | --------------- | ----------------- | ------------------ | ------- |
+| Greedy        | 98.15%          | 94.74%            | 0.354 MB           | 0:16:22 |
+| Easiest-first | 97.80% (-0.35%) | 94.60% (-0.15%)   | 0.299 MB (-15.54%) | 2:34:50 |
 
 > [!IMPORTANT]
 >
