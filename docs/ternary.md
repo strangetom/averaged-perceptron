@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Ternary weights are an extreme form of quantization where the weights only have 3 possible values: -1, 0, 1. The docs [here](model-optimisation.md#Quantization) describe the process of quantizing weights as a post training step, which shows that the averaged perceptron model weights can be quanitzed quite aggressively before the model accuracy starts to degrade significantly, however there is a limit.
+Ternary weights are an extreme form of quantization where the weights only have 3 possible values: -1, 0, 1. The docs [here](model-optimisation.md#quantization) describe the process of quantizing weights as a post training step, which shows that the averaged perceptron model weights can be quanitzed quite aggressively before the model accuracy starts to degrade significantly, however there is a limit.
 
 To end up with ternary weighs, the model needs to be trained in a way that accounts for the quantization during the training - too much information would be lost if quantization was applied post training step.
 
