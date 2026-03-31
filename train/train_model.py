@@ -63,7 +63,9 @@ def change_log_level(level: int) -> Generator[None, None, None]:
 
 def train_model(
     vectors: DataVectors,
-    model_type: Literal["ap", "ap_numpy", "ap_viterbi", "ap_easiest_first"],
+    model_type: Literal[
+        "ap", "ap_numpy", "ap_viterbi", "ap_easiest_first", "ap_ternary"
+    ],
     split: float,
     save_model: Path,
     seed: int | None,

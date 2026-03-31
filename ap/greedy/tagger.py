@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
-import gzip
+import io
 import json
 import logging
 import mimetypes
 import random
+import tarfile
+import time
 from collections import defaultdict
 
 from ingredient_parser.en import FeatureDict, PreProcessor
@@ -72,7 +74,7 @@ class IngredientTagger:
             List of (token, label, confidence) tuples.
         """
         labels, labels_only = [], []
-        p = PreProcessor(sentence)
+        p = PreProcessor(sentence, custom_units={})
         prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
         for token, features in zip(p.tokenized_sentence, p.sentence_features()):
             label, confidence = (self.labeldict.get(features["stem"]), 1.0)
@@ -235,69 +237,107 @@ class IngredientTagger:
 
         return constrained_labels
 
-    def save(self, path: str, compress: bool = True) -> str:
+    def save(self, path: str) -> str:
         """Save trained model to given path.
 
-        The weights and labels are saved as a tuple.
+        The model comprises 3 files:
+          1. weights.json   - JSON object of weights.
+          2. labels.json    - list of labels
+          3. labeldict.json - labeldict of labels for common tokens.
+
+        These are all saved to a .tar.gz file.
 
         Parameters
         ----------
         path : str
             Path to save model weights to.
-        compress : bool, optional
-            If True, compress .json file using gzip.
-            Default is True.
 
         Returns
         -------
         str
             File path to saved model.
         """
-        data = {
-            "labels": list(self.model.labels),
-            "weights": self.model.weights,
-            "labeldict": self.labeldict,
-        }
+        if path.endswith(".tar"):
+            path = path + ".gz"
+        elif not path.endswith(".tar.gz"):
+            path = path + ".tar.gz"
 
-        if not path.endswith(".json"):
-            path = path + ".json"
+        labels = list(self.model.labels)
+        weights = self.model.weights
+        labeldict = self.labeldict
 
-        if compress:
-            if not path.endswith(".gz"):
-                path = path + ".gz"
+        with tarfile.open(path, "w:gz") as tar:
+            # Add labels file
+            labels_data = json.dumps(labels, indent=2).encode("utf-8")
+            labels_buffer = io.BytesIO(labels_data)
+            labels_buffer.seek(0)
+            labels_info = tarfile.TarInfo(name="labels.json")
+            labels_info.size = labels_buffer.getbuffer().nbytes
+            labels_info.mtime = time.time()
+            tar.addfile(labels_info, labels_buffer)
 
-            with gzip.open(path, "wt", encoding="utf-8") as f:
-                json.dump(data, f)
-        else:
-            with open(path, "w") as f:
-                # The seperator argument removes spaces from the normal defaults
-                json.dump(data, f, separators=(",", ":"))
+            # Add weights file
+            weights_data = json.dumps(weights, indent=2).encode("utf-8")
+            weights_buffer = io.BytesIO(weights_data)
+            weights_buffer.seek(0)
+            weights_info = tarfile.TarInfo(name="weights.json")
+            weights_info.size = weights_buffer.getbuffer().nbytes
+            weights_info.mtime = time.time()
+            tar.addfile(weights_info, weights_buffer)
+
+            # Add labeldict file
+            labeldict_data = json.dumps(labeldict, indent=2).encode("utf-8")
+            labeldict_buffer = io.BytesIO(labeldict_data)
+            labeldict_buffer.seek(0)
+            labeldict_info = tarfile.TarInfo(name="labeldict.json")
+            labeldict_info.size = labeldict_buffer.getbuffer().nbytes
+            labeldict_info.mtime = time.time()
+            tar.addfile(labeldict_info, labeldict_buffer)
 
         return path
 
     def load(self, path: str) -> None:
         """Load saved model at given path.
 
+        The expected model is a .tar.gz file containing
+        * weights.json
+        * labels.json
+        * labeldict.json
+
         Parameters
         ----------
         path : str
             Path to model to load.
-            .json and .json.gz are accepted formats.
         """
         mimetype, encoding = mimetypes.guess_type(path)
-        if mimetype != "application/json":
-            raise ValueError("Model must be a .json or .json.gz file.")
+        if not (mimetype == "application/x-tar" and encoding == "gzip"):
+            raise ValueError("Model must be a .tar.gz file.")
 
-        if encoding == "gzip":
-            with open(path, "rb") as f:
-                data = json.loads(gzip.decompress(f.read()))
-        else:
-            with open(path, "r") as f:
-                data = json.load(f)
+        with tarfile.open(path, "r:gz") as tar:
+            # Extract and read the weights file
+            weights_file = tar.extractfile("weights.json")
+            if weights_file:
+                weights = json.load(weights_file)
+            else:
+                raise FileNotFoundError(f"Could not find weights.json in {path}.")
 
-        self.model.weights = data["weights"]
-        self.labels = set(data["labels"])
-        self.labeldict = data["labeldict"]
+            # Extract and read the labels file
+            labels_file = tar.extractfile("labels.json")
+            if labels_file:
+                labels = json.load(labels_file)
+            else:
+                raise FileNotFoundError(f"Could not find labels.json in {path}.")
+
+            # Extract and read the labeldict file
+            labeldict_file = tar.extractfile("labeldict.json")
+            if labeldict_file:
+                labeldict = json.load(labeldict_file)
+            else:
+                raise FileNotFoundError(f"Could not find labeldict.json in {path}.")
+
+        self.model.weights = weights
+        self.labels = set(labels)
+        self.labeldict = labeldict
         self.model.labels = self.labels
 
     def train(
