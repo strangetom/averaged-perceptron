@@ -80,8 +80,8 @@ class AveragedPerceptronTernary:
             Signal Processing (ICASSP), Rhodes Island, Greece: IEEE, Jun. 2023, pp. 1–5.
             doi: 10.1109/ICASSP49357.2023.10094626.
         """
-        # Slice to only include the current vocabulary
         if self.training_mode:
+            # Slice to only include the current vocabulary
             active_weights = self.weights[: self.next_feature_index]
         else:
             # During inference, simplify_weights() has already removed any rows that are
@@ -117,8 +117,6 @@ class AveragedPerceptronTernary:
         ----------
         weights : np.ndarray
             2D NumPy array of weights.
-        threshold : np.floating
-            Threshold for ternary conversion.
 
         Returns
         -------
@@ -238,7 +236,7 @@ class AveragedPerceptronTernary:
                 scores = np.zeros(self.n_labels)
 
         else:
-            # Inference only path
+            # Inference only path.
             if len(feature_indices) > 0:
                 scores = self.weights[feature_indices].sum(axis=0)
             else:
