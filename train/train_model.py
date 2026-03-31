@@ -5,6 +5,7 @@ import concurrent.futures as cf
 import logging
 import random
 from contextlib import contextmanager
+from datetime import datetime
 from itertools import chain
 from pathlib import Path
 from statistics import mean, stdev
@@ -21,6 +22,7 @@ from ap import (
     IngredientTaggerNumpy,
     IngredientTaggerTernary,
     IngredientTaggerViterbi,
+    ModelHyperParameters,
 )
 
 from .test_results_to_detailed_results import test_results_to_detailed_results
@@ -98,7 +100,7 @@ def train_model(
         If True, write html file of incorrect evaluation sentences
         and print out details about OTHER labels.
     detailed_results : bool
-        If True, write output files with details about how labeling performed on
+        If True, write output files with details about how labelling performed on
         the test set.
     plot_confusion_matrix : bool
         If True, plot a confusion matrix of the token labels.
@@ -125,7 +127,7 @@ def train_model(
     random.seed(seed)
 
     # Split data into train and test sets
-    # The stratify argument means that each dataset is represented proprtionally
+    # The stratify argument means that each dataset is represented proportionally
     # in the train and tests sets, avoiding the possibility that train or tests sets
     # contain data from one dataset disproportionally.
     (
@@ -152,39 +154,68 @@ def train_model(
     logger.info(f"{len(features_train):,} training vectors.")
     logger.info(f"{len(features_test):,} testing vectors.")
 
+    params = ModelHyperParameters(
+        model_type=model_type,
+        epochs=20,
+        only_positive_bool_features=False,
+        apply_label_constraints=True,
+        min_abs_weight=2,
+        min_feat_updates=5,
+        quantize_bits=8,
+        make_label_dict=False,
+        datetime=datetime.now().isoformat(),
+    )
+
     logger.info(f'Training "{model_type}" model with training data.')
     labels = set(chain.from_iterable(truth_train))
     if model_type == "ap":
-        tagger = IngredientTagger()
+        tagger = IngredientTagger(
+            only_positive_bool_features=params.only_positive_bool_features,
+            apply_label_constraints=params.apply_label_constraints,
+        )
         tagger.labels = labels
         tagger.model.labels = tagger.labels
     elif model_type == "ap_numpy":
-        tagger = IngredientTaggerNumpy(labels=list(labels))
+        tagger = IngredientTaggerNumpy(
+            labels=list(labels),
+            only_positive_bool_features=params.only_positive_bool_features,
+            apply_label_constraints=params.apply_label_constraints,
+        )
     elif model_type == "ap_viterbi":
-        tagger = IngredientTaggerViterbi()
+        tagger = IngredientTaggerViterbi(
+            only_positive_bool_features=params.only_positive_bool_features,
+            apply_label_constraints=params.apply_label_constraints,
+        )
         tagger.labels = labels
         tagger.model.labels = tagger.labels
     elif model_type == "ap_easiest_first":
-        tagger = IngredientTaggerEasiestFirst()
+        tagger = IngredientTaggerEasiestFirst(
+            only_positive_bool_features=params.only_positive_bool_features,
+            apply_label_constraints=params.apply_label_constraints,
+        )
         tagger.labels = labels
         tagger.model.labels = tagger.labels
     elif model_type == "ap_ternary":
-        tagger = IngredientTaggerTernary(labels=list(labels))
+        tagger = IngredientTaggerTernary(
+            labels=list(labels),
+            only_positive_bool_features=params.only_positive_bool_features,
+            apply_label_constraints=params.apply_label_constraints,
+        )
     else:
         raise ValueError(f"Unknown model type: {model_type}.")
 
     tagger.train(
         features_train,
         truth_train,
-        n_iter=20,
-        min_abs_weight=2,
-        min_feat_updates=5,
-        quantize_bits=8,
-        make_label_dict=False,
+        n_iter=params.epochs,
+        min_abs_weight=params.min_abs_weight,
+        min_feat_updates=params.min_feat_updates,
+        quantize_bits=params.quantize_bits,
+        make_label_dict=params.make_label_dict,
         show_progress=show_progress,
     )
     if keep_model:
-        p = tagger.save(str(save_model))
+        p = tagger.save(str(save_model), params)
         logger.info(f"Model saved to {p}.")
 
     logger.info("Evaluating model with test data.")

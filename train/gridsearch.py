@@ -7,7 +7,7 @@ import os
 import random
 import time
 from dataclasses import asdict, dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta
 from itertools import chain, product
 from pathlib import Path
 from typing import Literal
@@ -23,6 +23,7 @@ from ap import (
     IngredientTaggerNumpy,
     IngredientTaggerTernary,
     IngredientTaggerViterbi,
+    ModelHyperParameters,
 )
 
 from .train_model import DEFAULT_MODEL_LOCATION
@@ -44,7 +45,9 @@ class HyperParameters:
     min_feat_updates: int
     quantize_bits: int | None
     make_label_dict: bool
-    model_type: Literal["ap", "ap_viterbi", "ap_numpy", "ap_easiest_first"]
+    model_type: Literal[
+        "ap", "ap_viterbi", "ap_numpy", "ap_easiest_first", "ap_ternary"
+    ]
 
 
 def default_hyperparams() -> HyperParameters:
@@ -258,7 +261,19 @@ def train_model_grid_search(
         make_label_dict=parameters.make_label_dict,
         show_progress=False,
     )
-    saved_model_path = tagger.save(str(save_model_path))
+
+    params = ModelHyperParameters(
+        model_type=parameters.model_type,
+        epochs=parameters.epochs,
+        only_positive_bool_features=parameters.only_positive_bool_features,
+        apply_label_constraints=parameters.apply_label_constraints,
+        min_abs_weight=parameters.min_abs_weight,
+        min_feat_updates=parameters.min_feat_updates,
+        quantize_bits=parameters.quantize_bits,
+        make_label_dict=parameters.make_label_dict,
+        datetime=datetime.now().isoformat(),
+    )
+    saved_model_path = tagger.save(str(save_model_path), params)
 
     # Get model size, in MB
     model_size = os.path.getsize(saved_model_path) / 1024**2

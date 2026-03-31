@@ -8,10 +8,13 @@ import random
 import tarfile
 import time
 from collections import defaultdict
+from dataclasses import asdict
 from itertools import product
 
 from ingredient_parser.en import FeatureDict, PreProcessor
 from tqdm import tqdm
+
+from ap._dataclasses import ModelHyperParameters
 
 from .perceptron import AveragedPerceptronEasiestFirst
 
@@ -143,7 +146,7 @@ class IngredientTaggerEasiestFirst:
 
         return converted
 
-    def save(self, path: str) -> str:
+    def save(self, path: str, hyperparameters: ModelHyperParameters) -> str:
         """Save trained model to given path.
 
         The model comprises 3 files:
@@ -157,6 +160,8 @@ class IngredientTaggerEasiestFirst:
         ----------
         path : str
             Path to save model weights to.
+        hyper_parameters : ModelHyperParameters
+            Hyper parameters used to train model.
 
         Returns
         -------
@@ -199,6 +204,15 @@ class IngredientTaggerEasiestFirst:
             labeldict_info.size = labeldict_buffer.getbuffer().nbytes
             labeldict_info.mtime = time.time()
             tar.addfile(labeldict_info, labeldict_buffer)
+
+            # Add hyper parameters file
+            hp_data = json.dumps(asdict(hyperparameters), indent=2).encode("utf-8")
+            hp_buffer = io.BytesIO(hp_data)
+            hp_buffer.seek(0)
+            hp_info = tarfile.TarInfo(name="hyperparameters.json")
+            hp_info.size = hp_buffer.getbuffer().nbytes
+            hp_info.mtime = time.time()
+            tar.addfile(hp_info, hp_buffer)
 
         return path
 

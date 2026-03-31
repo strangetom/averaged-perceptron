@@ -8,12 +8,14 @@ import random
 import tarfile
 import time
 from collections import defaultdict
+from dataclasses import asdict
 
 import numpy as np
 from ingredient_parser.en import FeatureDict, PreProcessor
 from tqdm import tqdm
 
 from ap._constants import ILLEGAL_TRANSITIONS
+from ap._dataclasses import ModelHyperParameters
 
 from .perceptron import (
     AveragedPerceptronNumpy,
@@ -286,7 +288,7 @@ class IngredientTaggerNumpy:
 
         return constrained_labels
 
-    def save(self, path: str) -> str:
+    def save(self, path: str, hyperparameters: ModelHyperParameters) -> str:
         """Save trained model to given path.
 
         The model comprises 3 files:
@@ -300,6 +302,8 @@ class IngredientTaggerNumpy:
         ----------
         path : str
             Path to save model weights to.
+        hyper_parameters : ModelHyperParameters
+            Hyper parameters used to train model.
 
         Returns
         -------
@@ -346,6 +350,15 @@ class IngredientTaggerNumpy:
             npy_info.size = npy_buffer.getbuffer().nbytes
             npy_info.mtime = time.time()
             tar.addfile(npy_info, npy_buffer)
+
+            # Add hyper parameters file
+            hp_data = json.dumps(asdict(hyperparameters), indent=2).encode("utf-8")
+            hp_buffer = io.BytesIO(hp_data)
+            hp_buffer.seek(0)
+            hp_info = tarfile.TarInfo(name="hyperparameters.json")
+            hp_info.size = hp_buffer.getbuffer().nbytes
+            hp_info.mtime = time.time()
+            tar.addfile(hp_info, hp_buffer)
 
         return path
 

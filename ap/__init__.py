@@ -1,3 +1,4 @@
+from ._dataclasses import ModelHyperParameters  # noqa: F401
 from .easiestfirst.tagger import IngredientTaggerEasiestFirst  # noqa: F401
 from .greedy.tagger import IngredientTagger  # noqa: F401
 from .numpy.tagger import IngredientTaggerNumpy  # noqa: F401
