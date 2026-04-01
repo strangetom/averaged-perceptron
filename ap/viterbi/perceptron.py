@@ -558,7 +558,8 @@ class AveragedPerceptronViterbi:
                 if quantized_weight != 0:
                     new_feature_weights[label] = quantized_weight
 
-            new_weights[feature] = new_feature_weights
+            if new_feature_weights:
+                new_weights[feature] = new_feature_weights
 
         self.weights = new_weights
         logger.debug(f"Quantized model weights using {nbits} bits of precision.")
