@@ -13,4 +13,3 @@ class ModelHyperParameters:
     min_feat_updates: int
     quantize_bits: int | None
     make_label_dict: bool
-    datetime: str

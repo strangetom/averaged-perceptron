@@ -5,7 +5,6 @@ import concurrent.futures as cf
 import logging
 import random
 from contextlib import contextmanager
-from datetime import datetime
 from itertools import chain
 from pathlib import Path
 from statistics import mean, stdev
@@ -161,9 +160,8 @@ def train_model(
         apply_label_constraints=True,
         min_abs_weight=2,
         min_feat_updates=5,
-        quantize_bits=8,
+        quantize_bits=4,
         make_label_dict=False,
-        datetime=datetime.now().isoformat(),
     )
 
     logger.info(f'Training "{model_type}" model with training data.')

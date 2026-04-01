@@ -7,7 +7,7 @@ import os
 import random
 import time
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
+from datetime import timedelta
 from itertools import chain, product
 from pathlib import Path
 from typing import Literal
@@ -271,7 +271,6 @@ def train_model_grid_search(
         min_feat_updates=parameters.min_feat_updates,
         quantize_bits=parameters.quantize_bits,
         make_label_dict=parameters.make_label_dict,
-        datetime=datetime.now().isoformat(),
     )
     saved_model_path = tagger.save(str(save_model_path), params)
 
