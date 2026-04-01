@@ -103,7 +103,7 @@ class IngredientTaggerTernary:
         self.apply_label_constraints = apply_label_constraints
 
     def __repr__(self):
-        return f"IngredientTaggerNumpy(labels={self.labels})"
+        return f"IngredientTaggerTernary(labels={self.labels})"
 
     def tag(self, sentence: str) -> list[tuple[str, str, float]]:
         """Tag a sentence with labels using Averaged Perceptron model.
