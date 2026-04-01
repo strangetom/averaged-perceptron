@@ -178,14 +178,15 @@ def quantize(self, nbits: int | None = None) -> None:
 
 All these results were obtained without any model optimisations. If weight or feature pruning was applied, it would be done before the quantization.
 
-| Quantization bits | Word accuracy   | Sentence accuracy | Model size              |
-| ----------------- | --------------- | ----------------- | ----------------------- |
-| None              | 97.88% (+0%)    | 94.49% (+0%)      | 970,266 bytes (+0%)     |
-| 16                | 97.88% (+0%)    | 94.49% (+0%)      | 867,683 bytes (-10.57%) |
-| 8                 | 97.87% (-0.01%) | 94.45% (-0.04%)   | 575,683 bytes (-40.67%) |
-| 7                 | 97.85% (-0.03%) | 94.48% (-0.01%)   | 477,485 bytes (-50.79%) |
-| 6                 | 97.73% (-0.15%) | 94.13% (-0.38%)   | 400,973 bytes (-58.67%) |
-| 5                 | 97.07% (-0.83%) | 92.34% (-2.28%)   | 335,554 bytes (-65.42%) |
-| 4                 | 95.07% (-2.87%) | 85.73% (-9.27%)   | 292,533 bytes (-69.85%) |
+| Quantization bits | Word accuracy    | Sentence accuracy | Model size              |
+| ----------------- | ---------------- | ----------------- | ----------------------- |
+| None              | 98.20% (+0%)     | 95.21% (+0%)      | 2,207,420 bytes (+0%)   |
+| 16                | 98.20% (+0%)     | 95.21% (+0%)      | 939,016 bytes (-50.46%) |
+| 8                 | 98.18% (-0.02%)  | 95.18% (-0.03%)   | 601,044 bytes (-72.77%) |
+| 7                 | 98.19% (-0.01%)  | 95.21% (+0%)      | 433,462 bytes (-80.36%) |
+| 6                 | 98.13% (-0.07%)  | 95.02% (-0.20%)   | 288,526 bytes (-86.93%) |
+| 5                 | 97.40% (-0.81%)  | 93.25% (-2.06%)   | 149,517 bytes (-93-22%) |
+| 4                 | 95.39% (-2.86%)  | 85.89% (-9.79%)   | 43,559 bytes (-98.03%)  |
+| 3                 | 78.08% (-20.49%) | 39.32% (-58.70%)  | 6,427 bytes (-99.71%)   |
 
-In this example, we can quantize to 7 bits to reduce the model size by 50% with a negligible impact on model performance. 
+In this example, we can quantize to 7 bits to reduce the model size by 80% with a negligible impact on model performance. 
