@@ -383,17 +383,19 @@ class IngredientTaggerNumpy:
             # Extract and read the hyper parameters file
             hyperparameters_file = tar.extractfile("hyperparameters.json")
             if hyperparameters_file:
-                hyperparameters = json.load(hyperparameters_file)
+                hyperparameters = ModelHyperParameters(
+                    **json.load(hyperparameters_file)
+                )
             else:
                 raise FileNotFoundError(
                     f"Could not find hyperparameters.json in {path}."
                 )
 
             # Abort if saved model is not compatible with this class.
-            if hyperparameters["model_type"] not in ["ap_numpy"]:
+            if hyperparameters.model_type not in ["ap_numpy"]:
                 raise ValueError(
                     (
-                        f"Loaded model is '{hyperparameters['model_type']}' which "
+                        f"Loaded model is '{hyperparameters.model_type}' which "
                         "is not compatible with 'ap_numpy'."
                     )
                 )
