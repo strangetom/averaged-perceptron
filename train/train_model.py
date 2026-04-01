@@ -20,6 +20,7 @@ from ap import (
     IngredientTagger,
     IngredientTaggerEasiestFirst,
     IngredientTaggerNumpy,
+    IngredientTaggerQAT,
     IngredientTaggerTernary,
     IngredientTaggerViterbi,
     ModelHyperParameters,
@@ -66,7 +67,12 @@ def change_log_level(level: int) -> Generator[None, None, None]:
 def train_model(
     vectors: DataVectors,
     model_type: Literal[
-        "ap_greedy", "ap_numpy", "ap_viterbi", "ap_easiest_first", "ap_ternary"
+        "ap_greedy",
+        "ap_numpy",
+        "ap_viterbi",
+        "ap_easiest_first",
+        "ap_ternary",
+        "ap_qat",
     ],
     split: float,
     save_model: Path,
@@ -87,8 +93,6 @@ def train_model(
         Vectors loaded from training csv files
     model_type : Literal["ap", "ap_numpy", "ap_viterbi"]
         Model type to train.
-        ap = AveragedPerceptron.
-        ap_viterbi = AveragedPerceptron using viterbi decoding.
     split : float
         Fraction of vectors to use for evaluation.
     save_model : Path
@@ -161,7 +165,7 @@ def train_model(
         apply_label_constraints=True,
         min_abs_weight=2,
         min_feat_updates=5,
-        quantize_bits=8,
+        quantize_bits=4,
         make_label_dict=False,
         datetime=datetime.now().isoformat(),
     )
@@ -177,6 +181,12 @@ def train_model(
         tagger.model.labels = tagger.labels
     elif model_type == "ap_numpy":
         tagger = IngredientTaggerNumpy(
+            labels=list(labels),
+            only_positive_bool_features=params.only_positive_bool_features,
+            apply_label_constraints=params.apply_label_constraints,
+        )
+    elif model_type == "ap_qat":
+        tagger = IngredientTaggerQAT(
             labels=list(labels),
             only_positive_bool_features=params.only_positive_bool_features,
             apply_label_constraints=params.apply_label_constraints,

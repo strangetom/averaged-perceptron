@@ -100,6 +100,7 @@ if __name__ == "__main__":
             "ap_viterbi",
             "ap_easiest_first",
             "ap_ternary",
+            "ap_qat",
         ],
         help="Type of model to train..",
     )
@@ -194,6 +195,7 @@ if __name__ == "__main__":
             "ap_viterbi",
             "ap_easiest_first",
             "ap_ternary",
+            "ap_qat",
         ],
         help="Type of model to train..",
     )
