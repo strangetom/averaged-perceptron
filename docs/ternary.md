@@ -141,7 +141,7 @@ The effect of QAT is clearly shown here. The post training quantization results 
 
 > [!NOTE]
 >
-> Note the size of the post training quantized models compared to the Ternary model. The Ternary model is significantly larger. We can infer from this that there are more active features remaining in the Ternary model, where the post training quanitzed models have discarded a lot. This is a result of the QAT inducing errors during training which result in more updates to feature weights.
+> Note the size of the post training quantized models compared to the Ternary model. The Ternary model is significantly larger. We can infer from this that there are more active features remaining in the Ternary model, where the post training quanitzed models have discarded a lot. 
 
 We might also consider if the Ternary model requires more training epochs due to the severely limited values the weights can take. The table below shows that more training epochs result in better model accuracy, but only up to a point.
 
