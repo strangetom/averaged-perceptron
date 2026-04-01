@@ -28,7 +28,7 @@ $$
 $$
 where $E(|W|)$ is the mean of absolute weight values.
 
-This threshold is recalculated before every training sentence according to
+This threshold is recalculated every 250 training sentence according to.
 
 ```python
 def update_ternary_threshold(self) -> None:
@@ -52,6 +52,21 @@ def update_ternary_threshold(self) -> None:
         # Apply the 0.75 heuristic to the mean of non-zero active weights
         self.ternary_threshold = float(0.75 * np.mean(non_zero_weights))
 ```
+
+> [!TIP]
+>
+> The decision of how often to update the ternary threshold is somewhat arbitrary. Perhaps the *most correct* approach is to recalculate before every training sentence however this is very computationally expensive. 
+>
+> Since the weights do not change significantly between sentences, then neither will the threshold. Therefore we can get away with calculating it less often than for every sentence. The choice of every 250 sentences was made to have minimal impact on the training run-time whilst still updating the threshold regularly during training.
+>
+> Technically, how often we update the ternary threshold is a hyper parameter of the model because the choice does impact the model performance.
+>
+> | Update | Word accuracy | Sentence accuracy |
+> | ------ | ------------- | ----------------- |
+> | 1000   | 97.34%        | 92.23%            |
+> | 250    | 97.48%        | 92.93%            |
+> | 50     | 97.47%        | 92.90%            |
+> | 10     | 97.45%        | 92.81%            |
 
 The implementation here has to account for the decision to store the weights as a dense matrix. This means may be many rows of zeroes in the weights matrix that do not actually correspond to any features yet, so we slice the matrix to only include first $n$ rows up to the number of features in the model vocabulary.
 
@@ -113,7 +128,7 @@ Comparison of the Numpy and Ternary Averaged Perceptron models, using the same h
 | Model                  | Word accuracy   | Sentence accuracy | Model size         | Time    |
 | ---------------------- | --------------- | ----------------- | ------------------ | ------- |
 | NumPy (full precision) | 98.19%          | 95.18%            | 0.868 MB           | 0:07:07 |
-| Ternary                | 97.10% (-1.11%) | 92.11% (-3.23%)   | 0.177 MB (-79.61%) | 2:21:37 |
+| Ternary                | 97.48% (-0.72%) | 92.93% (-2.36%)   | 0.177 MB (-79.61%) | 0:10:06 |
 
 We can also compare the performance against the NumPy after post training quantization.
 
@@ -126,17 +141,15 @@ The effect of QAT is clearly shown here. The post training quantization results 
 
 > [!NOTE]
 >
-> Note the size of the post training quantized models compared to the Ternary model. The Ternary model is significantly larger. We can infer from this (given the limited options for the values of the weights) that there are more active features in the model. This is a result of the QAT inducing errors during training which result in more updates to feature weights.
+> Note the size of the post training quantized models compared to the Ternary model. The Ternary model is significantly larger. We can infer from this that there are more active features remaining in the Ternary model, where the post training quanitzed models have discarded a lot. This is a result of the QAT inducing errors during training which result in more updates to feature weights.
 
 We might also consider if the Ternary model requires more training epochs due to the severely limited values the weights can take. The table below shows that more training epochs result in better model accuracy, but only up to a point.
 
 | Model               | Word accuracy   | Sentence accuracy | Model size         | Time    |
 | ------------------- | --------------- | ----------------- | ------------------ | ------- |
-| Ternary (40 epochs) | 97.57% (-0.63%) | 92.95% (-2.34%)   | 0.195 MB (-77.53%) | 4:12:39 |
-| Ternary (50 epochs) | 97.63% (-0.57%) | 93.41% (-1.86%)   | 0.201 MB (-76.84%) | 4:59:45 |
-| Ternary (60 epochs) | 97.51% (-0.69%) | 93.10% (-2.19%)   | 0.205 MB (-76.38%) | 5:42:33 |
-
-
+| Ternary (40 epochs) | 97.61% (-0.59%) | 93.23% (-2.05%)   | 0.195 MB (-77.53%) | 0:19:10 |
+| Ternary (50 epochs) | 97.59% (-0.61%) | 93.26% (-2.02%)   | 0.201 MB (-76.84%) | 0:23:47 |
+| Ternary (60 epochs) | 97.65% (-0.55%) | 93.37% (-1.90%)   | 0.205 MB (-76.38%) | 0:27:43 |
 
 ## References
 

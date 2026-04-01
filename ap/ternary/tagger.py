@@ -481,9 +481,13 @@ class IngredientTaggerTernary:
         for iter_ in tqdm(range(n_iter), disable=not show_progress):
             n = 0  # number of total tokens this iteration
             c = 0  # number of correctly labelled tokens this iteration
-            for sentence_features, truth_labels in training_data:
-                # Update ternary threshold at the start of each sentence when training.
-                self.model.update_ternary_threshold()
+            for i, (sentence_features, truth_labels) in enumerate(training_data):
+                if i % 250 == 0:
+                    # Update ternary threshold every 1000 sentences when training.
+                    # Doing this for every sentence slows down the training a lot, but
+                    # only doing it every epoch is not often enough.
+                    self.model.update_ternary_threshold()
+
                 prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
                 for features, true_label in zip(sentence_features, truth_labels):
                     guess = self.labeldict.get(features["stem"])
