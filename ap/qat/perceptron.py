@@ -88,18 +88,6 @@ class AveragedPerceptronQAT:
 
     def update_scale_factor(self) -> None:
         """Update the quantization scale factor based on active latent weights."""
-        if self.training_mode:
-            # Slice to only include the current vocabulary
-            active_weights = self.weights[: self.next_feature_index]
-        else:
-            # During inference, simplify_weights() has already removed any rows that are
-            # all zeroes.
-            active_weights = self.weights
-
-        if active_weights.size == 0:
-            self.quantisation_scale_factor = 1.0
-            return
-
         max_weight = np.max(np.abs(self.weights))
         if max_weight == 0:
             self.quantisation_scale_factor = 1.0
