@@ -21,6 +21,7 @@ from ap import (
     IngredientTagger,
     IngredientTaggerEasiestFirst,
     IngredientTaggerNumpy,
+    IngredientTaggerQAT,
     IngredientTaggerTernary,
     IngredientTaggerViterbi,
     ModelHyperParameters,
@@ -46,7 +47,12 @@ class HyperParameters:
     quantize_bits: int | None
     make_label_dict: bool
     model_type: Literal[
-        "ap_greedy", "ap_viterbi", "ap_numpy", "ap_easiest_first", "ap_ternary"
+        "ap_greedy",
+        "ap_viterbi",
+        "ap_numpy",
+        "ap_easiest_first",
+        "ap_ternary",
+        "ap_qat",
     ]
 
 
@@ -232,6 +238,12 @@ def train_model_grid_search(
         tagger.model.labels = tagger.labels
     elif parameters.model_type == "ap_numpy":
         tagger = IngredientTaggerNumpy(
+            labels=list(labels),
+            only_positive_bool_features=parameters.only_positive_bool_features,
+            apply_label_constraints=parameters.apply_label_constraints,
+        )
+    elif parameters.model_type == "ap_qat":
+        tagger = IngredientTaggerQAT(
             labels=list(labels),
             only_positive_bool_features=parameters.only_positive_bool_features,
             apply_label_constraints=parameters.apply_label_constraints,

@@ -167,7 +167,7 @@ class IngredientTagger:
             Label of previous token.
         prev_label2 : str
             Label of token before previous token.
-        prev_label2 : str
+        prev_label3 : str
             Label of token before token before previous token.
 
         Returns

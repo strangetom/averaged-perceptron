@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-import gzip
 import io
 import json
 import pathlib
@@ -120,7 +119,7 @@ def plot(features: FeatureWeights, output: pathlib.Path) -> pathlib.Path:
 
 
 def load_json_model_features(model_path: str) -> FeatureWeights:
-    """Load model features.
+    """Load model features for model that saves weights in JSON format.
 
     Parameters
     ----------
@@ -132,20 +131,25 @@ def load_json_model_features(model_path: str) -> FeatureWeights:
     FeatureWeights
         Weights for each feature.
     """
-    with open(model_path, "rb") as f:
-        data = json.loads(gzip.decompress(f.read()))
+    with tarfile.open(model_path, "r:gz") as tar:
+        # Extract and read the weights file
+        weights_file = tar.extractfile("weights.json")
+        if weights_file:
+            weights = json.load(weights_file)
+        else:
+            raise FileNotFoundError(f"Could not find weights.json in {model_path}.")
 
     feature_weights: FeatureWeights = defaultdict(lambda: defaultdict(list))
-    for feature, weights in data["weights"].items():
+    for feature, label_weights in weights.items():
         feature_name = feature.split("=", 1)[0]
-        for label, weight in weights.items():
+        for label, weight in label_weights.items():
             feature_weights[feature_name][label].append(weight)
 
     return feature_weights
 
 
 def load_numpy_model_features(model_path: str) -> FeatureWeights:
-    """Load model features.
+    """Load model features for model that saves weights in numpy format.
 
     Parameters
     ----------
@@ -189,6 +193,35 @@ def load_numpy_model_features(model_path: str) -> FeatureWeights:
     return feature_weights
 
 
+def load_model_features(model_path: str) -> FeatureWeights:
+    """Load model features.
+
+    Parameters
+    ----------
+    model_path : str
+        Path to model.
+
+    Returns
+    -------
+    FeatureWeights
+        Weights for each feature.
+    """
+    with tarfile.open(model_path, "r:gz") as tar:
+        # Extract and read the hyperparameters file
+        hyperparams_file = tar.extractfile("hyperparameters.json")
+        if hyperparams_file:
+            hyperparams = json.load(hyperparams_file)
+        else:
+            raise FileNotFoundError(
+                f"Could not find hyperparameters.json in {model_path}."
+            )
+
+    if hyperparams["model_type"] in ["ap_numpy", "ap_ternary", "ap_qat"]:
+        return load_numpy_model_features(model_path)
+    else:
+        return load_json_model_features(model_path)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate plot of model weights.")
     parser.add_argument(
@@ -207,12 +240,12 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if "".join(args.model.suffixes[-2:]) == ".json.gz":
-        features = load_json_model_features(args.model)
-    elif "".join(args.model.suffixes[-2:]) == ".tar.gz":
-        features = load_numpy_model_features(args.model)
+    if "".join(args.model.suffixes[-2:]) == ".tar.gz":
+        features = load_model_features(args.model)
     else:
-        raise ValueError("Cannot handle model with given file extension: {args.model}.")
+        raise ValueError(
+            "Unexpected file extension: {args.model}. Only .tar.gz is supported"
+        )
 
     output = plot(features, args.output)
     print(f"Weights plot save to {output}.")

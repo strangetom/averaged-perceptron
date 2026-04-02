@@ -18,13 +18,13 @@ from ap._constants import ILLEGAL_TRANSITIONS
 from ap._dataclasses import ModelHyperParameters
 
 from .perceptron import (
-    AveragedPerceptronTernary,
+    AveragedPerceptronQAT,
 )
 
 logger = logging.getLogger(__name__)
 
 
-class IngredientTaggerTernary:
+class IngredientTaggerQAT:
     """Class to tag ingredient sentence tokens.
 
     Attributes
@@ -94,7 +94,7 @@ class IngredientTaggerTernary:
         self.labeldict = {}
         if labels is not None:
             self.labels = labels
-            self.model = AveragedPerceptronTernary(labels=labels, training_mode=True)
+            self.model = AveragedPerceptronQAT(labels=labels, training_mode=True)
 
         if weights_file is not None:
             self.load(weights_file)
@@ -103,7 +103,7 @@ class IngredientTaggerTernary:
         self.apply_label_constraints = apply_label_constraints
 
     def __repr__(self):
-        return f"IngredientTaggerTernary(labels={self.labels})"
+        return f"IngredientTaggerQAT(labels={self.labels})"
 
     def tag(self, sentence: str) -> list[tuple[str, str, float]]:
         """Tag a sentence with labels using Averaged Perceptron model.
@@ -119,9 +119,7 @@ class IngredientTaggerTernary:
             List of (token, label, confidence) tuples.
         """
         if self.model.weights.size == 0:
-            raise ValueError(
-                "AveragedPerceptronTernary model does not have any weights."
-            )
+            raise ValueError("AveragedPerceptronQAT model does not have any weights.")
 
         labels, labels_only = [], []
         p = PreProcessor(sentence, custom_units={})
@@ -166,9 +164,7 @@ class IngredientTaggerTernary:
             List of (label, confidence) tuples.
         """
         if self.model.weights.size == 0:
-            raise ValueError(
-                "AveragedPerceptronTernary model does not have any weights."
-            )
+            raise ValueError("AveragedPerceptronQAT model does not have any weights.")
 
         labels, labels_only = [], []
         prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
@@ -396,7 +392,7 @@ class IngredientTaggerTernary:
                 )
 
             # Abort if saved model is not compatible with this class.
-            if hyperparameters.model_type not in ["ap_ternary"]:
+            if hyperparameters.model_type not in ["ap_qat"]:
                 raise ValueError(
                     (
                         f"Loaded model is '{hyperparameters.model_type}' which "
@@ -426,11 +422,14 @@ class IngredientTaggerTernary:
                 raise FileNotFoundError(f"Could not find weights.npy in {path}.")
             weights = np.load(weights_buffer)
 
-        self.model = AveragedPerceptronTernary(labels=labels)
+        self.model = AveragedPerceptronQAT(labels=labels)
         self.model.weights = weights
         self.model.feature_vocab = {feat: idx for idx, feat in enumerate(features)}
         self.labels = labels
         self.model.labels = self.labels
+
+        # Set quantization bits (only to make the repr correct)
+        self.model.set_quantization_bits(hyperparameters.quantize_bits)
 
     def train(
         self,
@@ -455,11 +454,11 @@ class IngredientTaggerTernary:
             Number of training iterations.
             Default is 10.
         min_abs_weight : float, optional
-            Unused.
+            Weights below this value will be pruned after training.
         min_feat_updates : int, optional
             Minimum number of feature updates required to consider feature.
         quantize_bits : int | None, optional
-            Unused.
+            Number of bits to quantize weights to.
         make_label_dict : bool, optional
             If True, create a dict of labels for tokens that are unambiguous in the
             training data. Default i False.
@@ -473,8 +472,10 @@ class IngredientTaggerTernary:
         if make_label_dict:
             self._make_labeldict(training_features, truth)
 
-        # Set min_feature_updates for model
+        # Set min_feature_updates for model.
         self.model.min_feat_updates = min_feat_updates
+        # Set quantization bits.
+        self.model.set_quantization_bits(quantize_bits)
 
         # We need to convert to list before we start training so that we can shuffle the
         # list after each training epoch.
@@ -485,10 +486,10 @@ class IngredientTaggerTernary:
             c = 0  # number of correctly labelled tokens this iteration
             for i, (sentence_features, truth_labels) in enumerate(training_data):
                 if i % 250 == 0:
-                    # Update ternary threshold every 1000 sentences when training.
+                    # Update scale factor threshold every 250 sentences when training.
                     # Doing this for every sentence slows down the training a lot, but
                     # only doing it every epoch is not often enough.
-                    self.model.update_ternary_threshold()
+                    self.model.update_scale_factor()
 
                 prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
                 for features, true_label in zip(sentence_features, truth_labels):
@@ -526,7 +527,7 @@ class IngredientTaggerTernary:
         self.model.filter_features()
         self.model.average_weights()
         self.model.prune_weights(min_abs_weight)
-        self.model.ternarize()
+        self.model.quantize()
         self.model.simplify_weights()
         # Set training_mode False now so that we don't try to resize the model matrices
         # when evaluating the model and there are features not already in the vocab.

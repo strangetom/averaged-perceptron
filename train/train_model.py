@@ -4,7 +4,9 @@ import argparse
 import concurrent.futures as cf
 import logging
 import random
+import time
 from contextlib import contextmanager
+from datetime import timedelta
 from itertools import chain
 from pathlib import Path
 from statistics import mean, stdev
@@ -19,6 +21,7 @@ from ap import (
     IngredientTagger,
     IngredientTaggerEasiestFirst,
     IngredientTaggerNumpy,
+    IngredientTaggerQAT,
     IngredientTaggerTernary,
     IngredientTaggerViterbi,
     ModelHyperParameters,
@@ -65,7 +68,12 @@ def change_log_level(level: int) -> Generator[None, None, None]:
 def train_model(
     vectors: DataVectors,
     model_type: Literal[
-        "ap_greedy", "ap_numpy", "ap_viterbi", "ap_easiest_first", "ap_ternary"
+        "ap_greedy",
+        "ap_numpy",
+        "ap_viterbi",
+        "ap_easiest_first",
+        "ap_ternary",
+        "ap_qat",
     ],
     split: float,
     save_model: Path,
@@ -86,8 +94,6 @@ def train_model(
         Vectors loaded from training csv files
     model_type : Literal["ap", "ap_numpy", "ap_viterbi"]
         Model type to train.
-        ap = AveragedPerceptron.
-        ap_viterbi = AveragedPerceptron using viterbi decoding.
     split : float
         Fraction of vectors to use for evaluation.
     save_model : Path
@@ -118,6 +124,8 @@ def train_model(
     Stats
         Statistics evaluating the model
     """
+    start_time = time.monotonic()
+
     # Generate random seed for the train/test split if none provided.
     if seed is None:
         seed = random.randint(0, 1_000_000_000)
@@ -175,6 +183,12 @@ def train_model(
         tagger.model.labels = tagger.labels
     elif model_type == "ap_numpy":
         tagger = IngredientTaggerNumpy(
+            labels=list(labels),
+            only_positive_bool_features=params.only_positive_bool_features,
+            apply_label_constraints=params.apply_label_constraints,
+        )
+    elif model_type == "ap_qat":
+        tagger = IngredientTaggerQAT(
             labels=list(labels),
             only_positive_bool_features=params.only_positive_bool_features,
             apply_label_constraints=params.apply_label_constraints,
@@ -250,6 +264,10 @@ def train_model(
         confusion_matrix(labels_pred, truth_test)
 
     stats = evaluate(labels_pred, truth_test, seed, combine_name_labels)
+
+    training_time = timedelta(seconds=int(time.monotonic() - start_time))
+    logger.info(f"Model trained in {training_time}.")
+
     return stats
 
 

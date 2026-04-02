@@ -7,7 +7,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-class AveragedPerceptronTernary:
+class AveragedPerceptronQAT:
     def __init__(self, labels: list[str], training_mode: bool = False) -> None:
         """
         Parameters
@@ -28,6 +28,9 @@ class AveragedPerceptronTernary:
         self.labels = sorted(labels, reverse=True) if labels else []
         self.label_to_idx = {label: i for i, label in enumerate(self.labels)}
         self.n_labels = len(self.labels)
+
+        # At the start of training, this must be set by calling set_quantization_nbits.
+        self.nbits = None
 
         self.training_mode = training_mode
         if self.training_mode:
@@ -53,8 +56,8 @@ class AveragedPerceptronTernary:
             # the prediction step.
             self.min_feat_updates: int = 0
 
-            # Threshold used to ternarization. This is only used during training.
-            self.ternary_threshold: float = 0.0
+            # Scale factor for quantization. This is only used during training.
+            self.quantisation_scale_factor: float = 1.0
 
             self._iteration: int = 0
 
@@ -65,53 +68,35 @@ class AveragedPerceptronTernary:
             self.feature_vocab: dict[str, int] = {}
 
     def __repr__(self):
-        return f"AveragedPerceptronTernary(labels={self.labels})"
+        return f"AveragedPerceptronQAT(labels={self.labels}, nbits={self.nbits})"
 
-    def update_ternary_threshold(self) -> None:
-        """Update the cached ternary threshold based on active latent weights.
+    def set_quantization_bits(self, nbits: int | None) -> None:
+        """Set nbits for quantization.
 
-        This implementation follows the 0.75 * mean heuristic [1], ignoring unused
-        pre-allocated rows and zeros to prevent dilution.
-
-        References
+        Parameters
         ----------
-        [1] B. Liu, F. Li, X. Wang, B. Zhang, and J. Yan, ‘Ternary Weight Networks’, in
-            ICASSP 2023 - 2023 IEEE International Conference on Acoustics, Speech and
-            Signal Processing (ICASSP), Rhodes Island, Greece: IEEE, Jun. 2023, pp. 1–5.
-            doi: 10.1109/ICASSP49357.2023.10094626.
+        nbits : int
+            Number of bits to quantize weights to.
         """
-        if self.training_mode:
-            # Slice to only include the current vocabulary
-            active_weights = self.weights[: self.next_feature_index]
-        else:
-            # During inference, simplify_weights() has already removed any rows that are
-            # all zeroes.
-            active_weights = self.weights
+        if nbits is None:
+            raise ValueError("nbits cannot be None for Quantization Aware Training.")
 
-        if active_weights.size == 0:
-            self.ternary_threshold = 0.0
+        # Pre-calculate q_max from nbits because we use it in a few places.
+        # Assume that q_min = -q_max.
+        self.nbits = nbits
+        self.q_max = 2 ** (nbits - 1) - 1
+
+    def update_scale_factor(self) -> None:
+        """Update the quantization scale factor based on active latent weights."""
+        max_weight = np.max(np.abs(self.weights))
+        if max_weight == 0:
+            self.quantisation_scale_factor = 1.0
             return
 
-        # Filter for non-zero weights.
-        # Since a Perceptron is only interested in non-zero weights we need to remove
-        # the zeroes from this calculation that arise from the choice to store the
-        # weights as a dense matrix.
-        abs_weights = np.abs(active_weights)
-        non_zero_weights = abs_weights[abs_weights > 0]
+        self.quantisation_scale_factor = self.q_max / max_weight
 
-        if non_zero_weights.size == 0:
-            self.ternary_threshold = 0.0
-        else:
-            # Apply the 0.75 heuristic to the mean of non-zero active weights
-            self.ternary_threshold = float(0.75 * np.mean(non_zero_weights))
-
-    def _ternarize_weights(self, weights: np.ndarray) -> np.ndarray:
-        """Convert weights to ternary using ternary threshold.
-
-        The given threshold is used symmetrically in the conversion:
-        weight > threshold: 1
-        weight < -threshold: -1
-        otherwise: 0
+    def _quantize_weights(self, weights: np.ndarray) -> np.ndarray:
+        """Quantize weights to using cached quantization scale factor.
 
         Parameters
         ----------
@@ -121,13 +106,10 @@ class AveragedPerceptronTernary:
         Returns
         -------
         np.ndarray
-            Ternary weights.
+            Quantized weights.
         """
-        return np.where(
-            weights < -self.ternary_threshold,
-            -1,
-            np.where(weights > self.ternary_threshold, 1, 0),
-        )
+        scaled = np.round(weights * self.quantisation_scale_factor)
+        return np.clip(scaled, -self.q_max, self.q_max)
 
     def _resize_matrices(self) -> None:
         """Resize matrices by doubling the number of rows.
@@ -230,8 +212,8 @@ class AveragedPerceptronTernary:
                 # When training we need to convert the active latent weights to ternary
                 # to use to calculate the scores.
                 active_latent = self.weights[feature_indices]
-                ternary_active = self._ternarize_weights(active_latent)
-                scores = ternary_active.sum(axis=0)
+                quantized_active = self._quantize_weights(active_latent)
+                scores = quantized_active.sum(axis=0)
             else:
                 scores = np.zeros(self.n_labels)
 
@@ -240,7 +222,7 @@ class AveragedPerceptronTernary:
             if len(feature_indices) > 0:
                 scores = self.weights[feature_indices].sum(axis=0)
             else:
-                scores = np.zeros(self.n_labels, dtype=np.int8)
+                scores = np.zeros(self.n_labels, dtype=self.weights.dtype)
 
         # Apply label constraints by setting scores for constrained labels to the less
         # than the minimum of the scores. We have do this instead of just setting the
@@ -253,8 +235,8 @@ class AveragedPerceptronTernary:
                 if label in self.label_to_idx
             ]
             # Set score for constrained labels to less than lowest calculated score, but
-            # constrain to -128 so we don't overflow when using int8 numbers.
-            scores[mask_indices] = max([np.min(scores) - 1, np.int8(-128)])
+            # constrain to -q_max so we don't overflow when using integer numbers.
+            scores[mask_indices] = max([np.min(scores) - 1, -self.q_max])
 
         # Find the best label
         best_idx = np.argmax(scores)
@@ -440,10 +422,19 @@ class AveragedPerceptronTernary:
         # Can't use nonzero_idx to index here because it has the wrong dimensions.
         self.weights = self.weights[mask]
 
-    def ternarize(self) -> None:
-        """Final transformation of averaged weights into strict int8 ternary values.
+    def quantize(self) -> None:
+        """Final quantization of averaged weights to an appropriately sized integer
+        type.
 
         This happens after weight averaging.
         """
-        self.update_ternary_threshold()
-        self.weights = self._ternarize_weights(self.weights).astype(np.int8)
+        # Choose an appropriate type to minimise model size.
+        if self.nbits <= 8:
+            type_ = np.int8
+        elif self.nbits <= 16:
+            type_ = np.int16
+        else:
+            type_ = np.int32
+
+        self.update_scale_factor()
+        self.weights = self._quantize_weights(self.weights).astype(type_)
