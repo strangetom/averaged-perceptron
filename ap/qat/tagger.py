@@ -122,7 +122,7 @@ class IngredientTaggerQAT:
             raise ValueError("AveragedPerceptronQAT model does not have any weights.")
 
         labels, labels_only = [], []
-        p = PreProcessor(sentence)
+        p = PreProcessor(sentence, custom_units={})
         prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
         for token, features in zip(p.tokenized_sentence, p.sentence_features()):
             label, confidence = (self.labeldict.get(features["stem"]), 1.0)
