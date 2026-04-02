@@ -18,8 +18,6 @@ class AveragedPerceptronQAT:
             If True, initialise weights matrix and other matrices needed for training.
             If False (default), do not initialise these matrices. In this case, the
             weights matrix must be set externally.
-        nbits : int, optional
-            Number of bits to quantize the weights to.
         """
         # reverse=True is used here to ensure consistency with greedy AP.
         # In self.predict, if there's a tie for the highest score the greedy AP resolves

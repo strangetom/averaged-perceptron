@@ -218,7 +218,7 @@ class IngredientTaggerQAT:
             Label of previous token.
         prev_label2 : str
             Label of token before previous token.
-        prev_label2 : str
+        prev_label3 : str
             Label of token before token before previous token.
 
         Returns
@@ -456,11 +456,11 @@ class IngredientTaggerQAT:
             Number of training iterations.
             Default is 10.
         min_abs_weight : float, optional
-            Unused.
+            Weights below this value will be pruned after training.
         min_feat_updates : int, optional
             Minimum number of feature updates required to consider feature.
         quantize_bits : int | None, optional
-            Unused.
+            Number of bits to quantize weights to.
         make_label_dict : bool, optional
             If True, create a dict of labels for tokens that are unambiguous in the
             training data. Default i False.
