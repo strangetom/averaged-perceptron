@@ -394,6 +394,30 @@ class AveragedPerceptronTernary:
             )
         )
 
+    def prune_weights(self, min_abs_weight: float) -> None:
+        """Prune weights by removing weights smaller than min_abs_weight.
+
+        Parameters
+        ----------
+        min_abs_weight : float
+            Minimum absolute value of weight to keep.
+        """
+        if min_abs_weight == 0:
+            # Nothing to prune
+            return None
+
+        initial_weight_count = np.count_nonzero(self.weights)
+        self.weights[np.abs(self.weights) < min_abs_weight] = 0
+        remaining_count = np.count_nonzero(self.weights)
+        pruned_pc = 100 * (1 - remaining_count / initial_weight_count)
+
+        logger.debug(
+            (
+                f"Pruned {pruned_pc:.2f}% of weights for having absolute "
+                f"values small than {min_abs_weight}."
+            )
+        )
+
     def simplify_weights(self) -> None:
         """Simplify weights matrix by discarding any rows that are all zeros.
 

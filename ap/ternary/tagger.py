@@ -525,6 +525,7 @@ class IngredientTaggerTernary:
 
         self.model.filter_features()
         self.model.average_weights()
+        self.model.prune_weights(min_abs_weight)
         self.model.ternarize()
         self.model.simplify_weights()
         # Set training_mode False now so that we don't try to resize the model matrices
