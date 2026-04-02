@@ -168,7 +168,7 @@ def train_model(
         apply_label_constraints=True,
         min_abs_weight=2,
         min_feat_updates=5,
-        quantize_bits=4,
+        quantize_bits=8,
         make_label_dict=False,
     )
 
