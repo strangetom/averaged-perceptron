@@ -4,8 +4,9 @@ import argparse
 import concurrent.futures as cf
 import logging
 import random
+import time
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from itertools import chain
 from pathlib import Path
 from statistics import mean, stdev
@@ -123,6 +124,8 @@ def train_model(
     Stats
         Statistics evaluating the model
     """
+    start_time = time.monotonic()
+
     # Generate random seed for the train/test split if none provided.
     if seed is None:
         seed = random.randint(0, 1_000_000_000)
@@ -262,6 +265,10 @@ def train_model(
         confusion_matrix(labels_pred, truth_test)
 
     stats = evaluate(labels_pred, truth_test, seed, combine_name_labels)
+
+    training_time = timedelta(seconds=int(time.monotonic() - start_time))
+    logger.info(f"Model trained in {training_time}.")
+
     return stats
 
 
