@@ -164,9 +164,7 @@ class IngredientTaggerQAT:
             List of (label, confidence) tuples.
         """
         if self.model.weights.size == 0:
-            raise ValueError(
-                "AveragedPerceptronTernary model does not have any weights."
-            )
+            raise ValueError("AveragedPerceptronQAT model does not have any weights.")
 
         labels, labels_only = [], []
         prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
@@ -394,7 +392,7 @@ class IngredientTaggerQAT:
                 )
 
             # Abort if saved model is not compatible with this class.
-            if hyperparameters.model_type not in ["ap_ternary"]:
+            if hyperparameters.model_type not in ["ap_qat"]:
                 raise ValueError(
                     (
                         f"Loaded model is '{hyperparameters.model_type}' which "
