@@ -525,12 +525,7 @@ class IngredientTaggerTernary:
 
         self.model.filter_features()
         self.model.average_weights()
-        # The first call to simplify_weights is there to remove any pre-allocated rows
-        # that are unused.
-        self.model.simplify_weights()
         self.model.ternarize()
-        # The second call to simplify_weights is there to remove any rows that the
-        # ternarize() function has zeroed out.
         self.model.simplify_weights()
         # Set training_mode False now so that we don't try to resize the model matrices
         # when evaluating the model and there are features not already in the vocab.
