@@ -127,29 +127,29 @@ Comparison of the Numpy and Ternary Averaged Perceptron models, using the same h
 
 | Model                  | Word accuracy   | Sentence accuracy | Model size         | Time    |
 | ---------------------- | --------------- | ----------------- | ------------------ | ------- |
-| NumPy (full precision) | 98.19%          | 95.18%            | 0.868 MB           | 0:07:07 |
-| Ternary                | 97.48% (-0.72%) | 92.93% (-2.36%)   | 0.177 MB (-79.61%) | 0:10:06 |
+| NumPy (full precision) | 98.20%          | 95.21%            | 1.622 MB           | 0:07:37 |
+| Ternary                | 97.51% (-0.70%) | 92.74% (-2.59%)   | 0.197 MB (-87.85%) | 0:10:53 |
 
 We can also compare the performance against the NumPy after post training quantization.
 
 | Model                      | Word accuracy    | Sentence accuracy | Model size         | Time    |
 | -------------------------- | ---------------- | ----------------- | ------------------ | ------- |
-| Numpy (4 bit quantization) | 95.61% (-2.63%)  | 87.02% (-8.57%)   | 0.036 MB (-95.85%) | 0:07:04 |
-| Numpy (3 bit quantization) | 80.76% (-17.75%) | 45.58% (-52.11%)  | 0.006 MB (-99.31%) | 0:07:03 |
+| Numpy (4 bit quantization) | 95.39% (-2.86%)  | 85.89% (-9.79%)   | 0.033 MB (-97.97%) | 0:08:21 |
+| Numpy (3 bit quantization) | 78.08% (-20.49%) | 39.32% (-58.70%)  | 0.005 MB (-99.69%) | 0:07:35 |
 
 The effect of QAT is clearly shown here. The post training quantization results in significantly worse accuracy, even when using more bits of precision for the weights.
 
 > [!NOTE]
 >
-> Note the size of the post training quantized models compared to the Ternary model. The Ternary model is significantly larger. We can infer from this that there are more active features remaining in the Ternary model, where the post training quanitzed models have discarded a lot. 
+> Note the size of the post training quantized models compared to the Ternary model. The Ternary model is significantly larger. We can infer from this that there are more active features remaining in the Ternary model, where the post training quanitzed models have discarded a lot.
 
 We might also consider if the Ternary model requires more training epochs due to the severely limited values the weights can take. The table below shows that more training epochs result in better model accuracy, but only up to a point.
 
 | Model               | Word accuracy   | Sentence accuracy | Model size         | Time    |
 | ------------------- | --------------- | ----------------- | ------------------ | ------- |
-| Ternary (40 epochs) | 97.61% (-0.59%) | 93.23% (-2.05%)   | 0.195 MB (-77.53%) | 0:19:10 |
-| Ternary (50 epochs) | 97.59% (-0.61%) | 93.26% (-2.02%)   | 0.201 MB (-76.84%) | 0:23:47 |
-| Ternary (60 epochs) | 97.65% (-0.55%) | 93.37% (-1.90%)   | 0.205 MB (-76.38%) | 0:27:43 |
+| Ternary (40 epochs) | 97.55% (-0.66%) | 93.07% (-2.25%)   | 0.215 MB (-86.74%) | 0:18:57 |
+| Ternary (50 epochs) | 97.53% (-0.68%) | 93.06% (-2.26%)   | 0.220 MB (-86.43%) | 0:23:27 |
+| Ternary (60 epochs) | 97.51% (-0.70%) | 92.74% (-2.59%)   | 0.223 MB (-86.25%) | 0:27:08 |
 
 ## References
 
