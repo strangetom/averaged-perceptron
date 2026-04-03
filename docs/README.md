@@ -45,7 +45,7 @@ We will then investigate improvements various improvements to this.
   * [Model optimisation](model-optimisation.md)
   * [Constrained transitions](constrained-transitions.md)
   * [Execution performance optimisation](numpy.md)
-  * [Ternary weights](ternary.md)
+  * [Quantization Aware Training](qat.md)
 * Implementation Variations
   * [Viterbi decoding](viterbi.md)
   * [Easiest first decoding](easiest.md)
@@ -63,7 +63,8 @@ The `ap/` folder of this repository contains the following implementations:
 * `numpy` is a numpy implementation of the `greedy`.
 * `viterbi` implements Viterbi decoding for the basic greedy averaged perceptron.
 * `easiestfirst` implements "easiest-first" decoding for the basic greedy averaged perceptron.
-* `ternary` implements a ternary weight model, based on the numpy implementation.
+* `qat` implements quantization aware training, based on the NumPy implementation.
+* `ternary` implements a ternary weight model, based on the NumPy implementation.
 
 
 

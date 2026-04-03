@@ -209,8 +209,8 @@ class AveragedPerceptronQAT:
             # Sum weights for active features across all labels at once
             # Shape: (n_labels,) i.e. the summed score for each label.
             if len(feature_indices) > 0:
-                # When training we need to convert the active latent weights to ternary
-                # to use to calculate the scores.
+                # When training we need to quantize the active latent weights to use to
+                # calculate the scores.
                 active_latent = self.weights[feature_indices]
                 quantized_active = self._quantize_weights(active_latent)
                 scores = quantized_active.sum(axis=0)

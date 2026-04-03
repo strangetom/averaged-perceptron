@@ -120,7 +120,7 @@ The figure in brackets in the accuracy columns shows the change from the baselin
 
 Quantization is a technique to reduce the computational and memory cost of running inference using a model by representing the weights with lower precision data types.
 
-The quantization technique described here is symmetric linear quantization. The weights are scaled linearly relative to the largest absolute weight value, which is mapped to the largest value representable by the chosen lower precision datatype i.e.
+The quantization technique described here is post training symmetric linear quantization. The weights are scaled linearly relative to the largest absolute weight value, which is mapped to the largest value representable by the chosen lower precision datatype i.e.
 
 $$
 [-w_{max}, w_{max}] \rightarrow [-q_{max}, q_{max}]
@@ -128,7 +128,7 @@ $$
 
 The quantization is done such that an original weight of zero is mapped a quantized weight of zero. This is particularly important for the Averaged Perceptron model, where the majority of the model weights are zero.
 
-Quantization can be performed to an arbitrary level of precision although.
+Quantization can be performed to an arbitrary level of precision.
 
 ```python
 def quantize(self, nbits: int | None = None) -> None:
@@ -190,3 +190,7 @@ All these results were obtained without any model optimisations. If weight or fe
 | 3                 | 78.08% (-20.49%) | 39.32% (-58.70%)  | 6,427 bytes (-99.71%)   |
 
 In this example, we can quantize to 7 bits to reduce the model size by 80% with a negligible impact on model performance. 
+
+> [!TIP]
+>
+> See [here](qat.md) for details about implementing Quantization Aware Training which results in better accuracy when quantizing the model to very small numbers of bits.

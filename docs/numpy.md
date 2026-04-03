@@ -10,7 +10,7 @@ The documentation below describes the changes made to the `AveragedPerceptron` c
 
 ## Changes to the Data Structures
 
-In the Greedy implementation of the Averaged Perceptron, the weights were stored as a `dict` of `dict`s, where both levels of `dict` only had the elements need to represent non-zero weights.
+In the Greedy implementation of the Averaged Perceptron, the weights were stored as a `dict` of `dict`s, where both levels of `dict` only had the elements needed to represent non-zero weights.
 
 ```python
 weights = {
@@ -126,4 +126,3 @@ Comparison of training the Greedy and NumPy Averaged Perceptron models, using th
 > | ------ | ---------------- | ----------------- |
 > | Greedy | 609.75 (+0%)     | 1640 us (+0%)     |
 > | Numpy  | 819.35 (+34.37%) | 1220 us (-25.61%) |
->
