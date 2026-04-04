@@ -3,6 +3,7 @@
 import argparse
 import sqlite3
 import time
+from functools import lru_cache
 
 from ingredient_parser.en import PostProcessor, PreProcessor
 from ingredient_parser.en._utils import pluralise_units
@@ -15,17 +16,24 @@ from ap import (
     IngredientTaggerViterbi,
 )
 
-MODEL = {
-    "ap": IngredientTagger("PARSER.tar.gz"),
-    "ap_viterbi": IngredientTaggerViterbi("PARSER.tar.gz"),
-    "ap_numpy": IngredientTaggerNumpy(weights_file="PARSER.tar.gz"),
-    "ap_qat": IngredientTaggerQAT(weights_file="PARSER.tar.gz"),
-    "ap_ternary": IngredientTaggerTernary(weights_file="PARSER.tar.gz"),
-}
+
+@lru_cache
+def get_tagger(model: str):
+    """Cached function to load and return IngredientTagger."""
+    if model == "ap":
+        return IngredientTagger("PARSER.tar.gz")
+    elif model == "ap_viterbi":
+        return IngredientTaggerViterbi("PARSER.tar.gz")
+    elif model == "ap_numpy":
+        return IngredientTaggerNumpy(weights_file="PARSER.tar.gz")
+    elif model == "ap_qat":
+        return IngredientTaggerQAT(weights_file="PARSER.tar.gz")
+    elif model == "ap_ternary":
+        return IngredientTaggerTernary(weights_file="PARSER.tar.gz")
 
 
 def parse_ingredient(model: str, sentence: str):
-    tagger = MODEL[model]
+    tagger = get_tagger(model)
 
     processed_sentence = PreProcessor(sentence, custom_units={})
     labels, scores = zip(
