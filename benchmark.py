@@ -7,12 +7,20 @@ import time
 from ingredient_parser.en import PostProcessor, PreProcessor
 from ingredient_parser.en._utils import pluralise_units
 
-from ap import IngredientTagger, IngredientTaggerNumpy, IngredientTaggerViterbi
+from ap import (
+    IngredientTagger,
+    IngredientTaggerNumpy,
+    IngredientTaggerQAT,
+    IngredientTaggerTernary,
+    IngredientTaggerViterbi,
+)
 
 MODEL = {
-    "ap": IngredientTagger("PARSER.json.gz"),
-    "ap_viterbi": IngredientTaggerViterbi("PARSER.json.gz"),
+    "ap": IngredientTagger("PARSER.tar.gz"),
+    "ap_viterbi": IngredientTaggerViterbi("PARSER.tar.gz"),
     "ap_numpy": IngredientTaggerNumpy(weights_file="PARSER.tar.gz"),
+    "ap_qat": IngredientTaggerQAT(weights_file="PARSER.tar.gz"),
+    "ap_ternary": IngredientTaggerTernary(weights_file="PARSER.tar.gz"),
 }
 
 
@@ -55,7 +63,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model",
         "-m",
-        choices=["ap", "ap_viterbi", "ap_numpy"],
+        choices=["ap", "ap_viterbi", "ap_numpy", "ap_qat", "ap_ternary"],
         help="Model to benchmark.",
         default="ap",
     )
