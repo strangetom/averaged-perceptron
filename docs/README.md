@@ -45,7 +45,7 @@ We will then investigate improvements various improvements to this.
   * [Model optimisation](model-optimisation.md)
   * [Constrained transitions](constrained-transitions.md)
   * [Execution performance optimisation](numpy.md)
-  * [Quantization Aware Training](qat.md)
+  * [Quantization aware training](qat.md)
 * Implementation Variations
   * [Viterbi decoding](viterbi.md)
   * [Easiest first decoding](easiest.md)
