@@ -350,6 +350,7 @@ class IngredientTaggerViterbi:
                     # All correct, no need to modify weights
                     n += len(predicted_labels)
                     c += len(predicted_labels)
+                    self.model._iteration += len(features)
                     continue
 
                 # Calculate features based on prev_label for each element in sequence.
