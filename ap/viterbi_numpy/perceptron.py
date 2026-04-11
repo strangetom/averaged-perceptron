@@ -329,6 +329,14 @@ class AveragedPerceptronViterbiNumpy:
         # Deal with the first element of the sequence separately because the previous
         # label is always "-START-".
         transition_weights = self.transition_weights[self.label_to_idx["-START-"]]
+        if (
+            self.training_mode
+            and self._transition_feat_updates[self.label_to_idx["-START-"]]
+            < self.min_feat_updates
+        ):
+            # Ignore the transition weights if they haven't been updated at least
+            # min_feat_updates times.
+            transition_weights[:] = 0
         lattice_scores[0] = transition_weights + emission_scores[0]
         backpointers[0] = self.label_to_idx["-START-"]  # Not strictly necessary
 
@@ -344,6 +352,18 @@ class AveragedPerceptronViterbiNumpy:
             # rows of the transition matrix.
             prev_el_scores = lattice_scores[t - 1][:, np.newaxis]
 
+            # When training, we need to ignore transition features that haven't been
+            # updated at least min_feature_updates times (we've already handled this
+            # for emission features when creating the emission_score matrix).
+            # Create a copy of the transition matrix. If we're in training mode, zero
+            # out rows corresponding to labels that haven't updated enough times (these
+            # are the labels that form the prev_label=... feature).
+            transition_weights = self.transition_weights.copy()
+            if self.training_mode:
+                transition_weights[
+                    self._transition_feat_updates < self.min_feat_updates
+                ] = 0
+
             # Candidates is a (n_label, n_label) shaped matrix containing the total
             # scores for transition from each previous label to the current label.
             # We broadcast the prev_el_scores across all rows in the transition
@@ -356,7 +376,7 @@ class AveragedPerceptronViterbiNumpy:
             # not match if we didn't remove it here.
             candidates = (
                 prev_el_scores
-                + self.transition_weights[: self.n_labels]
+                + transition_weights[: self.n_labels]
                 + emission_scores[t]
             )
 
