@@ -103,17 +103,12 @@ class AveragedPerceptronNumpy:
         Parameters
         ----------
         features : set[str]
-            Set of feature strings to hash.
+            Set of feature strings to return indices of.
 
         Returns
         -------
         np.ndarray
             NumPy array of integer indices for string features.
-
-        Raises
-        ------
-        TypeError
-            Description
         """
         if self.training_mode:
             for feat in features:

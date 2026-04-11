@@ -274,7 +274,7 @@ class IngredientTaggerNumpy:
         # If the sequence does not contain NAME_SEP, check all labels.
         # If B_NAME_TOK not found, remove I_NAME_TOK from set.
         if "NAME_SEP" in sequence:
-            # Find index of last occurance of NAME_SEP in sequence
+            # Find index of last occurrence of NAME_SEP in sequence
             name_sep_idx = max(i for i, v in enumerate(sequence) if v == "NAME_SEP")
             if "B_NAME_TOK" not in sequence[name_sep_idx:]:
                 constrained_labels.add("I_NAME_TOK")
@@ -477,7 +477,7 @@ class IngredientTaggerNumpy:
         training_data = list(zip(training_features, truth))
 
         for iter_ in tqdm(range(n_iter), disable=not show_progress):
-            n = 0  # numer of total tokens this iteration
+            n = 0  # number of total tokens this iteration
             c = 0  # number of correctly labelled tokens this iteration
             for sentence_features, truth_labels in training_data:
                 prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
