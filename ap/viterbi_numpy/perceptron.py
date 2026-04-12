@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import logging
-from collections import defaultdict
 from dataclasses import dataclass
 from functools import lru_cache
 
@@ -320,6 +319,17 @@ class AveragedPerceptronViterbiNumpy:
                 # to the correct row of the emission_scores matrix.
                 emission_scores[t] = self.emission_weights[indices].sum(axis=0)
 
+        # Get indices for constraint-specific labels
+        b_name_idx = self.label_to_idx.get("B_NAME_TOK")
+        i_name_idx = self.label_to_idx.get("I_NAME_TOK")
+        name_sep_idx = self.label_to_idx.get("NAME_SEP")
+
+        # Auxiliary matrix to track if B_NAME_TOK has occurred in the best path
+        # for each label at each time step since the beginning or last NAME_SEP.
+        # Rows: sequence elements
+        # Columns: labels
+        has_b_name = np.zeros((seq_len, self.n_labels), dtype=bool)
+
         # Initialize the lattice as NumPy arrays.
         # One array for the scores, initialized to -inf. This is the best score for that
         # label given the previous label specified by the backpointers array.
@@ -344,7 +354,10 @@ class AveragedPerceptronViterbiNumpy:
 
         # Apply initial constraints (e.g., I_NAME_TOK cannot be first)
         if constrain_transitions:
-            lattice_scores[0, self.label_to_idx["I_NAME_TOK"]] = -np.inf
+            lattice_scores[0, i_name_idx] = -np.inf
+
+            # Update has_b_name matrix for first sequence element
+            has_b_name[0, b_name_idx] = True
 
         # Forward pass, starting at t=1 because we've already initialised t=0
         for t in range(1, seq_len):
@@ -386,11 +399,27 @@ class AveragedPerceptronViterbiNumpy:
             if constrain_transitions:
                 candidates[self.constraint_mask] = -np.inf
 
+                # Mask transitions to I_NAME_TOK from paths that lack a B_NAME_TOK
+                invalid_prev_paths = ~has_b_name[t - 1]
+                candidates[invalid_prev_paths, i_name_idx] = -np.inf
+
             # Find the best score in each column and the index of the best score in each
             # column and save to the lattice_scores and backpointers matrices
             # respectively.
             lattice_scores[t] = np.max(candidates, axis=0)
             backpointers[t] = np.argmax(candidates, axis=0)
+
+            if constrain_transitions:
+                # Update has_b_name matrix
+                # Inherit state from the best predecessor for each current label.
+                # We are setting the value of for each column to the value from the
+                # previous row (i.e. t-1) at the index given by backpointers[t] so that
+                # we inherit whether the best sequence has a B_NAME_TOk.
+                has_b_name[t] = has_b_name[t - 1, backpointers[t]]
+                # If current label is B_NAME_TOK, the path now has a B_NAME_TOK
+                has_b_name[t, b_name_idx] = True
+                # If current label is NAME_SEP, the B_NAME_TOK requirement resets
+                has_b_name[t, name_sep_idx] = False
 
         # Back tracking
         label_seq = []
@@ -413,47 +442,6 @@ class AveragedPerceptronViterbiNumpy:
             backpointer = backpointers[t, backpointer]
 
         return list(zip(reversed(label_seq), reversed(scores)))
-
-    def _b_name_tok_has_occurred(
-        self, lattice: list[defaultdict[str, LatticeElement]], end_label: str
-    ) -> bool:
-        """Check if B_NAME_TOK has occurred in best sequence ending with prev_label.
-
-        If NAME_SEP occurs in the best sequence, only check if B_NAME_TOK has occurred
-        since the last NAME_SEP.
-
-        Parameters
-        ----------
-        lattice : list[defaultdict[str, LatticeElement]]
-            Viterbi lattice
-        end_label : str
-            Label at end of sequence.
-
-        Returns
-        -------
-        bool
-            True if B_NAME_TOK has occurred in sequence since beginning or
-            last NAME_SEP.
-        """
-        label_seq = []
-        backpointer = end_label
-        for score_dict in reversed(lattice):
-            label_seq.append(backpointer)
-            backpointer = score_dict[backpointer].backpointer
-
-        # label_seq is generated from the end, moving towards the start, so reverse.
-        label_seq = list(reversed(label_seq))
-
-        if "NAME_SEP" in label_seq:
-            # Find index of last occurrence of NAME_SEP in sequence
-            name_sep_idx = max(i for i, v in enumerate(label_seq) if v == "NAME_SEP")
-            if "B_NAME_TOK" in label_seq[name_sep_idx:]:
-                return True
-        else:
-            if "B_NAME_TOK" in label_seq:
-                return True
-
-        return False
 
     def _get_pos_from_features(self, features: set[str]) -> str:
         """Get the part of speech tag from the current set of features.
