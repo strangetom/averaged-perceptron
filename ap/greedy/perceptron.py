@@ -141,9 +141,6 @@ class AveragedPerceptron:
 
         self.weights[feature][label] = weight + change
 
-        # Increment feature update count
-        self._feature_updates[feature] += 1
-
     def update(self, truth: str, guess: str, features: set[str]) -> None:
         """Update weights for given features.
 
@@ -176,6 +173,11 @@ class AveragedPerceptron:
             # incorrect labels by -1.
             self._update_feature(truth, feat, weights.get(truth, 0.0), 1.0)
             self._update_feature(guess, feat, weights.get(guess, 0.0), -1.0)
+
+            # Increment feature update counts.
+            # We do this here so that we only increment the count for each feature once,
+            # even though we adjusted the weights for different labels for that feature.
+            self._feature_updates[feat] += 1
 
         return None
 

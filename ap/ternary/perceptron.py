@@ -287,9 +287,6 @@ class AveragedPerceptronTernary:
         # Update timestamp to current iteration
         self._tstamps[feature_indices, label_index] = self._iteration
 
-        # Increment feature update count
-        self._feat_updates[feature_indices] += 1
-
     def update(self, truth: str, guess: str, features: set[str]) -> None:
         """Update weights for given features.
 
@@ -325,6 +322,11 @@ class AveragedPerceptronTernary:
         guess_idx = self.label_to_idx[guess]
         self._update_totals(guess_idx, feature_indices)
         self.weights[feature_indices, guess_idx] -= 1.0
+
+        # Increment feature update counts.
+        # We do this here so that we only increment the count for each feature once,
+        # even though we adjusted the weights for different labels for that feature.
+        self._feat_updates[feature_indices] += 1
 
         return None
 

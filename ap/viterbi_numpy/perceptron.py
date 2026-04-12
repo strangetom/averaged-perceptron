@@ -513,9 +513,6 @@ class AveragedPerceptronViterbiNumpy:
 
             # Update timestamp to current iteration
             self._emission_tstamps[feature_indices, label_index] = self._iteration
-
-            # Increment feature update count
-            self._emission_feat_updates[feature_indices] += 1
         else:
             # Calculate how many iterations passed since this weight was last touched
             iters = (
@@ -530,9 +527,6 @@ class AveragedPerceptronViterbiNumpy:
 
             # Update timestamp to current iteration
             self._transition_tstamps[feature_indices, label_index] = self._iteration
-
-            # Increment feature update count
-            self._transition_feat_updates[feature_indices] += 1
 
         return None
 
@@ -582,6 +576,9 @@ class AveragedPerceptronViterbiNumpy:
         self._update_totals(guess_idx, emission_feature_indices, "emission")
         self.emission_weights[emission_feature_indices, guess_idx] -= 1.0
 
+        # Increment feature update counts
+        self._emission_feat_updates[emission_feature_indices] += 1
+
         # For the transition features, the predicted and true features may be different,
         # so we have to increment the weights for the true feature and decrement the
         # weights for predicted features.
@@ -604,6 +601,12 @@ class AveragedPerceptronViterbiNumpy:
         )
         self._update_totals(truth_idx, truth_tran_feat_indices, "transition")
         self.transition_weights[truth_tran_feat_indices, truth_idx] += 1.0
+
+        # Increment feature update counts
+        transition_feature_indicates = np.intersect1d(
+            predicted_tran_feat_indices, truth_tran_feat_indices
+        )
+        self._transition_feat_updates[transition_feature_indicates] += 1
 
         return None
 
