@@ -4,7 +4,6 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Literal
 
 import numpy as np
 
@@ -482,13 +481,12 @@ class AveragedPerceptronViterbiNumpy:
 
         raise ValueError("Unable to extract POS tag from features.")
 
-    def _update_totals(
+    def _update_emission_totals(
         self,
         label_index: int,
         feature_indices: np.ndarray,
-        feature_type: Literal["emission", "transition"],
     ) -> None:
-        """Update weights for feature by given change
+        """Update weights for emission feature by given change
 
         Parameters
         ----------
@@ -499,34 +497,47 @@ class AveragedPerceptronViterbiNumpy:
         feature_type : Literal["emission", "transition"]
             Type of feature, to ensure the correct matrices are updated.
         """
-        if feature_type == "emission":
-            # Calculate how many iterations passed since this weight was last touched
-            iters = (
-                self._iteration - self._emission_tstamps[feature_indices, label_index]
-            )
+        # Calculate how many iterations passed since this weight was last touched
+        iters = self._iteration - self._emission_tstamps[feature_indices, label_index]
 
-            # Add the accumulated weight to totals
-            # totals += iterations_passed * current_weight
-            self._emission_totals[feature_indices, label_index] += (
-                iters * self.emission_weights[feature_indices, label_index]
-            )
+        # Add the accumulated weight to totals
+        # totals += iterations_passed * current_weight
+        self._emission_totals[feature_indices, label_index] += (
+            iters * self.emission_weights[feature_indices, label_index]
+        )
 
-            # Update timestamp to current iteration
-            self._emission_tstamps[feature_indices, label_index] = self._iteration
-        else:
-            # Calculate how many iterations passed since this weight was last touched
-            iters = (
-                self._iteration - self._transition_tstamps[feature_indices, label_index]
-            )
+        # Update timestamp to current iteration
+        self._emission_tstamps[feature_indices, label_index] = self._iteration
 
-            # Add the accumulated weight to totals
-            # totals += iterations_passed * current_weight
-            self._transition_totals[feature_indices, label_index] += (
-                iters * self.transition_weights[feature_indices, label_index]
-            )
+        return None
 
-            # Update timestamp to current iteration
-            self._transition_tstamps[feature_indices, label_index] = self._iteration
+    def _update_transition_totals(
+        self,
+        label_index: int,
+        feature_indices: np.ndarray,
+    ) -> None:
+        """Update weights for transition feature by given change
+
+        Parameters
+        ----------
+        label_index : int
+            Index of label to update total for.
+        feature_indices : np.ndarray
+            NumPy array of indices corresponding to features to update weights for.
+        feature_type : Literal["emission", "transition"]
+            Type of feature, to ensure the correct matrices are updated.
+        """
+        # Calculate how many iterations passed since this weight was last touched
+        iters = self._iteration - self._transition_tstamps[feature_indices, label_index]
+
+        # Add the accumulated weight to totals
+        # totals += iterations_passed * current_weight
+        self._transition_totals[feature_indices, label_index] += (
+            iters * self.transition_weights[feature_indices, label_index]
+        )
+
+        # Update timestamp to current iteration
+        self._transition_tstamps[feature_indices, label_index] = self._iteration
 
         return None
 
@@ -534,9 +545,8 @@ class AveragedPerceptronViterbiNumpy:
         self,
         truth: str,
         guess: str,
-        emission_features: set[str],
-        predicted_transition_features: set[str],
-        truth_transition_features: set[str],
+        predicted_features: set[str],
+        truth_features: set[str],
     ) -> None:
         """Update weights for given features.
 
@@ -565,46 +575,49 @@ class AveragedPerceptronViterbiNumpy:
         truth_idx = self.label_to_idx[truth]
         guess_idx = self.label_to_idx[guess]
 
-        # Update the weights and accumulated totals for the features and labels are
-        # changing.
-        emission_feature_indices = self._features_to_idx(emission_features)
-        # For true label
-        self._update_totals(truth_idx, emission_feature_indices, "emission")
-        self.emission_weights[emission_feature_indices, truth_idx] += 1.0
-
-        # For guess label
-        self._update_totals(guess_idx, emission_feature_indices, "emission")
-        self.emission_weights[emission_feature_indices, guess_idx] -= 1.0
-
-        # Increment feature update counts
-        self._emission_feat_updates[emission_feature_indices] += 1
-
-        # For the transition features, the predicted and true features may be different,
-        # so we have to increment the weights for the true feature and decrement the
-        # weights for predicted features.
-        predicted_tran_feat_indices = np.array(
+        # Update feature weights because truth != guess.
+        # We decrement the features for the predicted label by -1 and increment the
+        # features for the true label by one.
+        # We do the weights updates this way (unlike the greedy Averaged Perceptron)
+        # because the features for the true sequence are different to the weights for
+        # the (incorrect) predicted sequence - although only for the features related to
+        # the previous label.
+        #
+        # Decrement the weights for the predicted features first.
+        predicted_emission_feat_idx = self._features_to_idx(predicted_features)
+        predicted_transition_feat_idx = np.array(
             [
                 self.transition_feature_to_idx[feat]
-                for feat in predicted_transition_features
+                for feat in predicted_features
                 if feat in self.transition_feature_to_idx
             ]
         )
-        self._update_totals(guess_idx, predicted_tran_feat_indices, "transition")
-        self.transition_weights[predicted_tran_feat_indices, guess_idx] -= 1.0
+        self._update_emission_totals(guess_idx, predicted_emission_feat_idx)
+        self.emission_weights[predicted_emission_feat_idx, guess_idx] -= 1.0
+        self._update_transition_totals(guess_idx, predicted_transition_feat_idx)
+        self.transition_weights[predicted_transition_feat_idx, guess_idx] -= 1.0
 
-        truth_tran_feat_indices = np.array(
+        # Now increment weights for truth features
+        truth_emission_feat_idx = self._features_to_idx(truth_features)
+        truth_transition_feat_idx = np.array(
             [
                 self.transition_feature_to_idx[feat]
-                for feat in truth_transition_features
+                for feat in truth_features
                 if feat in self.transition_feature_to_idx
             ]
         )
-        self._update_totals(truth_idx, truth_tran_feat_indices, "transition")
-        self.transition_weights[truth_tran_feat_indices, truth_idx] += 1.0
+        self._update_emission_totals(truth_idx, truth_emission_feat_idx)
+        self.emission_weights[truth_emission_feat_idx, truth_idx] += 1.0
+        self._update_transition_totals(truth_idx, truth_transition_feat_idx)
+        self.transition_weights[truth_transition_feat_idx, truth_idx] += 1.0
 
-        # Increment feature update counts
+        # Increment feature update counts for all features updated.
+        emission_feature_indicates = np.intersect1d(
+            predicted_emission_feat_idx, truth_emission_feat_idx
+        )
+        self._emission_feat_updates[emission_feature_indicates] += 1
         transition_feature_indicates = np.intersect1d(
-            predicted_tran_feat_indices, truth_tran_feat_indices
+            predicted_transition_feat_idx, truth_transition_feat_idx
         )
         self._transition_feat_updates[transition_feature_indicates] += 1
 

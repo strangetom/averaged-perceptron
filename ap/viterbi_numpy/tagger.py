@@ -481,9 +481,8 @@ class IngredientTaggerViterbiNumpy:
                     self.model.update(
                         true_label,
                         predict_label,
-                        base_feats,
-                        predicted_transition_feats,
-                        truth_transition_feats,
+                        base_feats | predicted_transition_feats,
+                        base_feats | truth_transition_feats,
                     )
 
                     c += predict_label == true_label
