@@ -513,8 +513,8 @@ class IngredientTaggerNumpy:
 
             random.shuffle(training_data)
 
-        self.model.filter_features()
         self.model.average_weights()
+        self.model.filter_features()
         self.model.prune_weights(min_abs_weight)
         if quantize_bits:
             self.model.quantize(quantize_bits)
