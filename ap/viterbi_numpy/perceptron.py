@@ -220,7 +220,10 @@ class AveragedPerceptronViterbiNumpy:
         """
         if self.training_mode:
             for feat in features:
-                if feat not in self.feature_vocab:
+                if (
+                    feat not in self.feature_vocab
+                    and feat not in self.transition_feature_to_idx
+                ):
                     self.feature_vocab[feat] = self.next_feature_index
                     self.next_feature_index += 1
 
@@ -612,14 +615,14 @@ class AveragedPerceptronViterbiNumpy:
         self.transition_weights[truth_transition_feat_idx, truth_idx] += 1.0
 
         # Increment feature update counts for all features updated.
-        emission_feature_indicates = np.intersect1d(
+        emission_feature_idx = np.intersect1d(
             predicted_emission_feat_idx, truth_emission_feat_idx
         )
-        self._emission_feat_updates[emission_feature_indicates] += 1
-        transition_feature_indicates = np.intersect1d(
+        self._emission_feat_updates[emission_feature_idx] += 1
+        transition_feature_idx = np.intersect1d(
             predicted_transition_feat_idx, truth_transition_feat_idx
         )
-        self._transition_feat_updates[transition_feature_indicates] += 1
+        self._transition_feat_updates[transition_feature_idx] += 1
 
         return None
 
