@@ -603,11 +603,11 @@ class AveragedPerceptronViterbiNumpy:
         self.transition_weights[truth_transition_feat_idx, truth_idx] += 1.0
 
         # Increment feature update counts for all features updated.
-        emission_feature_idx = np.intersect1d(
+        emission_feature_idx = np.union1d(
             predicted_emission_feat_idx, truth_emission_feat_idx
         )
         self._emission_feat_updates[emission_feature_idx] += 1
-        transition_feature_idx = np.intersect1d(
+        transition_feature_idx = np.union1d(
             predicted_transition_feat_idx, truth_transition_feat_idx
         )
         self._transition_feat_updates[transition_feature_idx] += 1
