@@ -348,7 +348,7 @@ class AveragedPerceptronViterbiNumpy:
         ):
             # Ignore the transition weights if they haven't been updated at least
             # min_feat_updates times.
-            transition_weights[:] = 0
+            transition_weights = np.zeros((self.n_labels))
         lattice_scores[0] = transition_weights + emission_scores[0]
         backpointers[0] = self.label_to_idx["-START-"]  # Not strictly necessary
 
