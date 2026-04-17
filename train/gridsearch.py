@@ -3,6 +3,7 @@
 import argparse
 import concurrent.futures as cf
 import logging
+import multiprocessing
 import os
 import random
 import time
@@ -335,7 +336,9 @@ def grid_search(args: argparse.Namespace):
     logger.info(f"Grid search over {len(arguments)} hyperparameters combinations.")
     logger.info(f"{args.seed} is the random seed used for the train/test split.")
 
-    with cf.ProcessPoolExecutor(max_workers=args.processes) as executor:
+    with cf.ProcessPoolExecutor(
+        max_workers=args.processes, mp_context=multiprocessing.get_context("fork")
+    ) as executor:
         futures = [executor.submit(train_model_grid_search, *a) for a in arguments]
         eval_results = [
             future.result()
