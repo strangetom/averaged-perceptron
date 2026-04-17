@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import logging
-from dataclasses import dataclass
 from functools import lru_cache
 
 import numpy as np
@@ -9,25 +8,6 @@ import numpy as np
 from ap._constants import ILLEGAL_TRANSITIONS
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class LatticeElement:
-    """Dataclass for holding the score and backpointer for an element in the Viterbi
-    lattice.
-
-    Attributes
-    ----------
-    score : float
-        The best score for the current label calculated from current label combined with
-        all possible previous labels.
-    backpointer : str
-        The previous label that, when combined with the current label, yielded the best
-        score.
-    """
-
-    score: float
-    backpointer: str
 
 
 @lru_cache
