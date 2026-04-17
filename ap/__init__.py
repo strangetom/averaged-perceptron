@@ -5,3 +5,4 @@ from .numpy.tagger import IngredientTaggerNumpy  # noqa: F401
 from .qat.tagger import IngredientTaggerQAT  # noqa: F401
 from .ternary.tagger import IngredientTaggerTernary  # noqa: F401
 from .viterbi.tagger import IngredientTaggerViterbi  # noqa: F401
+from .viterbi_numpy.tagger import IngredientTaggerViterbiNumpy  # noqa: F401

@@ -14,24 +14,24 @@ import numpy as np
 from ingredient_parser.en import FeatureDict, PreProcessor
 from tqdm import tqdm
 
-from ap._constants import ILLEGAL_TRANSITIONS
 from ap._dataclasses import ModelHyperParameters
 
 from .perceptron import (
-    AveragedPerceptronNumpy,
+    AveragedPerceptronViterbiNumpy,
+    label_features,
 )
 
 logger = logging.getLogger(__name__)
 
 
-class IngredientTaggerNumpy:
+class IngredientTaggerViterbiNumpy:
     """Class to tag ingredient sentence tokens.
 
     Attributes
     ----------
     labels : set[str]
         Labels that each ingredient sentence token can be tagged as.
-    model : AveragedPerceptron
+    model : AveragedPerceptronViterbiNumpy
         Averaged Perceptron model used for tagging.
     only_positive_bool_features : bool, optional
         If True, only use features with boolean values if the value is True.
@@ -94,7 +94,9 @@ class IngredientTaggerNumpy:
         self.labeldict = {}
         if labels is not None:
             self.labels = labels
-            self.model = AveragedPerceptronNumpy(labels=labels, training_mode=True)
+            self.model = AveragedPerceptronViterbiNumpy(
+                labels=labels, training_mode=True
+            )
 
         if weights_file is not None:
             self.load(weights_file)
@@ -118,31 +120,24 @@ class IngredientTaggerNumpy:
         list[tuple[str, str, float]]
             List of (token, label, confidence) tuples.
         """
-        if self.model.weights.size == 0:
-            raise ValueError("AveragedPerceptronNumpy model does not have any weights.")
+        if (
+            self.model.emission_weights.size == 0
+            or self.model.transition_weights.size == 0
+        ):
+            raise ValueError(
+                "AveragedPerceptronViterbiNumpy model does not have any weights."
+            )
 
-        labels, labels_only = [], []
         p = PreProcessor(sentence, custom_units={})
-        prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
-        for token, features in zip(p.tokenized_sentence, p.sentence_features()):
-            label, confidence = (self.labeldict.get(features["stem"]), 1.0)
-            if not label:
-                constrained_labels = self._apply_constraints(labels_only)
+        features = [self._convert_features(f) for f in p.sentence_features()]
+        label_scores = self.model.predict_sequence(
+            features, constrain_transitions=self.apply_label_constraints
+        )
 
-                converted_features = self._convert_features(
-                    features, prev_label, prev_label2, prev_label3
-                )
-                label, confidence = self.model.predict(
-                    converted_features, constrained_labels, return_score=True
-                )
-
-            labels.append((token.text, label, confidence))
-            labels_only.append(label)
-
-            prev_label3 = prev_label2
-            prev_label2 = prev_label
-            prev_label = label
-
+        labels = [
+            (token.text, label, score)
+            for token, (label, score) in zip(p.tokenized_sentence, label_scores)
+        ]
         return labels
 
     def tag_from_features(
@@ -163,39 +158,20 @@ class IngredientTaggerNumpy:
         list[tuple[str, float]]
             List of (label, confidence) tuples.
         """
-        if self.model.weights.size == 0:
-            raise ValueError("AveragedPerceptronNumpy model does not have any weights.")
+        if (
+            self.model.emission_weights.size == 0
+            or self.model.transition_weights.size == 0
+        ):
+            raise ValueError(
+                "AveragedPerceptronViterbiNumpy model does not have any weights."
+            )
 
-        labels, labels_only = [], []
-        prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
-        for features in sentence_features:
-            label, confidence = (self.labeldict.get(features["stem"]), 1.0)  # type:ignore
-            if not label:
-                constrained_labels = self._apply_constraints(labels_only)
+        features = [self._convert_features(f) for f in sentence_features]
+        return self.model.predict_sequence(
+            features, constrain_transitions=self.apply_label_constraints
+        )
 
-                converted_features = self._convert_features(
-                    features, prev_label, prev_label2, prev_label3
-                )
-                label, confidence = self.model.predict(
-                    converted_features, constrained_labels, return_score=True
-                )
-
-            labels.append((label, confidence))
-            labels_only.append(label)
-
-            prev_label3 = prev_label2
-            prev_label2 = prev_label
-            prev_label = label
-
-        return labels
-
-    def _convert_features(
-        self,
-        features: FeatureDict,
-        prev_label: str,
-        prev_label2: str,
-        prev_label3: str,
-    ) -> set[str]:
+    def _convert_features(self, features: FeatureDict) -> set[str]:
         """Convert features dict to set of strings.
 
         The model weights use the features as keys, so they need to be a string rather
@@ -212,12 +188,6 @@ class IngredientTaggerNumpy:
         features : FeatureDict
             Dictionary of token features token, obtained from
             PreProcessor.sentence_features().
-        prev_label : str
-            Label of previous token.
-        prev_label2 : str
-            Label of token before previous token.
-        prev_label3 : str
-            Label of token before token before previous token.
 
         Returns
         -------
@@ -234,59 +204,7 @@ class IngredientTaggerNumpy:
             elif isinstance(value, (int, float, bool)):
                 converted.add(key + "=" + str(value))
 
-        # Add extra features based on labels of previous tokens.
-        converted.add("prev_label=" + prev_label)
-        converted.add("prev_label2=" + prev_label2)
-        converted.add("prev_label3=" + prev_label3)
-        converted.add("prev_label2+prev_label=" + "+".join((prev_label2, prev_label)))
-        converted.add("prev_label3+prev_label2=" + "+".join((prev_label3, prev_label2)))
-        converted.add(
-            "prev_label3+prev_label2+prev_label="
-            + "+".join((prev_label3, prev_label2, prev_label))
-        )
-        converted.add("prev_label+pos=" + prev_label + "+" + features["pos"])  # type: ignore
-
         return converted
-
-    def _apply_constraints(self, sequence: list[str]) -> set[str]:
-        """Apply constraints on labels by removing options from the set of possible
-        labels for the next token in the sequence.
-
-        Parameters
-        ----------
-        sequence : list[str]
-            Sequence of labels.
-
-        Returns
-        -------
-        set[str]
-            Set of invalid labels for next item in sequence.
-        """
-        constrained_labels = set()
-        if not sequence:
-            return constrained_labels
-
-        if not self.apply_label_constraints:
-            return constrained_labels
-
-        # B_NAME_TOK must occur before I_NAME_TOK.
-        # If the sequence contains NAME_SEP, only check labels after last NAME_SEP.
-        # If the sequence does not contain NAME_SEP, check all labels.
-        # If B_NAME_TOK not found, remove I_NAME_TOK from set.
-        if "NAME_SEP" in sequence:
-            # Find index of last occurrence of NAME_SEP in sequence
-            name_sep_idx = max(i for i, v in enumerate(sequence) if v == "NAME_SEP")
-            if "B_NAME_TOK" not in sequence[name_sep_idx:]:
-                constrained_labels.add("I_NAME_TOK")
-        else:
-            if "B_NAME_TOK" not in sequence:
-                constrained_labels.add("I_NAME_TOK")
-
-        prev_label = sequence[-1]
-        if prev_label in ILLEGAL_TRANSITIONS:
-            constrained_labels |= ILLEGAL_TRANSITIONS[prev_label]
-
-        return constrained_labels
 
     def save(self, path: str, hyperparameters: ModelHyperParameters) -> str:
         """Save trained model to given path.
@@ -315,13 +233,14 @@ class IngredientTaggerNumpy:
         elif not path.endswith(".tar.gz"):
             path = path + ".tar.gz"
 
-        weights = self.model.weights
+        emission_weights = self.model.emission_weights
+        transition_weights = self.model.transition_weights
         features = list(self.model.feature_vocab)
         labels = self.model.labels
 
         # The weights matrix may be larger than the number of features due to how it's
         # resized. Discard any rows after the total number of features.
-        resized_weights = weights[: len(features), :]
+        resized_emission_weights = emission_weights[: len(features), :]
 
         with tarfile.open(path, "w:gz") as tar:
             # Add features file
@@ -342,11 +261,19 @@ class IngredientTaggerNumpy:
             labels_info.mtime = time.time()
             tar.addfile(labels_info, labels_buffer)
 
-            # Add weights matrix
+            # Add weights matrices
             npy_buffer = io.BytesIO()
-            np.save(npy_buffer, resized_weights)
+            np.save(npy_buffer, resized_emission_weights)
             npy_buffer.seek(0)
-            npy_info = tarfile.TarInfo(name="weights.npy")
+            npy_info = tarfile.TarInfo(name="emission_weights.npy")
+            npy_info.size = npy_buffer.getbuffer().nbytes
+            npy_info.mtime = time.time()
+            tar.addfile(npy_info, npy_buffer)
+
+            npy_buffer = io.BytesIO()
+            np.save(npy_buffer, transition_weights)
+            npy_buffer.seek(0)
+            npy_info = tarfile.TarInfo(name="transition_weights.npy")
             npy_info.size = npy_buffer.getbuffer().nbytes
             npy_info.mtime = time.time()
             tar.addfile(npy_info, npy_buffer)
@@ -415,15 +342,28 @@ class IngredientTaggerNumpy:
                 raise FileNotFoundError(f"Could not find labels.json in {path}.")
 
             # Extract and read the NPY file
-            weights_file = tar.extractfile("weights.npy")
-            if weights_file:
-                weights_buffer = io.BytesIO(weights_file.read())
+            emission_weights_file = tar.extractfile("emission_weights.npy")
+            if emission_weights_file:
+                emission_weights_buffer = io.BytesIO(emission_weights_file.read())
             else:
-                raise FileNotFoundError(f"Could not find weights.npy in {path}.")
-            weights = np.load(weights_buffer)
+                raise FileNotFoundError(
+                    f"Could not find emission_weights.npy in {path}."
+                )
+            emission_weights = np.load(emission_weights_buffer)
 
-        self.model = AveragedPerceptronNumpy(labels=labels)
-        self.model.weights = weights
+            # Extract and read the NPY file
+            transition_weights_file = tar.extractfile("transition_weights.npy")
+            if transition_weights_file:
+                transition_weights_buffer = io.BytesIO(transition_weights_file.read())
+            else:
+                raise FileNotFoundError(
+                    f"Could not find transition_weights.npy in {path}."
+                )
+            transition_weights = np.load(transition_weights_buffer)
+
+        self.model = AveragedPerceptronViterbiNumpy(labels=labels)
+        self.model.emission_weights = emission_weights
+        self.model.transition_weights = transition_weights
         self.model.feature_vocab = {feat: idx for idx, feat in enumerate(features)}
         self.labels = labels
         self.model.labels = self.labels
@@ -467,47 +407,86 @@ class IngredientTaggerNumpy:
             raise ValueError("Set the model labels before training.")
 
         if make_label_dict:
-            self._make_labeldict(training_features, truth)
+            logger.warning("IngredientTaggerViterbi does not use label_dict.")
 
         # Set min_feature_updates for model
         self.model.min_feat_updates = min_feat_updates
 
+        # Convert training features to set outside the training loop so we don't do it
+        # at every epoch.
+        converted_training_features = [
+            [self._convert_features(f) for f in sentence_features]
+            for sentence_features in training_features
+        ]
+        # Extract part of speech tags - we need them for generated features based on the
+        # previous label in a sequence
+        sentence_pos_tags = [
+            [f["pos"] for f in sentence_features]
+            for sentence_features in training_features
+        ]
+
         # We need to convert to list before we start training so that we can shuffle the
         # list after each training epoch.
-        training_data = list(zip(training_features, truth))
+        training_data = list(zip(converted_training_features, sentence_pos_tags, truth))
 
         for iter_ in tqdm(range(n_iter), disable=not show_progress):
             n = 0  # number of total tokens this iteration
             c = 0  # number of correctly labelled tokens this iteration
-            for sentence_features, truth_labels in training_data:
-                prev_label, prev_label2, prev_label3 = "-START-", "-START2-", "-START3-"
-                for features, true_label in zip(sentence_features, truth_labels):
-                    guess = self.labeldict.get(features["stem"])
-                    if not guess:
-                        converted_features = self._convert_features(
-                            features, prev_label, prev_label2, prev_label3
-                        )
-                        # Do not calculate score for prediction during training because
-                        # the weights have not been averaged, so the values could be
-                        # massive and cause OverflowErrors.
-                        # Do not set constraints during training. Because the feature
-                        # sets include features based on previous labels, applying
-                        # constraints now means the model never learns from errors that
-                        # might occur during inference and therefore never adjusts
-                        # the weights appropriately.
-                        guess, _ = self.model.predict(
-                            converted_features, set(), return_score=False
-                        )
-                        self.model.update(true_label, guess, converted_features)
+            for features, pos_tags, truth_labels in training_data:
+                predicted_sequence = self.model.predict_sequence(
+                    features,
+                    return_score=False,
+                    constrain_transitions=False,
+                )
+                predicted_labels, _ = zip(*predicted_sequence)
 
-                    prev_label3 = prev_label2
-                    prev_label2 = prev_label
-                    # Use the guess here to avoid to model becoming over-reliant on the
-                    # historical labels being correct
-                    prev_label = guess
+                if list(predicted_labels) == truth_labels:
+                    # All correct, no need to modify weights
+                    n += len(predicted_labels)
+                    c += len(predicted_labels)
+                    self.model._iteration += len(features)
+                    continue
 
+                # Calculate features based on prev_label for each element in sequence.
+                # Do this for both the predicted and true sequences.
+                prev_label_features_predicted = [
+                    label_features(prev_label, pos)
+                    for prev_label, pos in zip(
+                        ["-START-", *list(predicted_labels)], pos_tags
+                    )
+                ]
+
+                # We could pre-compute this?
+                prev_label_features_true = [
+                    label_features(prev_label, pos)
+                    for prev_label, pos in zip(["-START-", *truth_labels], pos_tags)
+                ]
+
+                # Iterate through each element in sequence and update weights.
+                # Note that model.update checks if true_label == predict_label and
+                # doesn't make any changes to weights.
+                for (
+                    predict_label,
+                    true_label,
+                    base_feats,
+                    predicted_transition_feats,
+                    truth_transition_feats,
+                ) in zip(
+                    predicted_labels,
+                    truth_labels,
+                    features,
+                    prev_label_features_predicted,
+                    prev_label_features_true,
+                ):
+                    self.model.update(
+                        true_label,
+                        predict_label,
+                        base_feats | predicted_transition_feats,
+                        base_feats | truth_transition_feats,
+                    )
+
+                    c += predict_label == true_label
                     n += 1
-                    c += guess == true_label
 
             logger.debug(f"Iter {iter_}: {100 * c / n:.2f}% correct tokens.")
 

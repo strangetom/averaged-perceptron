@@ -524,8 +524,8 @@ class IngredientTaggerQAT:
 
             random.shuffle(training_data)
 
-        self.model.filter_features()
         self.model.average_weights()
+        self.model.filter_features()
         self.model.prune_weights(min_abs_weight)
         self.model.quantize()
         self.model.simplify_weights()

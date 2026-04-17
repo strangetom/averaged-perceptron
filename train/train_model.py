@@ -24,6 +24,7 @@ from ap import (
     IngredientTaggerQAT,
     IngredientTaggerTernary,
     IngredientTaggerViterbi,
+    IngredientTaggerViterbiNumpy,
     ModelHyperParameters,
 )
 
@@ -74,6 +75,7 @@ def train_model(
         "ap_easiest_first",
         "ap_ternary",
         "ap_qat",
+        "ap_viterbi_numpy",
     ],
     split: float,
     save_model: Path,
@@ -167,7 +169,7 @@ def train_model(
         only_positive_bool_features=False,
         apply_label_constraints=True,
         min_abs_weight=2,
-        min_feat_updates=5,
+        min_feat_updates=2,
         quantize_bits=8,
         make_label_dict=False,
     )
@@ -208,6 +210,12 @@ def train_model(
         tagger.model.labels = tagger.labels
     elif model_type == "ap_ternary":
         tagger = IngredientTaggerTernary(
+            labels=list(labels),
+            only_positive_bool_features=params.only_positive_bool_features,
+            apply_label_constraints=params.apply_label_constraints,
+        )
+    elif model_type == "ap_viterbi_numpy":
+        tagger = IngredientTaggerViterbiNumpy(
             labels=list(labels),
             only_positive_bool_features=params.only_positive_bool_features,
             apply_label_constraints=params.apply_label_constraints,

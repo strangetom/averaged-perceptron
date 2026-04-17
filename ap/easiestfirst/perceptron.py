@@ -297,9 +297,6 @@ class AveragedPerceptronEasiestFirst:
 
         self.weights[feature][label] = weight + change
 
-        # Increment feature update count
-        self._feature_updates[feature] += 1
-
     def update(
         self,
         truth: str,
@@ -352,6 +349,12 @@ class AveragedPerceptronEasiestFirst:
             # Update weights for feature:
             # Increment weight for correct label by +1
             self._update_feature(truth, feat, weights.get(truth, 0.0), 1.0)
+
+        # Increment feature update counts.
+        # We do this here so that we only increment the count for each feature once,
+        # even though we adjusted the weights for different labels for that feature.
+        for feat in predicted_features | truth_features:
+            self._feature_updates[feat] += 1
 
         return None
 

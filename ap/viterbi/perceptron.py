@@ -375,9 +375,6 @@ class AveragedPerceptronViterbi:
 
         self.weights[feature][label] = weight + change
 
-        # Increment feature update count
-        self._feature_updates[feature] += 1
-
     def update(
         self,
         truth: str,
@@ -411,10 +408,9 @@ class AveragedPerceptronViterbi:
 
         # Update feature weights because truth != guess.
         # We decrement the features for the predicted label by -1 and increment the
-        # features for the true label by one. If the same feature appears in both
-        # feature sets, the net change is 0.
-        # We do the weights updates this way because (unlike the greedy Averaged
-        # Perceptron) the weights for the true sequence and different to the weights for
+        # features for the true label by one.
+        # We do the weights updates this way (unlike the greedy Averaged Perceptron)
+        # because the features for the true sequence are different to the weights for
         # the (incorrect) predicted sequence - although only for the features related to
         # the previous label.
         for feat in predicted_features:
@@ -430,6 +426,12 @@ class AveragedPerceptronViterbi:
             # Update weights for feature:
             # Increment weight for correct label by +1
             self._update_feature(truth, feat, weights.get(truth, 0.0), 1.0)
+
+        # Increment feature update counts.
+        # We do this here so that we only increment the count for each feature once,
+        # even though we adjusted the weights for different labels for that feature.
+        for feat in predicted_features | truth_features:
+            self._feature_updates[feat] += 1
 
         return None
 

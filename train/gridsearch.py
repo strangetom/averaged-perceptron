@@ -24,6 +24,7 @@ from ap import (
     IngredientTaggerQAT,
     IngredientTaggerTernary,
     IngredientTaggerViterbi,
+    IngredientTaggerViterbiNumpy,
     ModelHyperParameters,
 )
 
@@ -53,6 +54,7 @@ class HyperParameters:
         "ap_easiest_first",
         "ap_ternary",
         "ap_qat",
+        "ap_viterbi_numpy",
     ]
 
 
@@ -256,6 +258,12 @@ def train_model_grid_search(
         tagger.model.labels = tagger.labels
     elif parameters.model_type == "ap_ternary":
         tagger = IngredientTaggerTernary(
+            labels=list(labels),
+            only_positive_bool_features=parameters.only_positive_bool_features,
+            apply_label_constraints=parameters.apply_label_constraints,
+        )
+    elif parameters.model_type == "ap_viterbi_numpy":
+        tagger = IngredientTaggerViterbiNumpy(
             labels=list(labels),
             only_positive_bool_features=parameters.only_positive_bool_features,
             apply_label_constraints=parameters.apply_label_constraints,

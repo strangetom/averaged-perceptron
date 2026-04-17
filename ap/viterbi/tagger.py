@@ -350,6 +350,7 @@ class IngredientTaggerViterbi:
                     # All correct, no need to modify weights
                     n += len(predicted_labels)
                     c += len(predicted_labels)
+                    self.model._iteration += len(features)
                     continue
 
                 # Calculate features based on prev_label for each element in sequence.
@@ -397,8 +398,8 @@ class IngredientTaggerViterbi:
 
             random.shuffle(training_data)
 
-        self.model.filter_features()
         self.model.average_weights()
+        self.model.filter_features()
         self.model.prune_weights(min_abs_weight)
         if quantize_bits:
             self.model.quantize(quantize_bits)
