@@ -62,6 +62,7 @@ The `ap/` folder of this repository contains the following implementations:
 * `greedy` implements the basic greedy averaged perceptron.
 * `numpy` is a numpy implementation of the `greedy`.
 * `viterbi` implements Viterbi decoding for the basic greedy averaged perceptron.
+* `viterbi_numpy` implements Viterbi decoding in numpy.
 * `easiestfirst` implements "easiest-first" decoding for the basic greedy averaged perceptron.
 * `qat` implements quantization aware training, based on the NumPy implementation.
 * `ternary` implements a ternary weight model, based on the NumPy implementation.

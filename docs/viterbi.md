@@ -284,3 +284,162 @@ Using the Viterbi algorithm does yield a notable improvement to sentence accurac
 The Viterbi implementation described here is a 1st-order implementation. This means that only the transition between the previous label and the current label is considered.
 
 From the Greedy Averaged Perceptron, we know that using up to 3 previous labels provides useful information, which is not being considered by the Viterbi algorithm. Higher order implementations of the Viterbi algorithm are possible but they come at a considerable performance penalty. This 1st-order implementation is 12x slower to train - a 2nd-order implementation would likely be yet another order of magnitude slower.
+
+## Performance Optimisation
+
+Since the Viterbi implementation is so slow, it is worth investigating if we can apply similar optimisations to those used in the NumPy version of the Greedy Averaged Perceptron and see if they improve performance.
+
+The docs for the [NumPy implementation](numpy.md) cover much of the detail, so we will only concern ourselves with the adaptions needed for the Viterbi algorithm.
+
+> [!NOTE]
+>
+> To keep the implementation reasonable straightforward, only one feature based on the label of the previous element is used, which is the `prev_label=` feature.
+>
+> Other features based on previous label, such as `prev_label+pos=` are not implement because they increase the complexity.
+
+### Weights matrices
+
+For a NumPy implementation, we want to store the weights as NumPy arrays to maximise the benefits from using NumPy's vectorised operations. In this case, it is convenient to separate the features into two matrices: one for emission features and and one for transition features.
+
+```python
+# Matrix of emission weights: [n_features, n_labels]
+# These are weights for features that are properties of an element of the
+# sequence, independent of previous labels.
+self.emission_weights = np.zeros(
+    (initial_features, self.n_labels), dtype=np.float32
+)
+# Matrix of transition weights: [n_labels + 1, n_labels]
+# These are weights for features based on the previous label (rows) and
+# current label (columns).
+# Since the previous label can also be -START-, we include an additional row
+# for that label.
+self.transition_weights = np.zeros(
+    (self.n_labels + 1, self.n_labels), dtype=np.float32
+)
+```
+
+The matrix for transition weights contains an extra row for the `-START-` label. We will never predict this label, but it can be the value of the previous label.
+
+Using separate matrices for the emission and transition features means that we also need separate matrices for associated data during training: totals, time stamps and feature updates.
+
+### Viterbi algorithm
+
+The implementation of the Viterbi algorithm is fundamentally the same, but is adjusted to maximise the benefits from the use of NumPy.
+
+For example, for each token of the sequence we can precalculate the emission score at the start of the `predict_sequence` function. This is because none of the emission features depend on the any of the labels.
+
+```python
+# Pre-compute emission scores for all elements of sequence.
+# Rows: sequence elements
+# Columns: labels
+emission_scores = np.zeros((seq_len, self.n_labels), dtype=np.float64)
+for t, features in enumerate(features_seq):
+    indices = self._features_to_idx(features)
+    # Don't consider features until they have been updated more than
+    # min_feat_updates times. We only do this during training.
+    if self.training_mode:
+        indices = indices[
+            self._emission_feat_updates[indices] >= self.min_feat_updates
+        ]
+
+    if len(indices) > 0:
+        # Sum the weights for the selected features by column (label) and assign
+        # to the correct row of the emission_scores matrix.
+        emission_scores[t] = self.emission_weights[indices].sum(axis=0)
+```
+
+The lattice is implemented as two matrices: one for the scores for each label for each token, and one for the backpointers for each label for each token.
+
+```python
+# Initialize the lattice as NumPy arrays.
+# One array for the scores, initialized to -inf. This is the best score for that
+# label given the previous label specified by the backpointers array.
+# One array for the backpointers, which hold the index of the previous label
+# that resulted in the score in the lattice_scores array.
+lattice_scores = np.full((seq_len, self.n_labels), -np.inf)
+backpointers = np.zeros((seq_len, self.n_labels), dtype=np.int32)
+```
+
+The forward pass through the sequence of tokens is similar to above, but we have to consider the emission features and transition features separately.
+
+```python
+# Forward pass, starting at t=1 because we've already initialised t=0
+for t in range(1, seq_len):
+    # Get the scores for each label from the previous lattice row.
+    # [:, np.newaxis] rotates this into a column vector because this is the
+    # previous label to the current label, so we need to broadcast across the
+    # rows of the transition matrix.
+    prev_el_scores = lattice_scores[t - 1][:, np.newaxis]
+
+    # Candidates is a (n_label, n_label) shaped matrix containing the total
+    # scores for transition from each previous label to the current label.
+    # We broadcast the prev_el_scores across all rows in the transition
+    # matrix and broadcast the emission_scores across all columns to end up
+    # with the sum of relevant weights for each label -> label transition.
+    #
+    # We have to slice the transition weights to remove the last row which
+    # corresponds to the "-START-" label. We have already handled this for the
+    # first element of the sequence and the dimensions of prev_el_scores would
+    # not match if we didn't remove it here.
+    candidates = (
+        prev_el_scores
+        + self.transition_weights[: self.n_labels]
+        + emission_scores[t]
+    )
+
+    # Find the best score in each column and the index of the best score in each
+    # column and save to the lattice_scores and backpointers matrices
+    # respectively.
+    lattice_scores[t] = np.max(candidates, axis=0)
+    backpointers[t] = np.argmax(candidates, axis=0)
+```
+
+Backtracking through the backpointers matrix is basically the same as above.
+
+```python
+# Find the best label for the last element of the lattice, since there isn't a
+# backpointer for this.
+backpointer = np.argmax(lattice_scores[-1])
+# Iterate backwards through the lattice.
+# At each step, append the backpointer that yielded the best score to the label
+# sequence. Note the the resultant label sequence will be in reverse.
+for t in range(seq_len - 1, -1, -1):
+    label_seq.append(self.labels[backpointer])
+
+    backpointer = backpointers[t, backpointer]
+```
+
+### Weight updates
+
+Since we store the emission and transition weights separately, we need to make sure that we update both matrices when the model makes a mistake during training.
+
+```python
+# Decrement the weights for the predicted features first.
+predicted_emission_feat_idx = self._features_to_idx(predicted_features)
+predicted_transition_feat_idx = np.array(
+    [
+        self.transition_feature_to_idx[feat]
+        for feat in predicted_features
+        if feat in self.transition_feature_to_idx
+    ]
+)
+self._update_emission_totals(guess_idx, predicted_emission_feat_idx)
+self.emission_weights[predicted_emission_feat_idx, guess_idx] -= 1.0
+self._update_transition_totals(guess_idx, predicted_transition_feat_idx)
+self.transition_weights[predicted_transition_feat_idx, guess_idx] -= 1.0
+```
+
+The weights for the features for the true features are incremented in the same way.
+
+### Execution performance comparison
+
+Comparison of the Greedy and Viterbi (original and NumPy) Averaged Perceptron models, using the same hyperparameters and features.
+
+| Model                 | Word accuracy | Sentence accuracy | Model size | Time    |
+| --------------------- | ------------- | ----------------- | ---------- | ------- |
+| Greedy (Pure Python)  | 97.94%        | 94.26%            | 2.09 MB    | 0:17:10 |
+| Greedy (NumPy)        | 97.94%        | 94.26%            | 1.61 MB    | 0:06:48 |
+| Viterbi (Pure python) | 98.01%        | 94.70%            | 2.38 MB    | 3:46:48 |
+| Viterbi (Numpy)       | 98.01%        | 94.70%            | 1.83 MB    | 0:05:48 |
+
+> Interestingly, the NumPy implementation of Viterbi Averaged Perceptron seems to be faster than the NumPy implementation of the Greedy Averaged Perceptron. I think this might be because the Viterbi version predicts an entire sentence in one go and therefore spends more time executing NumPy operations than the Greedy Averaged Perceptron, which predicts a token at a time and therefore has to context switch between Python and Numpy much more often.
